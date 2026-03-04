@@ -2,46 +2,72 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Air Hockey - Arena Edition</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Air Hockey - FX Master</title>
   <style>
-    :root { --cyan:#00e5ff; --bg:#0a0a0a; --rink:#e0f7fa; --rim:#004d40; --pink:#ff4081; --line:rgba(0,150,136,0.25); }
+    :root { --cyan:#00e5ff; --bg:#050505; }
     body {
-      margin: 0; background: var(--bg);
-      display: flex; justify-content: center; align-items: center; height: 100vh;
-      touch-action: none; overflow: hidden; font-family: 'Segoe UI', sans-serif;
+      margin: 0; background: var(--bg); display: flex; justify-content: center; align-items: center;
+      height: 100vh; touch-action: none; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white;
     }
     .wrap { position: relative; }
     canvas {
-      background: var(--rink); border: 8px solid var(--rim);
-      box-shadow: 0 0 50px rgba(0,0,0,0.8); display:block;
-      max-width: 100vw; max-height: 100vh; cursor: none;
+      display:block; cursor: none; background: white; border-radius: 5px;
+      box-shadow: 0 0 50px rgba(0,0,0,0.5);
     }
     #ui { position: absolute; top: 15px; left: 15px; z-index: 100; display:flex; gap:10px; }
     .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-      display: none; color: white; padding: 20px; z-index: 200;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: flex; align-items: center; justify-content: center;
+      z-index: 200; backdrop-filter: blur(8px);
     }
-    .overlay .inner {
-      width: min(450px, 90vw); margin: 40px auto; border: 1px solid #333;
-      border-radius: 15px; padding: 25px; background: #111;
-      box-shadow: 0 0 30px rgba(0,229,255,0.2);
+    .inner {
+      width: 92%; max-width: 820px; border-radius: 24px; padding: 24px; background: #111; border: 1px solid #333;
+      max-height: 90vh; overflow-y: auto;
     }
+    .grid-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+    .row { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 12px 0 18px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 18px; }
+    .label { font-size: 12px; letter-spacing: .5px; color: #aaa; text-transform: uppercase; }
     button {
-      padding: 12px 18px; cursor: pointer; background: var(--cyan);
-      border: none; font-weight: 800; border-radius: 8px; color:#000; transition: 0.2s;
+      padding: 10px; cursor: pointer; background: var(--cyan); border: none; font-weight: bold;
+      border-radius: 8px; color:#000; transition: 0.2s;
     }
-    button.sec { background: #222; color:#fff; }
-    button.warn { background: var(--pink); color:#fff; }
-    button:hover { filter: brightness(1.2); }
-    
-    .flag-selector { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 15px 0; }
-    .flag-btn { background: #222; border: 2px solid transparent; font-size: 20px; padding: 5px; border-radius: 4px; }
-    .flag-btn.active { border-color: var(--cyan); background: #333; }
-
+    button.sec { background: #1d1d1d; color:#fff; border: 1px solid #444; font-size: 12px; }
+    .active { border: 2px solid white !important; background: var(--cyan) !important; color: #000 !important; }
     #countdown {
       position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:250; pointer-events:none;
-      font-size: 150px; font-weight: 900; color: white; text-shadow: 0 0 20px var(--cyan);
+      font-size: 160px; font-weight: 900; color: white;
+    }
+
+    .flagbtn { display:flex; align-items:center; justify-content:center; padding:6px; background:transparent; border:1px solid #444; border-radius:8px; }
+    .flagbtn svg { width: 42px; height: 28px; border-radius: 3px; display:block; }
+
+    .bg-swatch { background:transparent; border:1px solid #444; border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; align-items:center; }
+    .swatch {
+      width: 48px; height: 32px; border-radius: 6px; border: 1px solid #666;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .swatch-name { font-size: 10px; color:#bbb; }
+
+    .inline { display:flex; gap:8px; align-items:center; }
+    input[type="number"], select, input[type="color"] {
+      background:#1d1d1d; border:1px solid #444; color:#fff; border-radius:8px; padding:8px;
+    }
+    input[type="color"] { width: 48px; height: 32px; padding:0; border-radius:6px; }
+    .hint { font-size: 11px; color:#888; }
+    .toggle { display:flex; gap:8px; align-items:center; }
+    .toggle input { width:18px; height:18px; }
+
+    .badge {
+      position: absolute; padding: 2px 6px; background: #111a; border: 1px solid #fff4;
+      color: #fff; font-size: 12px; border-radius: 6px; pointer-events: none; transform: translate(-50%, -150%);
+      white-space: nowrap;
+    }
+    .toast {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      background:#111c; border:1px solid #444; color:#fff; padding:8px 12px; border-radius:10px; z-index: 300;
+      font-size: 13px;
     }
   </style>
 </head>
@@ -50,280 +76,1296 @@
   <div class="wrap">
     <div id="ui">
       <button id="btnMenu" class="sec">⚙️</button>
-      <button id="btnSound" class="sec">🔇</button>
+      <button id="btnSound" class="sec">🔊</button>
+      <!-- Przycisk pełnego ekranu (zostaje dla szybkiego przełączania) -->
+      <button id="btnFs" class="sec" title="Pełny ekran">🖵</button>
     </div>
     <div id="countdown">3</div>
     <canvas id="gameCanvas"></canvas>
+    <div id="badges"></div>
   </div>
 
-  <div id="overlay" class="overlay">
+  <!-- =======================
+       PANEL USTAWIEŃ / MENU
+       ======================= -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
     <div class="inner">
-      <h2 style="color:var(--cyan); margin-top:0">ARENA SETTINGS</h2>
-      
-      <button id="btnFullScreen" style="width:100%; margin-bottom:15px">⛶ PEŁNY EKRAN (FULLSCREEN)</button>
-      
-      <div style="margin-bottom:20px">
-        <button id="btnToggleSound" class="warn" style="width:100%">DŹWIĘK: OFF</button>
+      <h2 id="txtTitle" style="text-align:center; margin-top:0; color: var(--cyan);">USTAWIENIA MECZU</h2>
+
+      <!-- Kolor tła stołu -->
+      <div class="row">
+        <div id="lblBg" class="label">Kolor tła</div>
+        <div class="grid-btns" id="bgColors"></div>
+        <div class="inline">
+          <span class="hint">Własny kolor:</span>
+          <input id="colorPicker" type="color" />
+        </div>
       </div>
 
-      <p style="margin:0; font-size:14px">Wybierz flagę Gracza 1 i 2:</p>
-      <div id="flagsP1" class="flag-selector"></div>
-      <div id="flagsP2" class="flag-selector"></div>
+      <!-- Rozmiar krążka -->
+      <div class="row">
+        <div id="lblPuck" class="label">Rozmiar krążka</div>
+        <div class="grid-btns" id="puckSizes">
+          <button class="btn-puck sec" onclick="setPuck(18,0)">S</button>
+          <button class="btn-puck sec active" onclick="setPuck(22,1)">M</button>
+          <button class="btn-puck sec" onclick="setPuck(26,2)">L</button>
+        </div>
+      </div>
 
-      <div style="display:flex; gap:10px; margin-top:20px">
-        <button id="btnResetScores" class="sec">Reset Wyniku</button>
-        <button id="btnResume" style="flex-grow:1">WRÓĆ DO GRY</button>
+      <!-- Rozmiar paletek osobno -->
+      <div class="row2">
+        <div>
+          <div id="lblMalletP1" class="label">Paletka P1</div>
+          <div class="grid-btns" id="malletSizesP1">
+            <button class="btn-mallet-p1 sec" onclick="setMallet('p1',30,0)">S</button>
+            <button class="btn-mallet-p1 sec active" onclick="setMallet('p1',35,1)">M</button>
+            <button class="btn-mallet-p1 sec" onclick="setMallet('p1',42,2)">L</button>
+          </div>
+        </div>
+        <div>
+          <div id="lblMalletP2" class="label">Paletka P2</div>
+          <div class="grid-btns" id="malletSizesP2">
+            <button class="btn-mallet-p2 sec" onclick="setMallet('p2',30,0)">S</button>
+            <button class="btn-mallet-p2 sec active" onclick="setMallet('p2',35,1)">M</button>
+            <button class="btn-mallet-p2 sec" onclick="setMallet('p2',42,2)">L</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flagi graczy -->
+      <div class="row">
+        <div id="lblP2" class="label">Flaga Gracza 2</div>
+        <div id="flagsP2" class="grid-btns"></div>
+      </div>
+      <div class="row">
+        <div id="lblP1" class="label">Flaga Gracza 1</div>
+        <div id="flagsP1" class="grid-btns"></div>
+      </div>
+
+      <!-- Język gry -->
+      <div class="row">
+        <div id="lblLang" class="label">Język</div>
+        <div class="grid-btns" id="langBtns">
+          <button class="btn-lang sec" data-lang="pl">Polski</button>
+          <button class="btn-lang sec" data-lang="en">English</button>
+          <button class="btn-lang sec" data-lang="fr">Français</button>
+          <button class="btn-lang sec" data-lang="es">Español</button>
+          <button class="btn-lang sec" data-lang="de">Deutsch</button>
+        </div>
+      </div>
+
+      <!-- Czas rund i format meczu -->
+      <div class="row">
+        <div id="lblRound" class="label">Czas rundy</div>
+        <div class="grid-btns" id="roundPresets">
+          <button class="btn-round sec" data-sec="60">1:00</button>
+          <button class="btn-round sec" data-sec="120">2:00</button>
+          <button class="btn-round sec" data-sec="180">3:00</button>
+          <button class="btn-round sec" data-sec="300">5:00</button>
+          <button class="btn-round sec" data-sec="custom">Własny</button>
+        </div>
+        <div class="inline" id="customTimeWrap" style="display:none;">
+          <input id="inpMinutes" type="number" min="0" max="60" step="1" value="3" /> <span style="color:#aaa">min</span>
+        </div>
+        <label class="toggle" style="margin-top:8px;">
+          <input type="checkbox" id="chkUnlimited" />
+          <span id="lblUnlimited">Czas nieograniczony</span>
+        </label>
+      </div>
+
+      <!-- Format meczu -->
+      <div class="row">
+        <div id="lblFormat" class="label">Format meczu</div>
+        <div class="grid-btns" id="formatBtns">
+          <button class="btn-format sec" data-bo="1">Best of 1</button>
+          <button class="btn-format sec active" data-bo="3">Best of 3</button>
+          <button class="btn-format sec" data-bo="5">Best of 5</button>
+        </div>
+      </div>
+
+      <!-- Sterowanie -->
+      <div class="row2">
+        <div>
+          <div id="lblInput" class="label">Sterowanie</div>
+          <div class="row2" style="grid-template-columns: 1fr 1fr;">
+            <div>
+              <div class="label">P1</div>
+              <select id="selInputP1">
+                <option value="keyboard">Klawiatura</option>
+                <option value="gamepad">Gamepad</option>
+                <option value="ai">AI (bot)</option>
+              </select>
+              <select id="selPadP1" style="margin-top:6px; display:none;"></select>
+              <select id="selAiP1" style="margin-top:6px; display:none;">
+                <option value="easy">Łatwy</option>
+                <option value="medium" selected>Średni</option>
+                <option value="hard">Trudny</option>
+              </select>
+              <div class="hint">← → ↑ ↓ | Enter/Numpad0 = cios</div>
+            </div>
+            <div>
+              <div class="label">P2</div>
+              <select id="selInputP2">
+                <option value="keyboard">Klawiatura</option>
+                <option value="gamepad">Gamepad</option>
+                <option value="ai">AI (bot)</option>
+              </select>
+              <select id="selPadP2" style="margin-top:6px; display:none;"></select>
+              <select id="selAiP2" style="margin-top:6px; display:none;">
+                <option value="easy">Łatwy</option>
+                <option value="medium" selected>Średni</option>
+                <option value="hard">Trudny</option>
+              </select>
+              <div class="hint">A D W S | Space/Ctrl = cios</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="label">P3 &amp; P4</div>
+          <div class="row2" style="grid-template-columns: 1fr 1fr;">
+            <div id="colP3">
+              <div class="label">P3</div>
+              <select id="selInputP3">
+                <option value="keyboard" selected>Klawiatura</option>
+                <option value="gamepad">Gamepad</option>
+                <option value="ai">AI (bot)</option>
+              </select>
+              <select id="selPadP3" style="margin-top:6px; display:none;"></select>
+              <select id="selAiP3" style="margin-top:6px; display:none;">
+                <option value="easy">Łatwy</option>
+                <option value="medium" selected>Średni</option>
+                <option value="hard">Trudny</option>
+              </select>
+              <div class="hint">J L I K | RightShift = cios</div>
+            </div>
+            <div id="colP4">
+              <div class="label">P4</div>
+              <select id="selInputP4">
+                <option value="keyboard" selected>Klawiatura</option>
+                <option value="gamepad">Gamepad</option>
+                <option value="ai">AI (bot)</option>
+              </select>
+              <select id="selPadP4" style="margin-top:6px; display:none;"></select>
+              <select id="selAiP4" style="margin-top:6px; display:none;">
+                <option value="easy">Łatwy</option>
+                <option value="medium" selected>Średni</option>
+                <option value="hard">Trudny</option>
+              </select>
+              <div class="hint">F H T G | ShiftLeft = cios</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liczba graczy + Specjal (multiball) -->
+      <div class="row2">
+        <div>
+          <div id="lblPlayers" class="label">Liczba graczy</div>
+          <div class="grid-btns" id="playersBtns">
+            <button class="btn-players sec active" data-n="1">1</button>
+            <button class="btn-players sec" data-n="2">2</button>
+            <button class="btn-players sec" data-n="3">3</button>
+            <button class="btn-players sec" data-n="4">4</button>
+          </div>
+          <div class="hint">Przy 3–4 graczach: po 2 paletki na stronę (P1+P3 dół, P2+P4 góra).</div>
+        </div>
+        <div>
+          <div class="label">Specjal (Multiball)</div>
+          <div class="inline">
+            <span class="hint">Ilość użyć na gracza:</span>
+            <select id="selMbLimit">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="5">5</option>
+              <option value="0">∞ (bez limitu)</option>
+            </select>
+          </div>
+          <div class="hint">Wciśnij <b>A</b> na padzie podczas strzału — pojawią się 2 dodatkowe krążki. Drobny cooldown zapobiega spamowi.</div>
+        </div>
+      </div>
+
+      <!-- NOWE: Ustawienie pełnego ekranu -->
+      <div class="row">
+        <div id="lblFullscreen" class="label">Pełny ekran</div>
+        <label class="toggle">
+          <input type="checkbox" id="chkFullscreen" />
+          <span class="hint">Włącz/wyłącz tryb pełnoekranowy (zapamiętywany)</span>
+        </label>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:25px">
+        <button id="btnResume" style="flex:2">START / WZNÓW</button>
       </div>
     </div>
   </div>
 
 <script>
-/* =========================================================================
-    1) KONFIGURACJA I AUDIO
-   ========================================================================= */
+/* ===========================================================
+   KANWA + KONTEKST 2D + TIMESTEP (dt)
+   =========================================================== */
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d', { alpha: false });
-const countdown = document.getElementById('countdown');
+const ctx = canvas.getContext('2d');
 const overlay = document.getElementById('overlay');
+const countdownEl = document.getElementById('countdown');
+const badgesWrap = document.getElementById('badges');
+let lastTime = performance.now();
 
+/* ===========================================================
+   i18n (PL/EN/FR/ES/DE) – rozszerzone
+   =========================================================== */
+const I18N = {
+  pl: {
+    settings: 'USTAWIENIA MECZU',
+    bgColor: 'Kolor tła',
+    puckSize: 'Rozmiar krążka',
+    malletP1: 'Paletka P1',
+    malletP2: 'Paletka P2',
+    p1Flag: 'Flaga Gracza 1',
+    p2Flag: 'Flaga Gracza 2',
+    start: 'START / WZNÓW',
+    newMatch: 'NOWY MECZ',
+    gameOver: 'KONIEC MECZU',
+    lang: 'Język',
+    goal: 'GOL!',
+    roundTime: 'Czas rundy',
+    unlimited: 'Czas nieograniczony',
+    format: 'Format meczu',
+    input: 'Sterowanie',
+    players: 'Liczba graczy',
+    ot: 'DOGRYWKA',
+    fullscreen: 'Pełny ekran'
+  },
+  en: { settings:'MATCH SETTINGS', bgColor:'Background color', puckSize:'Puck size', malletP1:'Mallet P1', malletP2:'Mallet P2', p1Flag:'Player 1 Flag', p2Flag:'Player 2 Flag', start:'START / RESUME', newMatch:'NEW MATCH', gameOver:'GAME OVER', lang:'Language', goal:'GOAL!', roundTime:'Round time', unlimited:'Unlimited time', format:'Match format', input:'Controls', players:'Players', ot:'OVERTIME', fullscreen:'Fullscreen' },
+  fr: { settings:'PARAMÈTRES DU MATCH', bgColor:'Couleur du fond', puckSize:'Taille du palet', malletP1:'Maillet J1', malletP2:'Maillet J2', p1Flag:'Drapeau Joueur 1', p2Flag:'Drapeau Joueur 2', start:'DÉMARRER / REPRENDRE', newMatch:'NOUVEAU MATCH', gameOver:'FIN DU MATCH', lang:'Langue', goal:'BUT !', roundTime:'Temps de la manche', unlimited:'Temps illimité', format:'Format du match', input:'Contrôles', players:'Joueurs', ot:'PROLONGATION', fullscreen:'Plein écran' },
+  es: { settings:'AJUSTES DEL PARTIDO', bgColor:'Color de fondo', puckSize:'Tamaño del disco', malletP1:'Paleta J1', malletP2:'Paleta J2', p1Flag:'Bandera Jugador 1', p2Flag:'Bandera Jugador 2', start:'INICIAR / REANUDAR', newMatch:'NUEVO PARTIDO', gameOver:'FIN DEL PARTIDO', lang:'Idioma', goal:'¡GOL!', roundTime:'Tiempo de la ronda', unlimited:'Tiempo ilimitado', format:'Formato del partido', input:'Controles', players:'Jugadores', ot:'PRÓRROGA', fullscreen:'Pantalla completa' },
+  de: { settings:'SPIELEINSTELLUNGEN', bgColor:'Hintergrundfarbe', puckSize:'Puckgröße', malletP1:'Schläger S1', malletP2:'Schläger S2', p1Flag:'Flagge Spieler 1', p2Flag:'Flagge Spieler 2', start:'START / FORTSETZEN', newMatch:'NEUES SPIEL', gameOver:'SPIEL ENDE', lang:'Sprache', goal:'TOR!', roundTime:'Rundenzeit', unlimited:'Unbegrenzte Zeit', format:'Spiel‑Format', input:'Steuerung', players:'Spieler', ot:'VERLÄNGERUNG', fullscreen:'Vollbild' }
+};
+let lang = localStorage.getItem('lang') || 'pl';
+const t = (k)=> (I18N[lang] && I18N[lang][k]) || k;
+function applyTexts() {
+  document.getElementById('txtTitle').textContent = isGameOver ? `${t('gameOver')} — R:${roundWinsP1}:${roundWinsP2}` : t('settings');
+  document.getElementById('lblBg').textContent = t('bgColor');
+  document.getElementById('lblPuck').textContent = t('puckSize');
+  document.getElementById('lblMalletP1').textContent = t('malletP1');
+  document.getElementById('lblMalletP2').textContent = t('malletP2');
+  document.getElementById('lblP2').textContent = t('p2Flag');
+  document.getElementById('lblP1').textContent = t('p1Flag');
+  document.getElementById('lblLang').textContent = t('lang');
+  document.getElementById('lblRound').textContent = t('roundTime');
+  document.getElementById('lblUnlimited').textContent = t('unlimited');
+  document.getElementById('lblFormat').textContent = t('format');
+  document.getElementById('lblInput').textContent = t('input');
+  document.getElementById('lblPlayers').textContent = t('players');
+  document.getElementById('lblFullscreen').textContent = t('fullscreen');
+  document.getElementById('btnResume').textContent = isGameOver ? t('newMatch') : t('start');
+}
+
+/* ===========================================================
+   STAN GRY, PARAMETRY FIZYKI
+   =========================================================== */
 let isPaused = true;
-const FRICTION = 0.988;
-const WALL_BOUNCE = 0.7;
-const GOAL_WIDTH = 180;
-const FLAGS = ['🇵🇱', '🇺🇸', '🇬🇧', '🇩🇪', '🇫🇷', '🇨🇦', '🇧🇷', '🇯🇵', '🇪🇺', '🇦🇷', '🇺🇦', '🇮🇹'];
+let isGameOver = false;
+let inOvertime = false;
+let goalText = { timer: 0, color: "", y: 0, text: t('goal') };
+let particles = [];
 
-const puck = { x: 0, y: 0, r: 18, vx: 0, vy: 0 };
-const p1 = { x: 0, y: 0, r: 35, score: 0, color: "#d32f2f", flag: '🇵🇱', vx: 0, vy: 0 };
-const p2 = { x: 0, y: 0, r: 35, score: 0, color: "#1976d2", flag: '🇪🇺', vx: 0, vy: 0 };
+/* CZAS / RUNDA */
+let roundTimeSec = 180;
+let unlimitedTime = false;
+let matchTime = roundTimeSec;
+let timerInterval;
 
-const SFX = (() => {
-  let ctxA = null; let enabled = false;
-  function ensure(){ if(!ctxA) ctxA = new (window.AudioContext||window.webkitAudioContext)(); if (ctxA.state==='suspended') ctxA.resume(); }
+/* FORMAT MECZU */
+let bestOf = 3;
+let roundWinsP1 = 0, roundWinsP2 = 0;
+
+/* MULTIBALL */
+let multiballLimitPerPlayer = 3;  // 0 = ∞
+const SPECIAL_COOLDOWN_MS = 5000;
+const MULTIBALL_LIFETIME_MS = 6000;
+
+/* TŁO */
+const BG_PRESETS = [
+  {c:'#ffffff', n:'White'}, {c:'#f8faff', n:'SnowBlue'}, {c:'#f3f4f6', n:'Gray100'},
+  {c:'#eef7ff', n:'SkyTint'}, {c:'#f0fff4', n:'Mint'}, {c:'#fff7ed', n:'Peach'},
+  {c:'#fff0f6', n:'Pink'}, {c:'#fefae0', n:'Pale'}, {c:'#f7f5ff', n:'Lavender'},
+  {c:'#f6fff8', n:'SoftGreen'}
+];
+let tableBgColor = localStorage.getItem('tableBgColor') || '#f8faff';
+
+/* Hamowanie / fizyka */
+const K1_AIR = 0.8;
+const K2_QUAD = 0.0008;
+const MUg = 80;
+const WALL_GRAZE_DAMP = 0.985;
+
+const WALL_E = 0.90;
+const E_STANDARD = 0.95;
+const E_ACTIVE_HIT = 1.20;
+const E_PASSIVE = 0.98;
+const TANGENTIAL_DAMPING = 0.02;
+const PUCK_SPEED_LIMIT = 45;
+
+/* ARENA */
+const arena = { frW: 14, gw: 195 };
+
+/* Gracze */
+function makePlayer(color, flagCode, sideTop=false, name='') {
   return {
-    impact: (vol) => {
-      if (!enabled) return; ensure();
-      const o=ctxA.createOscillator(), g=ctxA.createGain();
-      o.type='sine'; o.frequency.setValueAtTime(120 + (vol * 200), ctxA.currentTime);
-      g.gain.setValueAtTime(vol * 0.3, ctxA.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctxA.currentTime + 0.1);
-      o.connect(g).connect(ctxA.destination); o.start(); o.stop(ctxA.currentTime + 0.1);
-    },
-    setEnabled: (v) => { enabled = v; },
-    isEnabled: () => enabled,
-    resume: ensure
+    name, x:0, y:0, r:35, score:0, color, flagCode,
+    vx:0, vy:0, isHitting:false, isControlled:false, trail:[],
+    input:'keyboard', padIndex:-1, ai:'medium', sideTop,
+    lastSpecialAt:0, specialUsesUsed:0,
+    lastAiHit:false
   };
-})();
+}
+const p1 = makePlayer("#ff1744","PL",false,'P1');
+const p2 = makePlayer("#2979ff","US",true,'P2');
+let p3 = null, p4 = null;
 
-/* =========================================================================
-    2) FIZYKA: ANTY-PRZYKLEJANIE (REBOUND)
-   ========================================================================= */
-function resolvePlayerCollision(p) {
-  const dx = puck.x - p.x, dy = puck.y - p.y, dist = Math.hypot(dx, dy), minDist = puck.r + p.r;
-  
-  if (dist < minDist) {
-    const nx = dx / dist, ny = dy / dist;
-    
-    // Zapobieganie przyklejaniu: natychmiastowe wypchnięcie poza promień
-    puck.x = p.x + nx * (minDist + 1);
-    puck.y = p.y + ny * (minDist + 1);
+function makePuck(x,y,r){ return { x, y, r, vx:0, vy:0 }; }
+let pucks = [];
+const basePuck = makePuck(0,0,22);
 
-    const pV_dot_N = (p.vx * nx + p.vy * ny);
+/* ===========================================================
+   WEJŚCIA: KLAWIATURA / GAMEPAD / AI / DOTYK
+   =========================================================== */
+const keys = {};
+const justPressed = new Set();
 
-    if (pV_dot_N > 0) {
-      // Uderzenie aktywne (pchnięcie)
-      puck.vx = nx * pV_dot_N * 1.5;
-      puck.vy = ny * pV_dot_N * 1.5;
-      SFX.impact(Math.min(1, pV_dot_N / 15));
-    } else {
-      // Odbicie pasywne (anty-klej): krążek zawsze odskakuje z minimalną siłą
-      const rebound = 3.0; 
-      puck.vx = nx * rebound;
-      puck.vy = ny * rebound;
-      SFX.impact(0.1);
+window.addEventListener('keydown', e => {
+  if (!keys[e.code]) justPressed.add(e.code);
+  keys[e.code] = true;
+});
+window.addEventListener('keyup',   e => { keys[e.code] = false; });
+
+/* GAMEPAD */
+const pads = new Map();
+window.addEventListener('gamepadconnected',    (e) => { pads.set(e.gamepad.index, e.gamepad); refreshPadLists(); });
+window.addEventListener('gamepaddisconnected', (e) => { pads.delete(e.gamepad.index); refreshPadLists(); });
+
+const gamepadPrevButtons = new Map();
+
+function readGamepad(idx) {
+  const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+  const gp = gps[idx];
+  if (!gp) return { dx:0, dy:0, hit:false, justA:false };
+
+  const axLX = gp.axes[0] || 0;
+  const axLY = gp.axes[1] || 0;
+  const dead = 0.18;
+  const norm = (v)=> Math.abs(v) < dead ? 0 : v;
+  const dx = norm(axLX), dy = norm(axLY);
+
+  const btns = gp.buttons;
+  const A  = !!btns[0]?.pressed;
+  const RT = !!btns[7]?.pressed;
+  const RB = !!btns[5]?.pressed;
+
+  let prev = gamepadPrevButtons.get(idx);
+  if (!prev) prev = new Array(btns.length).fill(false);
+  const justA = (A && !prev[0]);
+  const nowPressed = btns.map(b => !!b?.pressed);
+  gamepadPrevButtons.set(idx, nowPressed);
+
+  return { dx, dy, hit: (A || RT || RB), justA };
+}
+
+/* AI */
+function aiInputFor(p, which, dt) {
+  const { W, H } = getSize();
+  const onTop = p.sideTop;
+  const targetPk = pucks[0] || pucks[1] || pucks[2];
+  const myHalf = targetPk ? (onTop ? (targetPk.y < H/2) : (targetPk.y > H/2)) : true;
+  let tx = targetPk ? targetPk.x : W/2, ty = targetPk ? targetPk.y : (onTop ? H*0.2 : H*0.8);
+  if (!myHalf) { tx = W/2; ty = onTop ? (H*0.20) : (H*0.80); }
+
+  const anticipate = (p.ai === 'hard') ? 0.20 : (p.ai === 'medium' ? 0.10 : 0.05);
+  if (targetPk) { tx += targetPk.vx * 60 * anticipate; ty += targetPk.vy * 60 * anticipate; }
+
+  const dx = clamp((tx - p.x)/120, -1, 1);
+  const dy = clamp((ty - p.y)/120, -1, 1);
+
+  const dist = targetPk ? Math.hypot(targetPk.x - p.x, targetPk.y - p.y) : 999;
+  const toward = targetPk ? (onTop ? (targetPk.vy > 0) : (targetPk.vy < 0)) : false;
+  const wantHit = (dist < (p.r + (targetPk?.r||22) + 20) && toward);
+
+  let justStrike = false;
+  const moving = Math.abs(dx) + Math.abs(dy) > 0.01;
+  if (wantHit && !p.lastAiHit && moving) justStrike = true;
+  p.lastAiHit = wantHit;
+
+  return { dx, dy, justStrike, justA:false };
+}
+
+/* DOTYK – stabilny multi-touch */
+const touchToPlayer = new Map();
+const touchState = {
+  p1: { active:false, prevX:0, prevY:0, dx:0, dy:0, just:false },
+  p2: { active:false, prevX:0, prevY:0, dx:0, dy:0, just:false },
+  p3: { active:false, prevX:0, prevY:0, dx:0, dy:0, just:false },
+  p4: { active:false, prevX:0, prevY:0, dx:0, dy:0, just:false }
+};
+function readTouchState(id){
+  const s = touchState[id];
+  const justStrike = s.just; s.just = false;
+  return { dx: s.dx, dy: s.dy, justStrike, justA:false };
+}
+function pickFreePlayerOnSide(isTop) {
+  const candidates = isTop
+    ? [p2 ? 'p2' : null, p4 ? 'p4' : null].filter(Boolean)
+    : [p1 ? 'p1' : null, p3 ? 'p3' : null].filter(Boolean);
+  if (candidates.length === 0) return null;
+  const activeCounts = Object.fromEntries(candidates.map(id => [id, 0]));
+  for (const id of touchToPlayer.values()) if (activeCounts[id] !== undefined) activeCounts[id]++;
+  return candidates.reduce((best, id) =>
+    (best == null || activeCounts[id] < activeCounts[best]) ? id : best, null);
+}
+function enableTouchControls() {
+  canvas.addEventListener('pointerdown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const isTop = y < rect.height / 2;
+    let who = pickFreePlayerOnSide(isTop);
+    if (!who) return;
+    touchToPlayer.set(e.pointerId, who);
+    const st = touchState[who];
+    st.active = true; st.prevX = x; st.prevY = y; st.dx = 0; st.dy = 0; st.just = false;
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    const who = touchToPlayer.get(e.pointerId);
+    if (!who) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const st = touchState[who];
+    if (!st.active) return;
+    const ddx = (x - st.prevX), ddy = (y - st.prevY);
+    st.dx = ddx / 6; st.dy = ddy / 6;
+    const flick = Math.hypot(ddx, ddy);
+    if (flick > 22) { st.just = true; }
+    st.prevX = x; st.prevY = y;
+  });
+  function endTouch(pid) {
+    const who = touchToPlayer.get(pid);
+    if (!who) return;
+    const st = touchState[who];
+    st.active = false; st.just = false; st.dx = 0; st.dy = 0;
+    touchToPlayer.delete(pid);
+  }
+  canvas.addEventListener('pointerup',   (e) => endTouch(e.pointerId));
+  canvas.addEventListener('pointercancel', (e) => endTouch(e.pointerId));
+}
+
+/* ===========================================================
+   DŹWIĘK (z zapisem preferencji)
+   =========================================================== */
+const SFX = {
+  enabled: (localStorage.getItem('sfx') ?? '1') !== '0', ctx: null,
+  ensureCtx() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AC();
     }
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  play(f, d) {
+    if (!this.enabled) return;
+    this.ensureCtx();
+    const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.2, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d);
+    o.frequency.setValueAtTime(f, this.ctx.currentTime);
+    o.connect(g).connect(this.ctx.destination);
+    o.start(); o.stop(this.ctx.currentTime + d);
+  }
+};
+document.addEventListener('click', () => { if (SFX.enabled) SFX.ensureCtx(); }, { once:true });
+
+/* ===========================================================
+   CZĄSTECZKI
+   =========================================================== */
+function createParticles(x, y, color, count) {
+  for (let i=0; i<count; i++) particles.push({ x, y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1.0, color });
+}
+function updateParticles() {
+  for (let i = particles.length-1; i>=0; i--) {
+    const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.04;
+    if (p.life <= 0) particles.splice(i, 1);
   }
 }
 
-/* =========================================================================
-    3) RYSOWANIE ARENY I SIATKI
-   ========================================================================= */
-function drawNet(yStart, isTop) {
-    const xStart = canvas.clientWidth / 2 - GOAL_WIDTH / 2;
-    const height = 40;
-    const step = 15;
-    ctx.strokeStyle = "rgba(0,0,0,0.3)";
-    ctx.lineWidth = 1;
-    
-    // Pionowe linie siatki
-    for(let x = xStart; x <= xStart + GOAL_WIDTH; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, yStart);
-        ctx.lineTo(x, isTop ? yStart - height : yStart + height);
-        ctx.stroke();
+/* ===========================================================
+   FLAGI – SVG + cache
+   =========================================================== */
+const FLAG_CODES = ['PL','US','GB','FR','DE','ES','BR','JP','IT','NL','PT'];
+
+function flagSVG(code) {
+  switch(code){
+    case 'PL': return `<svg viewBox="0 0 4 3"><rect width="4" height="1.5" fill="#fff"/><rect y="1.5" width="4" height="1.5" fill="#dc143c"/></svg>`;
+    case 'FR': return `<svg viewBox="0 0 3 2"><rect width="1" height="2" fill="#0055A4"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#EF4135"/></svg>`;
+    case 'DE': return `<svg viewBox="0 0 5 3"><rect width="5" height="1" fill="#000"/><rect y="1" width="5" height="1" fill="#DD0000"/><rect y="2" width="5" height="1" fill="#FFCE00"/></svg>`;
+    case 'ES': return `<svg viewBox="0 0 4 3"><rect width="4" height="3" fill="#AA151B"/><rect y="0.5" width="4" height="2" fill="#F1BF00"/></svg>`;
+    case 'JP': return `<svg viewBox="0 0 3 2"><rect width="3" height="2" fill="#fff"/><circle cx="1.5" cy="1" r="0.5" fill="#BC002D"/></svg>`;
+    case 'IT': return `<svg viewBox="0 0 3 2"><rect width="1" height="2" fill="#009246"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#CE2B37"/></svg>`;
+    case 'NL': return `<svg viewBox="0 0 3 2"><rect width="3" height="2" fill="#AE1C28"/><rect y="0.6667" width="3" height="0.6667" fill="#fff"/><rect y="1.3333" width="3" height="0.6667" fill="#21468B"/></svg>`;
+    case 'PT': return `<svg viewBox="0 0 3 2"><rect width="1.2" height="2" fill="#006600"/><rect x="1.2" width="1.8" height="2" fill="#FF0000"/></svg>`;
+    case 'US': {
+      const stripeH = 10/13, starR = 0.08;
+      let stripes = ''; for (let i=0;i<13;i++) if (i%2===0) stripes += `<rect y="${i*stripeH}" width="19" height="${stripeH}" fill="#B22234"/>`;
+      let stars = ''; const rows=9, cols6=6, cols5=5, cw=7.6, ch=5.38;
+      for (let r=0;r<rows;r++){ const six = r%2===0, cols = six?cols6:cols5;
+        for (let c=0;c<cols;c++){ const x = (c+1)*(cw/(cols+1)), y=(r+1)*(ch/(rows+1)); stars += `<circle cx="${x}" cy="${y}" r="${starR}" fill="#fff"/>`; } }
+      return `<svg viewBox="0 0 19 10"><rect width="19" height="10" fill="#fff"/>${stripes}<rect width="7.6" height="5.38" fill="#3C3B6E"/><g>${stars}</g></svg>`;
     }
-    // Poziome linie siatki
-    for(let y = 0; y <= height; y += step) {
-        const currentY = isTop ? yStart - y : yStart + y;
-        ctx.beginPath();
-        ctx.moveTo(xStart, currentY);
-        ctx.lineTo(xStart + GOAL_WIDTH, currentY);
-        ctx.stroke();
-    }
+    case 'GB': return `<svg viewBox="0 0 60 30">
+      <clipPath id="c"><path d="M0,0V30H60V0Z"/></clipPath>
+      <path d="M0,0V30H60V0Z" fill="#012169"/>
+      <path d="M0,0 60,30 M60,0 0,30" stroke="#FFF" stroke-width="6" clip-path="url(#c)"/>
+      <path d="M0,0 60,30 M60,0 0,30" stroke="#C8102E" stroke-width="3" clip-path="url(#c)"/>
+      <path d="M0,15H60 M30,0V30" stroke="#FFF" stroke-width="10"/>
+      <path d="M0,15H60 M30,0V30" stroke="#C8102E" stroke-width="6"/>
+    </svg>`;
+    case 'BR': return `<svg viewBox="0 0 10 7">
+      <rect width="10" height="7" fill="#009B3A"/>
+      <polygon points="5,1 8,3.5 5,6 2,3.5" fill="#FFDF00"/>
+      <defs><clipPath id="disk"><circle cx="5" cy="3.5" r="1.25"/></clipPath></defs>
+      <circle cx="5" cy="3.5" r="1.25" fill="#002776"/>
+      <g clip-path="url(#disk)" transform="rotate(-27 5 3.5)">
+        <path d="M3.6 3.5 A1.5 1.5 0 0 1 6.4 3.5" stroke="#fff" stroke-width="0.25" fill="none"/>
+      </g>
+    </svg>`;
+    default: return `<svg viewBox="0 0 3 2"><rect width="3" height="2" fill="#999"/></svg>`;
+  }
 }
 
+const flagCache = new Map();
+function getFlagCanvas(code, size=256) {
+  const key = code + '@' + size;
+  if (flagCache.has(key)) return flagCache.get(key);
+  const off = document.createElement('canvas'); off.width=size; off.height=size;
+  const c = off.getContext('2d'); const W=size, H=size;
+  const rect=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
+  switch(code){
+    case 'PL': rect(0,0,W,H/2,'#fff'); rect(0,H/2,W,H/2,'#dc143c'); break;
+    case 'FR': rect(0,0,W/3,H,'#0055A4'); rect(W/3,0,W/3,H,'#fff'); rect(2*W/3,0,W/3,H,'#EF4135'); break;
+    case 'DE': rect(0,0,W,H/3,'#000'); rect(0,H/3,W,H/3,'#DD0000'); rect(0,2*H/3,W,H/3,'#FFCE00'); break;
+    case 'ES': rect(0,0,W,H,'#AA151B'); rect(0,H*0.1667,W,H*0.6666,'#F1BF00'); break;
+    case 'JP': rect(0,0,W,H,'#fff'); c.beginPath(); c.arc(W/2,H/2,Math.min(W,H)*0.25,0,Math.PI*2); c.fillStyle='#BC002D'; c.fill(); break;
+    case 'IT': rect(0,0,W/3,H,'#009246'); rect(W/3,0,W/3,H,'#fff'); rect(2*W/3,0,W/3,H,'#CE2B37'); break;
+    case 'NL': rect(0,0,W,H/3,'#AE1C28'); rect(0,H/3,W,H/3,'#fff'); rect(0,2*H/3,W,H/3,'#21468B'); break;
+    case 'PT': rect(0,0,W*0.4,H,'#006600'); rect(W*0.4,0,W*0.6,H,'#FF0000'); break;
+    case 'US': {
+      rect(0,0,W,H,'#fff'); const stripeH=H/13; c.fillStyle='#B22234';
+      for(let i=0;i<13;i+=2) c.fillRect(0,i*stripeH,W,stripeH);
+      const cw=W*0.4, ch=stripeH*7; rect(0,0,cw,ch,'#3C3B6E');
+      c.fillStyle='#fff'; const rows=9, cols6=6, cols5=5;
+      for(let r=0;r<rows;r++){ const six=r%2===0, cols = six?cols6:cols5;
+        for(let col=0; col<cols; col++){ const x = (col+1)*(cw/(cols+1)), y = (r+1)*(ch/(rows+1));
+          c.beginPath(); c.arc(x,y,Math.min(W,H)*0.008,0,Math.PI*2); c.fill(); } }
+      break;
+    }
+    case 'GB': rect(0,0,W,H,'#012169');
+      c.strokeStyle='#fff'; c.lineWidth=H*0.2; c.beginPath(); c.moveTo(0,0); c.lineTo(W,H); c.moveTo(W,0); c.lineTo(0,H); c.stroke();
+      c.strokeStyle='#C8102E'; c.lineWidth=H*0.12; c.beginPath(); c.moveTo(0,0); c.lineTo(W,H); c.moveTo(W,0); c.lineTo(0,H); c.stroke();
+      c.fillStyle='#fff'; c.fillRect(0,H*0.4,W,H*0.2); c.fillRect(W*0.4,0,W*0.2,H);
+      c.fillStyle='#C8102E'; c.fillRect(0,H*0.44,W,H*0.12); c.fillRect(W*0.44,0,W*0.12,H); break;
+    case 'BR': rect(0,0,W,H,'#009B3A');
+      c.fillStyle='#FFDF00'; c.beginPath(); c.moveTo(W/2,H*0.1); c.lineTo(W*0.85,H/2); c.lineTo(W/2,H*0.9); c.lineTo(W*0.15,H/2); c.closePath(); c.fill();
+      c.beginPath(); c.arc(W/2,H/2,Math.min(W,H)*0.18,0,Math.PI*2); c.fillStyle='#002776'; c.fill();
+      c.save(); c.beginPath(); c.arc(W/2,H/2,Math.min(W,H)*0.20, -0.3, 0.3); c.lineWidth=Math.min(W,H)*0.04; c.strokeStyle='#fff'; c.stroke(); c.restore(); break;
+    default: rect(0,0,W,H,'#999');
+  }
+  flagCache.set(key, off); return off;
+}
+function drawFlagOnMallet(p) {
+  ctx.save();
+  ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.clip();
+  const off = getFlagCanvas(p.flagCode, 256);
+  ctx.drawImage(off, p.x - p.r, p.y - p.r, p.r*2, p.r*2);
+  ctx.restore();
+  ctx.strokeStyle="rgba(255,255,255,0.8)"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.stroke();
+}
+
+/* ===========================================================
+   RYSOWANIE
+   =========================================================== */
+function getSize(){ const dpr=window.devicePixelRatio||1; return { W:canvas.width/dpr, H:canvas.height/dpr, dpr }; }
 function draw() {
-  ctx.fillStyle = "var(--rink)"; ctx.fillRect(0,0,canvas.clientWidth, canvas.clientHeight);
-  
-  // Linie pola
-  ctx.strokeStyle = "var(--line)"; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(0, canvas.clientHeight/2); ctx.lineTo(canvas.clientWidth, canvas.clientHeight/2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(canvas.clientWidth/2, canvas.clientHeight/2, 65, 0, Math.PI*2); ctx.stroke();
+  const { W, H } = getSize();
 
-  // WYNIK NA ŚRODKU (W kolorze linii)
-  ctx.fillStyle = "rgba(0,150,136,0.4)";
-  ctx.font = "bold 45px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText(p2.score, canvas.clientWidth/2, canvas.clientHeight/2 - 30);
-  ctx.fillText(p1.score, canvas.clientWidth/2, canvas.clientHeight/2 + 30);
+  // Tło
+  ctx.fillStyle = tableBgColor; ctx.fillRect(0,0,W,H);
+  canvas.style.background = tableBgColor;
 
-  // Bramki (Siatki)
-  drawNet(0, true);
-  drawNet(canvas.clientHeight, false);
+  // Linie
+  ctx.strokeStyle = "rgba(0,0,0,0.06)"; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W/2, H/2, 60, 0, Math.PI*2); ctx.stroke();
 
-  // Gracze
-  [p1, p2].forEach(p => {
-    ctx.fillStyle = p.color;
-    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
-    ctx.font = "24px serif"; ctx.fillText(p.flag, p.x, p.y + 2);
+  // Zegar
+  ctx.fillStyle = "rgba(0,0,0,0.1)"; ctx.font = "bold 24px monospace"; ctx.textAlign = "center"; ctx.textBaseline="middle";
+  if (unlimitedTime) ctx.fillText("∞", W/2, H/2 + 8);
+  else { const mins=Math.floor(matchTime/60), secs=matchTime%60; ctx.fillText(`${mins}:${secs<10?'0':''}${secs}`, W/2, H/2 + 8); }
+
+  // Info o rundach / dogrywka
+  ctx.fillStyle = "rgba(0,0,0,0.25)"; ctx.font = "bold 16px sans-serif"; ctx.textBaseline="top";
+  const otTxt = inOvertime ? ` • ${t('ot')}` : '';
+  ctx.fillText(`Rundy: ${roundWinsP1} - ${roundWinsP2}${otTxt}`, W/2, 10);
+
+  // Wyniki (duże)
+  const topScore = listPlayers(true).reduce((s,p)=>s+p.score,0);
+  const botScore = listPlayers(false).reduce((s,p)=>s+p.score,0);
+  ctx.fillStyle = "rgba(0,0,0,0.04)"; ctx.font = "bold 150px sans-serif"; ctx.textBaseline="alphabetic";
+  ctx.fillText(topScore, W/2, H/2 - 80);
+  ctx.fillText(botScore, W/2, H/2 + 180);
+
+  // Bandy
+  ctx.lineWidth = arena.frW;
+  const topColor = listPlayers(true)[0]?.color || "#2979ff";
+  const botColor = listPlayers(false)[0]?.color || "#ff1744";
+  ctx.strokeStyle = topColor; ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, arena.frW/2); ctx.lineTo(arena.frW/2, arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, arena.frW/2); ctx.lineTo(W/2+arena.gw/2, arena.frW/2); ctx.stroke();
+  ctx.strokeStyle = botColor; ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, H-arena.frW/2); ctx.lineTo(W/2+arena.gw/2, H-arena.frW/2); ctx.stroke();
+
+  // Particles
+  particles.forEach(p => { ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,4,4); }); ctx.globalAlpha=1;
+
+  // Paletki
+  listPlayers().forEach(p => {
+    p.trail.forEach((t,i) => { ctx.globalAlpha=(i+1)/p.trail.length * .15; ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(t.x,t.y,p.r,0,Math.PI*2); ctx.fill(); });
+    ctx.globalAlpha=1; drawFlagOnMallet(p);
   });
 
-  // Krążek
-  ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI*2); ctx.fill();
+  // Krążki
+  ctx.fillStyle="#111"; pucks.forEach(pk => { ctx.beginPath(); ctx.arc(pk.x, pk.y, pk.r, 0, Math.PI*2); ctx.fill(); });
+
+  // Napis GOL
+  if (goalText.timer > 0) { ctx.fillStyle = goalText.color; ctx.font="bold 100px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.globalAlpha=Math.min(1, goalText.timer/20); ctx.fillText(goalText.text, W/2, goalText.y); goalText.timer--; ctx.globalAlpha=1; }
 }
 
-function step() {
-  if (isPaused) return;
-  puck.x += puck.vx; puck.y += puck.vy;
-  puck.vx *= FRICTION; puck.vy *= FRICTION;
+/* ===========================================================
+   LOGIKA GRY + FIZYKA (z dt)
+   =========================================================== */
+function handleLogic(dt) {
+  const { W, H } = getSize();
+  const s = dt * 60;
 
-  // Ściany boczne
-  if (puck.x < puck.r || puck.x > canvas.clientWidth - puck.r) {
-    puck.vx *= -WALL_BOUNCE;
-    puck.x = puck.x < puck.r ? puck.r : canvas.clientWidth - puck.r;
+  // Sterowanie i ruch paletek (1..4)
+  listPlayers().forEach((p, idx) => {
+    const id = `p${idx+1}`;
+    const input = getInputForPlayer(p, id, dt);
+
+    // Warunki „strzału”: pojedynczy klik + jednoczesny ruch
+    const movingNow = Math.abs(input.dx) + Math.abs(input.dy) > 0.01;
+    const justStrike = !!input.justStrike && movingNow;
+
+    updatePlayer(p, input.dx, input.dy, justStrike, p.sideTop ? arena.frW : H/2, p.sideTop ? H/2 : (H - arena.frW), W, s);
+
+    // Multiball – tylko gdy kliknięto A (edge) i w tej klatce faktycznie strzelamy
+    if (input.justAButton && p.isHitting) { showBadge(p, 'A'); trySpawnMultiball(p); }
+  });
+
+  // Ruch krążków + hamowanie
+  for (let i=0; i<pucks.length; i++) {
+    const pk = pucks[i];
+    pk.x += pk.vx * s; pk.y += pk.vy * s;
+    naturalBrake(pk, dt);
+
+    const tol=2;
+    if (pk.x - (arena.frW + pk.r) < tol || (W - arena.frW - pk.r) - pk.x < tol) pk.vy *= WALL_GRAZE_DAMP;
+    if (pk.y - (arena.frW + pk.r) < tol || (H - arena.frW - pk.r) - pk.y < tol) pk.vx *= WALL_GRAZE_DAMP;
+
+    if (pk.x < arena.frW + pk.r || pk.x > W - arena.frW - pk.r) {
+      pk.vx *= -WALL_E; pk.x = pk.x < W/2 ? (arena.frW + pk.r) : (W - arena.frW - pk.r);
+      SFX.play(180, 0.05); createParticles(pk.x, pk.y, "#999", 5);
+    }
+
+    const isGoalX = Math.abs(pk.x - W/2) < arena.gw/2;
+    if (!isGoalX) {
+      if (pk.y < arena.frW + pk.r || pk.y > H - arena.frW - pk.r) {
+        pk.vy *= -WALL_E; pk.y = pk.y < H/2 ? (arena.frW + pk.r) : (H - arena.frW - pk.r);
+        SFX.play(180, 0.05); createParticles(pk.x, pk.y, "#999", 5);
+      }
+    } else {
+      if (pk.y < 0) onGoal('bottom', pk);
+      if (pk.y > H) onGoal('top', pk);
+    }
   }
 
-  // Bramki (poza canvas - detekcja gola)
-  const isGoalX = Math.abs(puck.x - canvas.clientWidth/2) < GOAL_WIDTH/2;
-  
-  if (puck.y < 0) { // Wpadł do górnej bramki
-    p1.score++; onGoal();
-  } else if (puck.y > canvas.clientHeight) { // Wpadł do dolnej bramki
-    p2.score++; onGoal();
-  }
+  // Kolizje paletka‑krążek
+  listPlayers().forEach(p => pucks.forEach(pk => resolveCollision(p, pk)));
 
-  // Odbicie od ścian góra/dół (z wyłączeniem wejścia do bramki)
-  if (!isGoalX) {
-    if (puck.y < puck.r) { puck.y = puck.r; puck.vy *= -WALL_BOUNCE; }
-    if (puck.y > canvas.clientHeight - puck.r) { puck.y = canvas.clientHeight - puck.r; puck.vy *= -WALL_BOUNCE; }
-  }
+  // Limiter prędkości
+  pucks.forEach(pk => limitPuckSpeed(pk, PUCK_SPEED_LIMIT));
 
-  resolvePlayerCollision(p1); resolvePlayerCollision(p2);
+  // Efekty
+  updateParticles();
+
+  // Auto-przypisywanie padów
+  autoAssignGamepadsOnPress();
+
+  // Wyczyść jednorazowe naciśnięcia
+  justPressed.clear();
 }
 
-/* =========================================================================
-    4) STEROWANIE I UI
-   ========================================================================= */
-function updatePos(player, newX, newY) {
-    if (isPaused) return;
-    player.vx = newX - player.x; player.vy = newY - player.y;
-    player.x = newX; player.y = newY;
-    player.x = Math.max(player.r, Math.min(canvas.clientWidth - player.r, player.x));
-    if (player === p1) player.y = Math.max(canvas.clientHeight/2 + player.r, Math.min(canvas.clientHeight - player.r, player.y));
-    else player.y = Math.max(player.r, Math.min(canvas.clientHeight/2 - player.r, player.y));
+/* ====== Gol / reset (z sudden death w dogrywce) ====== */
+function onGoal(scoringSide, pk) {
+  const { H } = getSize();
+  const topTeam = listPlayers(true);
+  const botTeam = listPlayers(false);
+
+  if (scoringSide === 'bottom') { botTeam.forEach(p=>p.score++); showGoal( topTeam[0]?.color || "#2979ff", H*0.65 ); }
+  else { topTeam.forEach(p=>p.score++); showGoal( botTeam[0]?.color || "#ff1744", H*0.35 ); }
+
+  if (inOvertime) {
+    pucks.length = 0;
+    setTimeout(() => endRound(), 50);
+    return;
+  }
+
+  const idx = pucks.indexOf(pk);
+  if (idx >= 0) pucks.splice(idx,1);
+
+  if (pucks.length === 0) setTimeout(()=>resetPositions(), 400);
 }
 
-canvas.addEventListener('mousemove', e => {
-    const rect = canvas.getBoundingClientRect();
-    updatePos(p1, e.clientX - rect.left, e.clientY - rect.top);
+function showGoal(color, y) {
+  goalText = { timer: 40, color, y, text: t('goal') };
+  createParticles(canvas.width/2/(window.devicePixelRatio||1), y, color, 40);
+}
+
+/* ====== Naturalne hamowanie ====== */
+function naturalBrake(obj, dt) {
+  let vx = obj.vx * 60, vy = obj.vy * 60;
+  const speed = Math.hypot(vx, vy);
+  if (speed < 1e-6) { obj.vx = 0; obj.vy = 0; return; }
+
+  const lin = Math.exp(-K1_AIR * dt); vx *= lin; vy *= lin;
+  let s2 = Math.hypot(vx, vy); const dec2 = K2_QUAD * s2 * s2 * dt; s2 = Math.max(0, s2 - dec2);
+  if (s2 === 0) { obj.vx=0; obj.vy=0; return; } const scale2 = s2 / Math.hypot(vx, vy); vx *= scale2; vy *= scale2;
+  let s3 = Math.hypot(vx, vy); s3 = Math.max(0, s3 - MUg * dt);
+  if (s3 === 0) { obj.vx=0; obj.vy=0; return; } const scale3 = s3 / Math.hypot(vx, vy); vx *= scale3; vy *= scale3;
+
+  obj.vx = vx / 60; obj.vy = vy / 60;
+}
+
+/* ====== Paletki ====== */
+function updatePlayer(p, dx, dy, justHit, minY, maxY, W, s) {
+  const base = 9, boost = 25;
+
+  p.isHitting = !!justHit;                     // tylko jedna klatka
+  p.isControlled = (Math.abs(dx) > 0 || Math.abs(dy) > 0);
+
+  if (p.isHitting) { p.trail.push({ x: p.x, y: p.y }); if (p.trail.length > 8) p.trail.shift(); }
+  else { if (p.trail.length > 0) p.trail.shift(); }
+
+  const speed = (p.isHitting ? boost : base);
+  p.vx = dx * speed; p.vy = dy * speed;
+  p.x += p.vx * s; p.y += p.vy * s;
+
+  p.x = Math.max(arena.frW + p.r, Math.min(W - arena.frW - p.r, p.x));
+  p.y = Math.max(minY + p.r, Math.min(maxY - p.r, p.y));
+}
+
+/* ====== Kolizja paletka‑krążek ====== */
+function resolveCollision(p, pk) {
+  let dx = pk.x - p.x, dy = pk.y - p.y;
+  let distance = Math.hypot(dx, dy);
+  const minDist = p.r + pk.r;
+
+  if (distance < minDist) {
+    if (distance === 0) { dx = 1e-6; dy = 0; distance = 1e-6; }
+    const nx = dx / distance, ny = dy / distance;
+    const tx = -ny, ty = nx;
+
+    let vrel_n = (pk.vx - p.vx) * nx + (pk.vy - p.vy) * ny;
+
+    const { H } = getSize();
+    const nearLine = p.sideTop ? Math.abs(p.y - (H/2 - p.r)) < 2.0 : Math.abs(p.y - (H/2 + p.r)) < 2.0;
+    const allowPunch = p.isHitting && nearLine;
+
+    if (vrel_n > 0 && !allowPunch) return;
+    const isPassive = (!p.isControlled && Math.hypot(p.vx, p.vy) < 0.1);
+    const e = p.isHitting ? E_ACTIVE_HIT : (isPassive ? E_PASSIVE : E_STANDARD);
+
+    if (allowPunch && vrel_n > 0) vrel_n = -Math.min(0.4, vrel_n);
+
+    const jn = -(1 + e) * vrel_n;
+    pk.vx += jn * nx; pk.vy += jn * ny;
+
+    const vrel_t = (pk.vx - p.vx) * tx + (pk.vy - p.vy) * ty;
+    const jt = -vrel_t * TANGENTIAL_DAMPING; pk.vx += jt * tx; pk.vy += jt * ty;
+
+    const penetration = minDist - distance;
+    pk.x += nx * penetration; pk.y += ny * penetration;
+
+    SFX.play(400 + Math.abs(jn)*10, 0.1);
+    if (p.isHitting) createParticles(pk.x, pk.y, p.color, 15);
+  }
+}
+
+/* ====== Multiball (A podczas strzału) ====== */
+function trySpawnMultiball(p) {
+  const now = performance.now();
+  if (now - p.lastSpecialAt < SPECIAL_COOLDOWN_MS) return;
+  if (multiballLimitPerPlayer !== 0 && p.specialUsesUsed >= multiballLimitPerPlayer) return;
+
+  p.lastSpecialAt = now;
+  p.specialUsesUsed++;
+  showBadge(p, 'MB');
+
+  const { W } = getSize();
+  const baseR = basePuck.r;
+
+  const spawn = (angleDeg, speed)=> {
+    const rad = angleDeg * Math.PI/180;
+    const pk = makePuck(p.x + Math.cos(rad)*(p.r + baseR + 2), p.y + Math.sin(rad)*(p.r + baseR + 2), baseR);
+    pk.vx = Math.cos(rad) * speed; pk.vy = Math.sin(rad) * speed;
+    pucks.push(pk);
+    setTimeout(()=> {
+      const i = pucks.indexOf(pk);
+      if (i>=0) pucks.splice(i,1);
+    }, MULTIBALL_LIFETIME_MS);
+  };
+  const dir = p.sideTop ? 1 : -1;
+  spawn(dir*80, 18/60);
+  spawn(dir*100,18/60);
+}
+
+/* ====== Toast i badge ====== */
+function showBadge(p, text) {
+  const el = document.createElement('div');
+  el.className = 'badge'; el.textContent = text;
+  positionElementOverPlayer(el, p);
+  document.body.appendChild(el);
+  setTimeout(()=>{ el.remove(); }, 450);
+}
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1500);
+}
+function positionElementOverPlayer(el, p) {
+  const { W, H } = getSize(); const rect = canvas.getBoundingClientRect();
+  el.style.left = (rect.left + (p.x / W) * rect.width) + 'px';
+  el.style.top  = (rect.top  + (p.y / H) * rect.height) + 'px';
+}
+
+/* ====== Zegar / mecz ====== */
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (!isPaused && !isGameOver && !unlimitedTime && matchTime > 0) {
+      matchTime--;
+      if (matchTime === 0) {
+        if (sumScores(false) !== sumScores(true)) endRound();
+        else startOvertime();
+      }
+    }
+  }, 1000);
+}
+function startOvertime(){ inOvertime = true; }
+function endRound(){
+  if (sumScores(false) > sumScores(true)) roundWinsP1++; else if (sumScores(true) > sumScores(false)) roundWinsP2++;
+  inOvertime = false;
+  const need = Math.ceil(bestOf/2);
+  if (roundWinsP1 === need || roundWinsP2 === need) endMatch();
+  else startNewRound();
+}
+function startNewRound() {
+  listPlayers().forEach(p => { p.score = 0; p.specialUsesUsed = 0; p.lastSpecialAt = 0; });
+  matchTime = unlimitedTime ? 0 : roundTimeSec;
+  resetPositions();
+  let c = 3; isPaused = true; countdownEl.style.display = 'flex'; countdownEl.innerText = c;
+  const tmr = setInterval(() => { c--; if (c>0) countdownEl.innerText = c; else { clearInterval(tmr); countdownEl.style.display='none'; isPaused=false; } }, 500);
+}
+function endMatch() {
+  isGameOver = true; isPaused = true; overlay.style.display = 'flex'; applyTexts();
+  const btn = document.getElementById('btnResume');
+  btn.textContent = t('newMatch');
+  btn.onclick = () => {
+    roundWinsP1 = 0; roundWinsP2 = 0; listPlayers().forEach(p => { p.score=0; p.specialUsesUsed=0; p.lastSpecialAt=0; });
+    isGameOver = false; inOvertime=false; matchTime = unlimitedTime ? 0 : roundTimeSec;
+    overlay.style.display = 'none'; applyTexts(); resetPositions(); isPaused=false; startTimer();
+    btn.onclick = onResumeClick;
+  };
+}
+
+/* ====== Pozycje startowe ====== */
+function resetPositions() {
+  const { W, H } = getSize();
+  const topTeam = listPlayers(true), botTeam = listPlayers(false);
+  positionTeam(botTeam, W/2, H - 100, W);
+  positionTeam(topTeam, W/2, 100, W);
+  pucks = []; const r = basePuck.r; pucks.push({ x: W/2, y: H/2, r, vx: 0, vy: 0 });
+}
+function positionTeam(team, cx, cy, W) {
+  if (team.length === 1) { team[0].x = cx; team[0].y = cy; return; }
+  if (team.length === 2) { team[0].x = W*0.35; team[0].y = cy; team[1].x = W*0.65; team[1].y = cy; }
+}
+
+/* ====== Limity i sumy ====== */
+function limitPuckSpeed(pk, max=PUCK_SPEED_LIMIT) { const sp=Math.hypot(pk.vx, pk.vy); if (sp>max){ const s=max/sp; pk.vx*=s; pk.vy*=s; } }
+function listPlayers(onlyTopOrBot=null) {
+  const L=[]; L.push(p1); L.push(p2); if (p3) L.push(p3); if (p4) L.push(p4);
+  if (onlyTopOrBot===null) return L;
+  return L.filter(pp => pp.sideTop === !!onlyTopOrBot);
+}
+function sumScores(top) { return listPlayers(top).reduce((s,p)=>s+p.score,0); }
+
+/* ===========================================================
+   DOPASOWANIE / FULLSCREEN
+   =========================================================== */
+function fit(){
+  const dpr = window.devicePixelRatio || 1;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+}
+
+// Fullscreen helpers
+function isFullscreen() { return !!document.fullscreenElement; }
+async function enterFullscreen() {
+  try {
+    if (!isFullscreen()) await document.documentElement.requestFullscreen();
+  } catch (e) { toast('Nie można wejść w pełny ekran'); console.warn(e); }
+}
+async function exitFullscreen() {
+  try {
+    if (isFullscreen()) await document.exitFullscreen();
+  } catch (e) { toast('Nie można wyjść z pełnego ekranu'); console.warn(e); }
+}
+async function toggleFullscreen() {
+  if (!isFullscreen()) await enterFullscreen();
+  else await exitFullscreen();
+}
+
+// Re‑fit na zmiany
+window.onresize = fit;
+document.addEventListener('fullscreenchange', () => {
+  fit();
+  // Zsynchronizuj checkbox ustawień ze stanem fullscreen (ale pamięć preferencji to osobna flaga)
+  const chk = document.getElementById('chkFullscreen');
+  if (chk) chk.checked = fullscreenPref || isFullscreen();
 });
 
-canvas.addEventListener('touchmove', e => {
-    e.preventDefault(); const rect = canvas.getBoundingClientRect();
-    for (let i = 0; i < e.touches.length; i++) {
-        const t = e.touches[i], tx = t.clientX - rect.left, ty = t.clientY - rect.top;
-        if (ty > canvas.clientHeight/2) updatePos(p1, tx, ty); else updatePos(p2, tx, ty);
-    }
-}, {passive: false});
+/* ===========================================================
+   USTAWIENIA UI, FLAGI, JĘZYK, CZAS, PADY/AI, FULLSCREEN
+   =========================================================== */
+function setupBgColors() {
+  const wrap = document.getElementById('bgColors'); wrap.innerHTML = '';
+  BG_PRESETS.forEach(({c,n}) => {
+    const b = document.createElement('button');
+    b.className = 'bg-swatch';
+    b.innerHTML = `<div class="swatch" style="background:${c}"></div><div class="swatch-name">${n}</div>`;
+    if (tableBgColor.toLowerCase() === c.toLowerCase()) b.classList.add('active');
+    b.onclick = () => {
+      tableBgColor = c; localStorage.setItem('tableBgColor', c);
+      Array.from(wrap.children).forEach(cn => cn.classList.remove('active')); b.classList.add('active');
+      canvas.style.background = tableBgColor;
+    };
+    wrap.appendChild(b);
+  });
+  const cp = document.getElementById('colorPicker');
+  cp.value = toHex(tableBgColor);
+  cp.oninput = (e)=>{
+    tableBgColor = e.target.value;
+    localStorage.setItem('tableBgColor', tableBgColor);
+    canvas.style.background = tableBgColor;
+    Array.from(wrap.children).forEach(cn => cn.classList.remove('active'));
+  };
+}
+function toHex(col){ const ctx2 = document.createElement('canvas').getContext('2d'); ctx2.fillStyle = col; return ctx2.fillStyle; }
 
-function onGoal() {
-  isPaused = true;
-  saveState();
-  setTimeout(() => startCountdown(), 800);
+function setPuck(r, idx){ basePuck.r = r; if (pucks[0]) pucks[0].r = r; document.querySelectorAll('.btn-puck').forEach((b,i)=>b.classList.toggle('active', i===idx)); }
+function setMallet(which, r, idx){
+  if (which==='p1'){ p1.r = r; document.querySelectorAll('.btn-mallet-p1').forEach((b,i)=>b.classList.toggle('active', i===idx)); }
+  else { p2.r = r; document.querySelectorAll('.btn-mallet-p2').forEach((b,i)=>b.classList.toggle('active', i===idx)); }
 }
 
-function startCountdown() {
-    isPaused = true;
-    puck.x = canvas.clientWidth/2; puck.y = canvas.clientHeight/2;
-    puck.vx = 0; puck.vy = 0;
-    p1.x = canvas.clientWidth/2; p1.y = canvas.clientHeight - 50;
-    p2.x = canvas.clientWidth/2; p2.y = 50;
-    
-    let c = 3; countdown.textContent = c; countdown.style.display = 'flex';
-    const iv = setInterval(() => {
-        c--;
-        if (c > 0) { countdown.textContent = c; SFX.impact(0.3); }
-        else if (c === 0) { countdown.textContent = "GO!"; }
-        else { clearInterval(iv); countdown.style.display = 'none'; isPaused = false; }
-    }, 800);
-}
-
-// FULLSCREEN
-document.getElementById('btnFullScreen').onclick = () => {
-    if (!document.fullscreenElement) canvas.parentElement.requestFullscreen().catch(err => alert(err.message));
-    else document.exitFullscreen();
-};
-
-document.getElementById('btnMenu').onclick = () => { isPaused = true; overlay.style.display = 'block'; };
-document.getElementById('btnResume').onclick = () => { overlay.style.display = 'none'; startCountdown(); };
-document.getElementById('btnToggleSound').onclick = () => {
-    SFX.setEnabled(!SFX.isEnabled()); const on = SFX.isEnabled();
-    document.getElementById('btnSound').textContent = on ? '🔊' : '🔇';
-    document.getElementById('btnToggleSound').textContent = `DŹWIĘK: ${on ? 'ON' : 'OFF'}`;
-    document.getElementById('btnToggleSound').className = on ? '' : 'warn';
-    SFX.resume();
-};
-
-function buildFlags() {
-    [p1, p2].forEach(p => {
-        const cont = document.getElementById(p === p1 ? 'flagsP1' : 'flagsP2');
-        FLAGS.forEach(f => {
-            const b = document.createElement('button'); b.className = `flag-btn ${p.flag === f ? 'active' : ''}`;
-            b.textContent = f; b.onclick = () => {
-                p.flag = f; Array.from(cont.children).forEach(btn => btn.classList.remove('active'));
-                b.classList.add('active'); saveState();
-            };
-            cont.appendChild(b);
-        });
+function setupFlags() {
+  [p2, p1].forEach((player, idx) => {
+    const div = document.getElementById('flagsP' + (idx+1)); div.innerHTML = '';
+    FLAG_CODES.forEach(code => {
+      const b = document.createElement('button'); b.className = 'flagbtn'; b.innerHTML = flagSVG(code); b.title = code;
+      b.onclick = () => { player.flagCode = code; Array.from(div.children).forEach(c => c.classList.remove('active')); b.classList.add('active'); };
+      if (player.flagCode === code) b.classList.add('active'); div.appendChild(b);
     });
+  });
+}
+function setupLang() {
+  document.querySelectorAll('.btn-lang').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+    btn.onclick = () => { lang = btn.dataset.lang; localStorage.setItem('lang', lang); document.querySelectorAll('.btn-lang').forEach(b => b.classList.remove('active')); btn.classList.add('active'); goalText.text = t('goal'); applyTexts(); };
+  });
+}
+function setupRoundsUI() {
+  const wrap = document.getElementById('roundPresets');
+  const customWrap = document.getElementById('customTimeWrap');
+  const inpMinutes = document.getElementById('inpMinutes');
+  const chkUnlimited = document.getElementById('chkUnlimited');
+
+  Array.from(wrap.children).forEach(b => b.classList.toggle('active', b.dataset.sec === '180'));
+  inpMinutes.value = 3; customWrap.style.display = 'none'; chkUnlimited.checked = false;
+
+  wrap.querySelectorAll('.btn-round').forEach(btn => {
+    btn.onclick = () => {
+      Array.from(wrap.children).forEach(b => b.classList.remove('active')); btn.classList.add('active');
+      const val = btn.dataset.sec;
+      if (val === 'custom') { customWrap.style.display = 'flex'; unlimitedTime = false; chkUnlimited.checked = false; }
+      else { customWrap.style.display = 'none'; unlimitedTime = false; chkUnlimited.checked = false; roundTimeSec = parseInt(val,10); }
+      matchTime = unlimitedTime ? 0 : roundTimeSec;
+    };
+  });
+  inpMinutes.addEventListener('change', () => { const m=Math.max(0, Math.min(60, parseInt(inpMinutes.value||'0',10))); roundTimeSec = m*60; matchTime = unlimitedTime ? 0 : roundTimeSec; });
+  chkUnlimited.addEventListener('change', () => {
+    unlimitedTime = chkUnlimited.checked;
+    if (unlimitedTime) { Array.from(wrap.children).forEach(b => b.classList.remove('active')); customWrap.style.display='none'; matchTime=0; }
+    else {
+      const activeBtn = Array.from(wrap.children).find(b => b.classList.contains('active'));
+      if (activeBtn && activeBtn.dataset.sec !== 'custom') { roundTimeSec = parseInt(activeBtn.dataset.sec,10); matchTime = roundTimeSec; }
+      else { roundTimeSec=180; matchTime=180; }
+    }
+  });
+
+  document.querySelectorAll('.btn-format').forEach(btn => {
+    btn.onclick = () => { document.querySelectorAll('.btn-format').forEach(b => b.classList.remove('active')); btn.classList.add('active'); bestOf = parseInt(btn.dataset.bo,10); };
+  });
 }
 
-function saveState(){ localStorage.setItem('ahp_v5', JSON.stringify({p1s:p1.score, p2s:p2.score, p1f:p1.flag, p2f:p2.flag})); }
-function loadState(){
-    const s = JSON.parse(localStorage.getItem('ahp_v5') || '{}');
-    if(s.p1s !== undefined) { p1.score=s.p1s; p2.score=s.p2s; p1.flag=s.p1f; p2.flag=s.p2f; }
+/* Sterowanie (P1..P4) */
+function refreshPadLists() {
+  const ids = ['P1','P2','P3','P4'];
+  const sels = ids.map(id => document.getElementById('selPad'+id));
+  sels.forEach(sel => { if (sel) sel.innerHTML=''; });
+  const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (let i=0;i<gps.length;i++) {
+    const gp = gps[i]; if (!gp) continue;
+    sels.forEach(sel => { if (sel){ const opt=document.createElement('option'); opt.value=gp.index; opt.textContent=`#${gp.index} ${gp.id}`; sel.appendChild(opt); } });
+  }
+  if (p1.padIndex >= 0) document.getElementById('selPadP1').value = p1.padIndex;
+  if (p2.padIndex >= 0) document.getElementById('selPadP2').value = p2.padIndex;
+  if (p3?.padIndex >= 0) document.getElementById('selPadP3').value = p3.padIndex;
+  if (p4?.padIndex >= 0) document.getElementById('selPadP4').value = p4.padIndex;
+}
+function setupInputSelectors() {
+  const map = [
+    {p:p1, inSel:'selInputP1', padSel:'selPadP1', aiSel:'selAiP1'},
+    {p:p2, inSel:'selInputP2', padSel:'selPadP2', aiSel:'selAiP2'},
+    {p:()=>p3, inSel:'selInputP3', padSel:'selPadP3', aiSel:'selAiP3', col:'colP3'},
+    {p:()=>p4, inSel:'selInputP4', padSel:'selPadP4', aiSel:'selAiP4', col:'colP4'},
+  ];
+  const applyVis = (selInId, padSelId, aiSelId) => {
+    const selIn = document.getElementById(selInId);
+    const padSel = document.getElementById(padSelId);
+    const aiSel  = document.getElementById(aiSelId);
+    if (!selIn) return;
+    padSel.style.display = (selIn.value === 'gamepad') ? 'block' : 'none';
+    aiSel.style.display  = (selIn.value === 'ai') ? 'block' : 'none';
+  };
+  map.forEach(row => {
+    const getP = typeof row.p === 'function' ? row.p : ()=>row.p;
+    const pRef = getP();
+    const selIn = document.getElementById(row.inSel);
+    const padSel= document.getElementById(row.padSel);
+    const aiSel = document.getElementById(row.aiSel);
+    if (!selIn) return;
+
+    selIn.addEventListener('change', () => { const pObj=getP(); if (pObj) pObj.input = selIn.value; applyVis(row.inSel,row.padSel,row.aiSel); });
+    if (padSel) padSel.addEventListener('change', () => { const pObj=getP(); if (pObj) pObj.padIndex = parseInt(padSel.value,10); });
+    if (aiSel)  aiSel.addEventListener('change', () => { const pObj=getP(); if (pObj) pObj.ai = aiSel.value; });
+
+    if (pRef) { pRef.input = selIn.value; }
+    applyVis(row.inSel,row.padSel,row.aiSel);
+  });
+
+  refreshPadLists();
+  setInterval(refreshPadLists, 2000);
 }
 
-function fit() {
-    const cssW = Math.min(window.innerWidth, 500); const cssH = window.innerHeight;
-    canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = cssW * dpr; canvas.height = cssH * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+/* Liczba graczy */
+let playersCount = 1;
+function setupPlayersUI() {
+  const btns = document.querySelectorAll('.btn-players');
+  btns.forEach(b => b.onclick = () => {
+    btns.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    playersCount = parseInt(b.dataset.n,10);
+    applyPlayersCount();
+  });
+  document.getElementById('selMbLimit').addEventListener('change', (e)=>{
+    multiballLimitPerPlayer = parseInt(e.target.value,10);
+    listPlayers().forEach(p => { p.specialUsesUsed = 0; p.lastSpecialAt = 0; });
+  });
+}
+function applyPlayersCount() {
+  if (playersCount >= 3 && !p3) p3 = makePlayer(p1.color, p1.flagCode, false, 'P3');
+  if (playersCount < 3) p3 = null;
+  if (playersCount >= 4 && !p4) p4 = makePlayer(p2.color, p2.flagCode, true,  'P4');
+  if (playersCount < 4) p4 = null;
+
+  document.getElementById('colP3').style.display = playersCount >= 3 ? 'block' : 'none';
+  document.getElementById('colP4').style.display = playersCount >= 4 ? 'block' : 'none';
+
+  p1.sideTop = false; p2.sideTop = true;
+  if (p3) p3.sideTop = false;
+  if (p4) p4.sideTop = true;
+
+  setupInputSelectors();
+  resetPositions();
 }
 
-function loop() { step(); draw(); requestAnimationFrame(loop); }
-window.addEventListener('resize', fit);
-fit(); loadState(); buildFlags(); loop();
-overlay.style.display = 'block';
+/* ====== Preferencja pełnego ekranu (ustawienie w menu) ====== */
+let fullscreenPref = (localStorage.getItem('fs') ?? '0') === '1';
+function setupFullscreenSetting(){
+  const chk = document.getElementById('chkFullscreen');
+  chk.checked = fullscreenPref || isFullscreen();
+  chk.addEventListener('change', async () => {
+    fullscreenPref = chk.checked;
+    localStorage.setItem('fs', fullscreenPref ? '1' : '0');
+    // Zmiana stanu natychmiast (klik = gest użytkownika)
+    if (fullscreenPref) await enterFullscreen();
+    else await exitFullscreen();
+  });
+}
+
+/* ====== Struktura wejść 1..4: {dx,dy, justStrike, justAButton} ====== */
+function getInputForPlayer(p, id, dt) {
+  if (touchState[id]?.active) return readTouchState(id);
+
+  if (p.input === 'gamepad' && p.padIndex >= 0) {
+    const gp = readGamepad(p.padIndex);
+    const moving = Math.abs(gp.dx) + Math.abs(gp.dy) > 0.01;
+    const justStrike = gp.justA && moving;
+    return { dx: gp.dx, dy: gp.dy, justStrike, justAButton: gp.justA };
+  }
+  if (p.input === 'ai') {
+    const ai = aiInputFor(p, id, dt);
+    return { dx: ai.dx, dy: ai.dy, justStrike: ai.justStrike, justAButton: false };
+  }
+
+  let dx=0, dy=0, justStrike=false;
+  switch(id){
+    case 'p1': {
+      dx = (keys['ArrowLeft']?-1:0) + (keys['ArrowRight']?1:0);
+      dy = (keys['ArrowUp']?-1:0) + (keys['ArrowDown']?1:0);
+      const moving = Math.abs(dx)+Math.abs(dy) > 0.01;
+      const just = (justPressed.has('Enter') || justPressed.has('Numpad0') || justPressed.has('NumpadEnter'));
+      justStrike = just && moving;
+      break;
+    }
+    case 'p2': {
+      dx = (keys['KeyA']?-1:0) + (keys['KeyD']?1:0);
+      dy = (keys['KeyW']?-1:0) + (keys['KeyS']?1:0);
+      const moving = Math.abs(dx)+Math.abs(dy) > 0.01;
+      const just = (justPressed.has('Space') || justPressed.has('ControlLeft'));
+      justStrike = just && moving;
+      break;
+    }
+    case 'p3': {
+      dx = (keys['KeyJ']?-1:0) + (keys['KeyL']?1:0);
+      dy = (keys['KeyI']?-1:0) + (keys['KeyK']?1:0);
+      const moving = Math.abs(dx)+Math.abs(dy) > 0.01;
+      const just = (justPressed.has('ShiftRight'));
+      justStrike = just && moving;
+      break;
+    }
+    case 'p4': {
+      dx = (keys['KeyF']?-1:0) + (keys['KeyH']?1:0);
+      dy = (keys['KeyT']?-1:0) + (keys['KeyG']?1:0);
+      const moving = Math.abs(dx)+Math.abs(dy) > 0.01;
+      const just = (justPressed.has('ShiftLeft')); // CapsLock usunięty
+      justStrike = just && moving;
+      break;
+    }
+  }
+  return { dx, dy, justStrike, justAButton: false };
+}
+
+/* Auto-przypisywanie padów */
+let autoAssignShown = false;
+function autoAssignGamepadsOnPress() {
+  const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (let i=0;i<gps.length;i++){
+    const gp = gps[i]; if (!gp) continue;
+    const anyPressed = gp.buttons?.some(b => (typeof b === 'object' ? b.pressed : b > 0.5));
+    if (!anyPressed) continue;
+
+    const targets = listPlayers().filter(p => p.input === 'gamepad' && p.padIndex < 0);
+    if (targets.length > 0) {
+      targets[0].padIndex = gp.index;
+      refreshPadLists();
+      if (!autoAssignShown) { toast(`Gamepad #${gp.index} przypisany do ${targets[0].name}`); autoAssignShown = true; setTimeout(()=>autoAssignShown=false, 1500); }
+      return;
+    }
+  }
+}
+
+/* ===========================================================
+   ZDARZENIA UI
+   =========================================================== */
+const onResumeClick = async () => {
+  // Jeśli preferujemy fullscreen, spróbuj wejść przed startem (to też gest użytkownika)
+  if (fullscreenPref && !isFullscreen()) await enterFullscreen();
+
+  overlay.style.display = 'none';
+  if (roundWinsP1 === 0 && roundWinsP2 === 0 && sumScores(false)===0 && sumScores(true)===0) {
+    matchTime = unlimitedTime ? 0 : roundTimeSec;
+    resetPositions();
+  }
+  isPaused=false; startTimer(); applyTexts();
+};
+document.getElementById('btnResume').onclick = onResumeClick;
+
+document.getElementById('btnMenu').onclick = () => { overlay.style.display = 'flex'; isPaused = true; applyTexts(); };
+document.getElementById('btnSound').onclick = () => {
+  SFX.enabled = !SFX.enabled;
+  localStorage.setItem('sfx', SFX.enabled ? '1' : '0');
+  document.getElementById('btnSound').innerText = SFX.enabled ? '🔊' : '🔇';
+};
+document.getElementById('btnSound').innerText = SFX.enabled ? '🔊' : '🔇';
+
+// FULLSCREEN (przycisk w HUD)
+document.getElementById('btnFs').onclick = async () => { await toggleFullscreen(); };
+
+// Auto‑pauza przy utracie fokusu / zakładki
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    isPaused = true;
+    overlay.style.display = 'flex';
+    applyTexts();
+  }
+});
+window.addEventListener('blur', () => {
+  isPaused = true;
+  overlay.style.display = 'flex';
+  applyTexts();
+});
+
+/* ===========================================================
+   START
+   =========================================================== */
+fit(); setupBgColors(); setupFlags(); setupLang(); setupRoundsUI(); setupInputSelectors(); setupPlayersUI(); setupFullscreenSetting(); applyPlayersCount(); applyTexts(); enableTouchControls();
+
+function loop(now) {
+  const dt = Math.min(0.033, (now - lastTime)/1000);
+  lastTime = now;
+  if (!isPaused) handleLogic(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ====== Helpers ====== */
+function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 </script>
 </body>
 </html>
