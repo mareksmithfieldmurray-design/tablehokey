@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Air Hockey Pro - Center Start</title>
+  <style>
+    :root { --cyan:#00e5ff; --bg:#111; --rink:#e0f7fa; --rim:#004d40; --pink:#ff4081; }
+    body {
+      margin: 0; background: var(--bg);
+      display: flex; justify-content: center; align-items: center; height: 100vh;
+      touch-action: none; overflow: hidden; font-family: system-ui, sans-serif;
+    }
+    .wrap { position: relative; }
+    canvas {
+      background: var(--rink); border: 5px solid var(--rim);
+      box-shadow: 0 0 30px rgba(0,255,255,0.2); display:block;
+      max-width: 100vw; max-height: 100vh; cursor: crosshair;
+    }
+    #ui { position: absolute; top: 10px; left: 10px; z-index: 100; display:flex; gap:8px; align-items:center; }
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+      display: none; color: white; padding: 20px; box-sizing: border-box; z-index: 200; overflow-y: auto;
+    }
+    .overlay .inner {
+      width: min(500px, 92vw); margin: 40px auto; border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 20px; background: rgba(20,20,20,0.95);
+      box-shadow: 0 0 40px rgba(0,0,0,1);
+    }
+    button {
+      padding: 10px 14px; cursor: pointer; background: var(--cyan);
+      border: none; font-weight: 800; border-radius: 8px; color:#00151a;
+    }
+    button.sec { background: #1c2b2b; color:#eaffff; }
+    button.warn { background: var(--pink); color:#fff; }
+    
+    .flag-selector { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 10px 0; }
+    .flag-btn { 
+        background: #333; border: 2px solid transparent; font-size: 24px; padding: 5px; 
+        border-radius: 6px; cursor: pointer; transition: 0.2s;
+    }
+    .flag-btn.active { border-color: var(--cyan); background: #444; transform: scale(1.1); }
+
+    .score {
+      position:absolute; top:8px; right:10px; z-index:100; color:#043;
+      font-weight:900; font-size:14px; background: rgba(255,255,255,0.6);
+      padding:6px 10px; border-radius:10px; pointer-events: none;
+    }
+    #countdown {
+      position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:250; pointer-events:none;
+      font-size: 140px; font-weight: 900; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.7);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div id="ui">
+      <button id="btnMenu" class="sec">⚙️</button>
+      <button id="btnSound" class="sec">🔇</button>
+    </div>
+    <div id="scoreHud" class="score">P2: 0 | P1: 0</div>
+    <div id="countdown">3</div>
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="inner">
+      <h2>USTAWIENIA</h2>
+      <div style="margin-bottom:20px">
+        <button id="btnToggleSound" class="warn" style="width:100%">DŹWIĘK: OFF</button>
+      </div>
+      <p>Gracz 1 (Dół):</p>
+      <div id="flagsP1" class="flag-selector"></div>
+      <p>Gracz 2 (Góra):</p>
+      <div id="flagsP2" class="flag-selector"></div>
+      <div style="display:flex; gap:10px; margin-top:30px">
+        <button id="btnResetScores" class="sec">Resetuj Wynik</button>
+        <button id="btnResume" style="flex-grow:1">GRAJ</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================================
+    1) KONFIGURACJA
+   ========================================================================= */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d', { alpha: false });
+const countdown = document.getElementById('countdown');
+const overlay = document.getElementById('overlay');
+
+let isPaused = true; // Zaczynamy od pauzy (menu lub odliczanie)
+const FRICTION = 0.985;
+const WALL_BOUNCE = 0.75;
+const GOAL_WIDTH = 180;
+const AVAILABLE_FLAGS = ['🇵🇱', '🇺🇸', '🇬🇧', '🇩🇪', '🇫🇷', '🇨🇦', '🇧🇷', '🇯🇵', '🇪🇸', '🇮🇹', '🇪🇺', '🇦🇷'];
+
+const puck = { x: 0, y: 0, r: 18, vx: 0, vy: 0 };
+const p1 = { x: 0, y: 0, r: 35, score: 0, color: "#d32f2f", flag: '🇵🇱', vx: 0, vy: 0 };
+const p2 = { x: 0, y: 0, r: 35, score: 0, color: "#1976d2", flag: '🇪🇺', vx: 0, vy: 0 };
+
+const SFX = (() => {
+  let ctxA = null;
+  let enabled = false; 
+  function ensure(){ if(!ctxA) ctxA = new (window.AudioContext||window.webkitAudioContext)(); if (ctxA.state==='suspended') ctxA.resume(); }
+  return {
+    impact: (vol) => {
+      if (!enabled) return; ensure();
+      const o=ctxA.createOscillator(), g=ctxA.createGain();
+      o.type='triangle'; o.frequency.setValueAtTime(150 + (vol * 150), ctxA.currentTime);
+      g.gain.setValueAtTime(vol * 0.4, ctxA.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctxA.currentTime + 0.1);
+      o.connect(g).connect(ctxA.destination);
+      o.start(); o.stop(ctxA.currentTime + 0.1);
+    },
+    goal: () => { if (!enabled) return; ensure(); /* ... prosta fala ... */ },
+    setEnabled: (v) => { enabled = v; },
+    isEnabled: () => enabled,
+    resume: ensure
+  };
+})();
+
+/* =========================================================================
+    2) FIZYKA PCHNIĘCIA
+   ========================================================================= */
+function resolvePlayerCollision(p) {
+  const dx = puck.x - p.x, dy = puck.y - p.y, dist = Math.hypot(dx, dy), minDist = puck.r + p.r;
+  if (dist < minDist) {
+    const nx = dx / dist, ny = dy / dist;
+    puck.x = p.x + nx * minDist;
+    puck.y = p.y + ny * minDist;
+    const pV_dot_N = (p.vx * nx + p.vy * ny);
+    if (pV_dot_N > 0) {
+      puck.vx = nx * pV_dot_N * 1.4;
+      puck.vy = ny * pV_dot_N * 1.4;
+      SFX.impact(Math.min(1, pV_dot_N / 12));
+    } else {
+      puck.vx *= 0.3; puck.vy *= 0.3;
+    }
+  }
+}
+
+/* =========================================================================
+    3) RUCH I RESET (NOWA LOGIKA STARTU)
+   ========================================================================= */
+function resetGamePositions() {
+  // Krążek na środek
+  puck.x = canvas.clientWidth / 2;
+  puck.y = canvas.clientHeight / 2;
+  puck.vx = 0; puck.vy = 0;
+
+  // Gracz 1 - na dolnej bramce
+  p1.x = canvas.clientWidth / 2;
+  p1.y = canvas.clientHeight - p1.r - 5;
+  p1.vx = 0; p1.vy = 0;
+
+  // Gracz 2 - na górnej bramce
+  p2.x = canvas.clientWidth / 2;
+  p2.y = p2.r + 5;
+  p2.vx = 0; p2.vy = 0;
+}
+
+function onGoal(who) {
+  isPaused = true;
+  document.getElementById('scoreHud').textContent = `P2: ${p2.score} | P1: ${p1.score}`;
+  saveState();
+  setTimeout(() => {
+    startCountdown();
+  }, 1000);
+}
+
+function updatePos(player, newX, newY) {
+    if (isPaused) return; // Blokada ruchu podczas odliczania
+    player.vx = newX - player.x;
+    player.vy = newY - player.y;
+    player.x = newX;
+    player.y = newY;
+
+    player.x = Math.max(player.r, Math.min(canvas.clientWidth - player.r, player.x));
+    if (player === p1) {
+        player.y = Math.max(canvas.clientHeight/2 + player.r, Math.min(canvas.clientHeight - player.r, player.y));
+    } else {
+        player.y = Math.max(player.r, Math.min(canvas.clientHeight/2 - player.r, player.y));
+    }
+}
+
+/* =========================================================================
+    4) RYSOWANIE
+   ========================================================================= */
+function draw() {
+  ctx.fillStyle = "#e0f7fa"; ctx.fillRect(0,0,canvas.clientWidth, canvas.clientHeight);
+  
+  // Boisko
+  ctx.strokeStyle = "rgba(0,150,136,0.15)"; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(0, canvas.clientHeight/2); ctx.lineTo(canvas.clientWidth, canvas.clientHeight/2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(canvas.clientWidth/2, canvas.clientHeight/2, 60, 0, Math.PI*2); ctx.stroke();
+
+  // Bramki (wizualne)
+  ctx.fillStyle = "rgba(0,0,0,0.05)";
+  ctx.fillRect(canvas.clientWidth/2 - GOAL_WIDTH/2, 0, GOAL_WIDTH, 40);
+  ctx.fillRect(canvas.clientWidth/2 - GOAL_WIDTH/2, canvas.clientHeight - 40, GOAL_WIDTH, 40);
+
+  // Gracze
+  [p1, p2].forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+    ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(p.flag, p.x, p.y + 2);
+  });
+
+  // Krążek
+  ctx.fillStyle = "#111";
+  ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI*2); ctx.fill();
+}
+
+function step() {
+  if (isPaused) return;
+  puck.x += puck.vx; puck.y += puck.vy;
+  puck.vx *= FRICTION; puck.vy *= FRICTION;
+
+  if (puck.x < puck.r || puck.x > canvas.clientWidth - puck.r) {
+    puck.vx *= -WALL_BOUNCE;
+    puck.x = puck.x < puck.r ? puck.r : canvas.clientWidth - puck.r;
+  }
+  const isGoalX = Math.abs(puck.x - canvas.clientWidth/2) < GOAL_WIDTH/2;
+  if (puck.y < puck.r) {
+    if (isGoalX) { p1.score++; onGoal('p1'); } 
+    else { puck.y = puck.r; puck.vy *= -WALL_BOUNCE; }
+  }
+  if (puck.y > canvas.clientHeight - puck.r) {
+    if (isGoalX) { p2.score++; onGoal('p2'); } 
+    else { puck.y = canvas.clientHeight - puck.r; puck.vy *= -WALL_BOUNCE; }
+  }
+  resolvePlayerCollision(p1); resolvePlayerCollision(p2);
+}
+
+/* =========================================================================
+    5) STEROWANIE I UI
+   ========================================================================= */
+canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    updatePos(p1, e.clientX - rect.left, e.clientY - rect.top);
+});
+
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    for (let i = 0; i < e.touches.length; i++) {
+        const t = e.touches[i], tx = t.clientX - rect.left, ty = t.clientY - rect.top;
+        if (ty > canvas.clientHeight/2) updatePos(p1, tx, ty);
+        else updatePos(p2, tx, ty);
+    }
+}, {passive: false});
+
+function startCountdown() {
+    isPaused = true;
+    resetGamePositions();
+    let c = 3; 
+    countdown.textContent = c;
+    countdown.style.display = 'flex';
+    const iv = setInterval(() => {
+        c--;
+        if (c > 0) {
+            countdown.textContent = c;
+            SFX.impact(0.3);
+        } else if (c === 0) {
+            countdown.textContent = "START!";
+        } else {
+            clearInterval(iv);
+            countdown.style.display = 'none';
+            isPaused = false;
+        }
+    }, 800);
+}
+
+document.getElementById('btnMenu').onclick = () => { isPaused = true; overlay.style.display = 'block'; };
+document.getElementById('btnResume').onclick = () => { overlay.style.display = 'none'; startCountdown(); };
+document.getElementById('btnToggleSound').onclick = () => {
+    SFX.setEnabled(!SFX.isEnabled());
+    const on = SFX.isEnabled();
+    document.getElementById('btnSound').textContent = on ? '🔊' : '🔇';
+    document.getElementById('btnToggleSound').textContent = `DŹWIĘK: ${on ? 'ON' : 'OFF'}`;
+    document.getElementById('btnToggleSound').className = on ? '' : 'warn';
+    SFX.resume();
+};
+
+function buildFlagSelectors() {
+    const containers = { p1: document.getElementById('flagsP1'), p2: document.getElementById('flagsP2') };
+    [p1, p2].forEach(player => {
+        const key = player === p1 ? 'p1' : 'p2';
+        AVAILABLE_FLAGS.forEach(f => {
+            const btn = document.createElement('button');
+            btn.className = `flag-btn ${player.flag === f ? 'active' : ''}`;
+            btn.textContent = f;
+            btn.onclick = () => {
+                player.flag = f;
+                Array.from(containers[key].children).forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                saveState();
+            };
+            containers[key].appendChild(btn);
+        });
+    });
+}
+
+function saveState(){ localStorage.setItem('ahp_v4', JSON.stringify({p1s:p1.score, p2s:p2.score, p1f:p1.flag, p2f:p2.flag})); }
+function loadState(){
+    const s = JSON.parse(localStorage.getItem('ahp_v4') || '{}');
+    if(s.p1s !== undefined) { p1.score=s.p1s; p2.score=s.p2s; p1.flag=s.p1f; p2.flag=s.p2f; }
+}
+
+function fit() {
+  const cssW = Math.min(window.innerWidth, 550);
+  const cssH = window.innerHeight;
+  canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = cssW * dpr; canvas.height = cssH * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function loop() { step(); draw(); requestAnimationFrame(loop); }
+
+window.addEventListener('resize', fit);
+fit(); loadState(); buildFlagSelectors(); resetGamePositions(); loop();
+overlay.style.display = 'block'; // Start z menu
+</script>
+</body>
+</html>
