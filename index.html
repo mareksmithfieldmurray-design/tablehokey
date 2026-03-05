@@ -77,7 +77,6 @@
     <div id="ui">
       <button id="btnMenu" class="sec">⚙️</button>
       <button id="btnSound" class="sec">🔊</button>
-      <!-- Przycisk pełnego ekranu (zostaje dla szybkiego przełączania) -->
       <button id="btnFs" class="sec" title="Pełny ekran">🖵</button>
     </div>
     <div id="countdown">3</div>
@@ -110,6 +109,19 @@
           <button class="btn-puck sec active" onclick="setPuck(22,1)">M</button>
           <button class="btn-puck sec" onclick="setPuck(26,2)">L</button>
         </div>
+      </div>
+
+      <!-- NOWE: Prędkość krążka -->
+      <div class="row">
+        <div id="lblPuckSpeed" class="label">Prędkość krążka</div>
+        <div class="grid-btns" id="puckSpeedBtns">
+          <button class="btn-ps sec" data-speed="very_slow">Bardzo wolny</button>
+          <button class="btn-ps sec" data-speed="slow">Wolny</button>
+          <button class="btn-ps sec" data-speed="normal">Normalny</button>
+          <button class="btn-ps sec" data-speed="fast">Szybki</button>
+          <button class="btn-ps sec" data-speed="very_fast">Bardzo szybki</button>
+        </div>
+        <div class="hint">„Bardzo szybki” odpowiada dotychczasowej maksymalnej prędkości.</div>
       </div>
 
       <!-- Rozmiar paletek osobno -->
@@ -285,7 +297,7 @@
         </div>
       </div>
 
-      <!-- NOWE: Ustawienie pełnego ekranu -->
+      <!-- Pełny ekran -->
       <div class="row">
         <div id="lblFullscreen" class="label">Pełny ekran</div>
         <label class="toggle">
@@ -319,6 +331,7 @@ const I18N = {
     settings: 'USTAWIENIA MECZU',
     bgColor: 'Kolor tła',
     puckSize: 'Rozmiar krążka',
+    puckSpeed: 'Prędkość krążka',
     malletP1: 'Paletka P1',
     malletP2: 'Paletka P2',
     p1Flag: 'Flaga Gracza 1',
@@ -336,10 +349,10 @@ const I18N = {
     ot: 'DOGRYWKA',
     fullscreen: 'Pełny ekran'
   },
-  en: { settings:'MATCH SETTINGS', bgColor:'Background color', puckSize:'Puck size', malletP1:'Mallet P1', malletP2:'Mallet P2', p1Flag:'Player 1 Flag', p2Flag:'Player 2 Flag', start:'START / RESUME', newMatch:'NEW MATCH', gameOver:'GAME OVER', lang:'Language', goal:'GOAL!', roundTime:'Round time', unlimited:'Unlimited time', format:'Match format', input:'Controls', players:'Players', ot:'OVERTIME', fullscreen:'Fullscreen' },
-  fr: { settings:'PARAMÈTRES DU MATCH', bgColor:'Couleur du fond', puckSize:'Taille du palet', malletP1:'Maillet J1', malletP2:'Maillet J2', p1Flag:'Drapeau Joueur 1', p2Flag:'Drapeau Joueur 2', start:'DÉMARRER / REPRENDRE', newMatch:'NOUVEAU MATCH', gameOver:'FIN DU MATCH', lang:'Langue', goal:'BUT !', roundTime:'Temps de la manche', unlimited:'Temps illimité', format:'Format du match', input:'Contrôles', players:'Joueurs', ot:'PROLONGATION', fullscreen:'Plein écran' },
-  es: { settings:'AJUSTES DEL PARTIDO', bgColor:'Color de fondo', puckSize:'Tamaño del disco', malletP1:'Paleta J1', malletP2:'Paleta J2', p1Flag:'Bandera Jugador 1', p2Flag:'Bandera Jugador 2', start:'INICIAR / REANUDAR', newMatch:'NUEVO PARTIDO', gameOver:'FIN DEL PARTIDO', lang:'Idioma', goal:'¡GOL!', roundTime:'Tiempo de la ronda', unlimited:'Tiempo ilimitado', format:'Formato del partido', input:'Controles', players:'Jugadores', ot:'PRÓRROGA', fullscreen:'Pantalla completa' },
-  de: { settings:'SPIELEINSTELLUNGEN', bgColor:'Hintergrundfarbe', puckSize:'Puckgröße', malletP1:'Schläger S1', malletP2:'Schläger S2', p1Flag:'Flagge Spieler 1', p2Flag:'Flagge Spieler 2', start:'START / FORTSETZEN', newMatch:'NEUES SPIEL', gameOver:'SPIEL ENDE', lang:'Sprache', goal:'TOR!', roundTime:'Rundenzeit', unlimited:'Unbegrenzte Zeit', format:'Spiel‑Format', input:'Steuerung', players:'Spieler', ot:'VERLÄNGERUNG', fullscreen:'Vollbild' }
+  en: { settings:'MATCH SETTINGS', bgColor:'Background color', puckSize:'Puck size', puckSpeed:'Puck speed', malletP1:'Mallet P1', malletP2:'Mallet P2', p1Flag:'Player 1 Flag', p2Flag:'Player 2 Flag', start:'START / RESUME', newMatch:'NEW MATCH', gameOver:'GAME OVER', lang:'Language', goal:'GOAL!', roundTime:'Round time', unlimited:'Unlimited time', format:'Match format', input:'Controls', players:'Players', ot:'OVERTIME', fullscreen:'Fullscreen' },
+  fr: { settings:'PARAMÈTRES DU MATCH', bgColor:'Couleur du fond', puckSize:'Taille du palet', puckSpeed:'Vitesse du palet', malletP1:'Maillet J1', malletP2:'Maillet J2', p1Flag:'Drapeau Joueur 1', p2Flag:'Drapeau Joueur 2', start:'DÉMARRER / REPRENDRE', newMatch:'NOUVEAU MATCH', gameOver:'FIN DU MATCH', lang:'Langue', goal:'BUT !', roundTime:'Temps de la manche', unlimited:'Temps illimité', format:'Format du match', input:'Contrôles', players:'Joueurs', ot:'PROLONGATION', fullscreen:'Plein écran' },
+  es: { settings:'AJUSTES DEL PARTIDO', bgColor:'Color de fondo', puckSize:'Tamaño del disco', puckSpeed:'Velocidad del disco', malletP1:'Paleta J1', malletP2:'Paleta J2', p1Flag:'Bandera Jugador 1', p2Flag:'Bandera Jugador 2', start:'INICIAR / REANUDAR', newMatch:'NUEVO PARTIDO', gameOver:'FIN DEL PARTIDO', lang:'Idioma', goal:'¡GOL!', roundTime:'Tiempo de la ronda', unlimited:'Tiempo ilimitado', format:'Formato del partido', input:'Controles', players:'Jugadores', ot:'PRÓRROGA', fullscreen:'Pantalla completa' },
+  de: { settings:'SPIELEINSTELLUNGEN', bgColor:'Hintergrundfarbe', puckSize:'Puckgröße', puckSpeed:'Puck‑Geschwindigkeit', malletP1:'Schläger S1', malletP2:'Schläger S2', p1Flag:'Flagge Spieler 1', p2Flag:'Flagge Spieler 2', start:'START / FORTSETZEN', newMatch:'NEUES SPIEL', gameOver:'SPIEL ENDE', lang:'Sprache', goal:'TOR!', roundTime:'Rundenzeit', unlimited:'Unbegrenzte Zeit', format:'Spiel‑Format', input:'Steuerung', players:'Spieler', ot:'VERLÄNGERUNG', fullscreen:'Vollbild' }
 };
 let lang = localStorage.getItem('lang') || 'pl';
 const t = (k)=> (I18N[lang] && I18N[lang][k]) || k;
@@ -347,6 +360,7 @@ function applyTexts() {
   document.getElementById('txtTitle').textContent = isGameOver ? `${t('gameOver')} — R:${roundWinsP1}:${roundWinsP2}` : t('settings');
   document.getElementById('lblBg').textContent = t('bgColor');
   document.getElementById('lblPuck').textContent = t('puckSize');
+  document.getElementById('lblPuckSpeed').textContent = t('puckSpeed');
   document.getElementById('lblMalletP1').textContent = t('malletP1');
   document.getElementById('lblMalletP2').textContent = t('malletP2');
   document.getElementById('lblP2').textContent = t('p2Flag');
@@ -405,7 +419,17 @@ const E_STANDARD = 0.95;
 const E_ACTIVE_HIT = 1.20;
 const E_PASSIVE = 0.98;
 const TANGENTIAL_DAMPING = 0.02;
-const PUCK_SPEED_LIMIT = 45;
+
+/* ====== Prędkość krążka – presety i limit ====== */
+const PUCK_SPEED_PRESETS = {
+  very_slow: 18,   // px/frame (skala silnika przed s=dt*60)
+  slow:      24,
+  normal:    32,
+  fast:      38,
+  very_fast: 45    // to była dotychczasowa wartość
+};
+// Domyślnie „normal”
+let puckSpeedMax = parseInt(localStorage.getItem('puckSpeedMax') || '') || PUCK_SPEED_PRESETS.normal;
 
 /* ARENA */
 const arena = { frW: 14, gw: 195 };
@@ -543,7 +567,7 @@ function enableTouchControls() {
     const ddx = (x - st.prevX), ddy = (y - st.prevY);
     st.dx = ddx / 6; st.dy = ddy / 6;
     const flick = Math.hypot(ddx, ddy);
-    if (flick > 22) { st.just = true; }
+    if (flick > 22) { s.just = true; } // jednorazowy strzał
     st.prevX = x; st.prevY = y;
   });
   function endTouch(pid) {
@@ -670,10 +694,6 @@ function getFlagCanvas(code, size=256) {
       c.strokeStyle='#C8102E'; c.lineWidth=H*0.12; c.beginPath(); c.moveTo(0,0); c.lineTo(W,H); c.moveTo(W,0); c.lineTo(0,H); c.stroke();
       c.fillStyle='#fff'; c.fillRect(0,H*0.4,W,H*0.2); c.fillRect(W*0.4,0,W*0.2,H);
       c.fillStyle='#C8102E'; c.fillRect(0,H*0.44,W,H*0.12); c.fillRect(W*0.44,0,W*0.12,H); break;
-    case 'BR': rect(0,0,W,H,'#009B3A');
-      c.fillStyle='#FFDF00'; c.beginPath(); c.moveTo(W/2,H*0.1); c.lineTo(W*0.85,H/2); c.lineTo(W/2,H*0.9); c.lineTo(W*0.15,H/2); c.closePath(); c.fill();
-      c.beginPath(); c.arc(W/2,H/2,Math.min(W,H)*0.18,0,Math.PI*2); c.fillStyle='#002776'; c.fill();
-      c.save(); c.beginPath(); c.arc(W/2,H/2,Math.min(W,H)*0.20, -0.3, 0.3); c.lineWidth=Math.min(W,H)*0.04; c.strokeStyle='#fff'; c.stroke(); c.restore(); break;
     default: rect(0,0,W,H,'#999');
   }
   flagCache.set(key, off); return off;
@@ -746,34 +766,58 @@ function draw() {
 }
 
 /* ===========================================================
-   LOGIKA GRY + FIZYKA (z dt)
+   ANTI‑TUNNEL & ANTI‑JAM — sub‑stepping i wypych
    =========================================================== */
-function handleLogic(dt) {
-  const { W, H } = getSize();
-  const s = dt * 60;
+const MAX_SUBSTEPS = 8;
+const JAM_PEN_EPS   = 0.5;
+const EJECT_SPEED   = 22/60;
 
-  // Sterowanie i ruch paletek (1..4)
-  listPlayers().forEach((p, idx) => {
-    const id = `p${idx+1}`;
-    const input = getInputForPlayer(p, id, dt);
-
-    // Warunki „strzału”: pojedynczy klik + jednoczesny ruch
-    const movingNow = Math.abs(input.dx) + Math.abs(input.dy) > 0.01;
-    const justStrike = !!input.justStrike && movingNow;
-
-    updatePlayer(p, input.dx, input.dy, justStrike, p.sideTop ? arena.frW : H/2, p.sideTop ? H/2 : (H - arena.frW), W, s);
-
-    // Multiball – tylko gdy kliknięto A (edge) i w tej klatce faktycznie strzelamy
-    if (input.justAButton && p.isHitting) { showBadge(p, 'A'); trySpawnMultiball(p); }
+function getOverlappingPlayers(pk) {
+  const colliders = [];
+  listPlayers().forEach(p => {
+    const dx = pk.x - p.x, dy = pk.y - p.y;
+    const dist = Math.hypot(dx, dy);
+    const minDist = p.r + pk.r;
+    if (dist < (minDist - JAM_PEN_EPS)) colliders.push({ p, dx, dy, dist, minDist });
   });
+  return colliders;
+}
+function unjamPuck(pk, colliders) {
+  let dirX = 0, dirY = 0;
+  colliders.forEach(({ dx, dy, dist }) => {
+    const d = dist || 1;
+    dirX += dx / d;
+    dirY += dy / d;
+  });
+  let angle = Math.atan2(dirY, dirX);
+  if (!isFinite(angle) || (Math.abs(dirX) + Math.abs(dirY) < 1e-3)) {
+    angle = Math.random() * Math.PI * 2;
+  }
+  angle += (Math.random() - 0.5) * 0.5; // delikatna rotacja
+  let maxPen = 0;
+  colliders.forEach(({ dist, minDist }) => {
+    const pen = (minDist + 1) - dist; // +1px poza styk
+    if (pen > maxPen) maxPen = pen;
+  });
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  pk.x += ux * maxPen;
+  pk.y += uy * maxPen;
+  pk.vx = ux * EJECT_SPEED;
+  pk.vy = uy * EJECT_SPEED;
+  createParticles(pk.x, pk.y, "#aaa", 8);
+  SFX.play(260, 0.04);
+}
 
-  // Ruch krążków + hamowanie
-  for (let i=0; i<pucks.length; i++) {
+function substepAdvance(sStep) {
+  const { W, H } = getSize();
+  for (let i = pucks.length - 1; i >= 0; i--) {
     const pk = pucks[i];
-    pk.x += pk.vx * s; pk.y += pk.vy * s;
-    naturalBrake(pk, dt);
+    pk.x += pk.vx * sStep;
+    pk.y += pk.vy * sStep;
 
-    const tol=2;
+    naturalBrake(pk, sStep / 60);
+
+    const tol = 2;
     if (pk.x - (arena.frW + pk.r) < tol || (W - arena.frW - pk.r) - pk.x < tol) pk.vy *= WALL_GRAZE_DAMP;
     if (pk.y - (arena.frW + pk.r) < tol || (H - arena.frW - pk.r) - pk.y < tol) pk.vx *= WALL_GRAZE_DAMP;
 
@@ -781,7 +825,6 @@ function handleLogic(dt) {
       pk.vx *= -WALL_E; pk.x = pk.x < W/2 ? (arena.frW + pk.r) : (W - arena.frW - pk.r);
       SFX.play(180, 0.05); createParticles(pk.x, pk.y, "#999", 5);
     }
-
     const isGoalX = Math.abs(pk.x - W/2) < arena.gw/2;
     if (!isGoalX) {
       if (pk.y < arena.frW + pk.r || pk.y > H - arena.frW - pk.r) {
@@ -789,28 +832,75 @@ function handleLogic(dt) {
         SFX.play(180, 0.05); createParticles(pk.x, pk.y, "#999", 5);
       }
     } else {
-      if (pk.y < 0) onGoal('bottom', pk);
-      if (pk.y > H) onGoal('top', pk);
+      if (pk.y < 0) { onGoal('bottom', pk); continue; }
+      if (pk.y > H) { onGoal('top', pk);    continue; }
     }
   }
 
-  // Kolizje paletka‑krążek
-  listPlayers().forEach(p => pucks.forEach(pk => resolveCollision(p, pk)));
+  // Kolizje po mikrokroku
+  listPlayers().forEach(p => {
+    for (let i = 0; i < pucks.length; i++) {
+      resolveCollision(p, pucks[i]);
+    }
+  });
 
-  // Limiter prędkości
-  pucks.forEach(pk => limitPuckSpeed(pk, PUCK_SPEED_LIMIT));
+  // Anti‑jam
+  for (let i = 0; i < pucks.length; i++) {
+    const pk = pucks[i];
+    const colliders = getOverlappingPlayers(pk);
+    if (colliders.length >= 2) {
+      unjamPuck(pk, colliders);
+    }
+  }
+}
+
+/* ===========================================================
+   LOGIKA GRY + FIZYKA (z dt)
+   =========================================================== */
+function handleLogic(dt) {
+  const { W, H } = getSize();
+  const s = dt * 60;
+
+  // Sterowanie i ruch paletek
+  listPlayers().forEach((p, idx) => {
+    const id = `p${idx+1}`;
+    const input = getInputForPlayer(p, id, dt);
+    const movingNow = Math.abs(input.dx) + Math.abs(input.dy) > 0.01;
+    const justStrike = !!input.justStrike && movingNow;
+    updatePlayer(p, input.dx, input.dy, justStrike, p.sideTop ? arena.frW : H/2, p.sideTop ? H/2 : (H - arena.frW), W, s);
+
+    if (input.justAButton && p.isHitting) { showBadge(p, 'A'); trySpawnMultiball(p); }
+  });
+
+  // Anti‑tunnel: sub‑stepping ruchu krążków
+  if (pucks.length > 0) {
+    let maxDispPx = 0;
+    for (const pk of pucks) {
+      const disp = Math.hypot(pk.vx, pk.vy) * s;
+      if (disp > maxDispPx) maxDispPx = disp;
+    }
+    const refR = Math.min(...listPlayers().map(p => p.r).concat([basePuck.r]));
+    const refStepPx = Math.max(6, Math.floor(refR * 0.5));
+    const substeps = Math.max(1, Math.min(MAX_SUBSTEPS, Math.ceil(maxDispPx / refStepPx)));
+    const sStep = s / substeps;
+
+    for (let st = 0; st < substeps; st++) substepAdvance(sStep);
+  }
+
+  // Limiter prędkości – zgodnie z presetem
+  pucks.forEach(pk => limitPuckSpeed(pk, puckSpeedMax));
 
   // Efekty
   updateParticles();
 
-  // Auto-przypisywanie padów
+  // Auto‑assign gamepad
   autoAssignGamepadsOnPress();
 
-  // Wyczyść jednorazowe naciśnięcia
+  // Wyczyść edge klawiszy
   justPressed.clear();
 }
 
-/* ====== Gol / reset (z sudden death w dogrywce) ====== */
+/* ====== Gol / reset (sudden death) ====== */
 function onGoal(scoringSide, pk) {
   const { H } = getSize();
   const topTeam = listPlayers(true);
@@ -855,7 +945,7 @@ function naturalBrake(obj, dt) {
 function updatePlayer(p, dx, dy, justHit, minY, maxY, W, s) {
   const base = 9, boost = 25;
 
-  p.isHitting = !!justHit;                     // tylko jedna klatka
+  p.isHitting = !!justHit;                     // jedna klatka
   p.isControlled = (Math.abs(dx) > 0 || Math.abs(dy) > 0);
 
   if (p.isHitting) { p.trail.push({ x: p.x, y: p.y }); if (p.trail.length > 8) p.trail.shift(); }
@@ -869,7 +959,7 @@ function updatePlayer(p, dx, dy, justHit, minY, maxY, W, s) {
   p.y = Math.max(minY + p.r, Math.min(maxY - p.r, p.y));
 }
 
-/* ====== Kolizja paletka‑krążek ====== */
+/* ====== Kolizja paletka‑krążek (z +1px separacji) ====== */
 function resolveCollision(p, pk) {
   let dx = pk.x - p.x, dy = pk.y - p.y;
   let distance = Math.hypot(dx, dy);
@@ -898,7 +988,8 @@ function resolveCollision(p, pk) {
     const vrel_t = (pk.vx - p.vx) * tx + (pk.vy - p.vy) * ty;
     const jt = -vrel_t * TANGENTIAL_DAMPING; pk.vx += jt * tx; pk.vy += jt * ty;
 
-    const penetration = minDist - distance;
+    // Separacja +1px ponad styk
+    const penetration = minDist - distance + 1.0;
     pk.x += nx * penetration; pk.y += ny * penetration;
 
     SFX.play(400 + Math.abs(jn)*10, 0.1);
@@ -906,7 +997,7 @@ function resolveCollision(p, pk) {
   }
 }
 
-/* ====== Multiball (A podczas strzału) ====== */
+/* ====== Multiball (A podczas strzału) – skalowane do prędkości ====== */
 function trySpawnMultiball(p) {
   const now = performance.now();
   if (now - p.lastSpecialAt < SPECIAL_COOLDOWN_MS) return;
@@ -916,9 +1007,7 @@ function trySpawnMultiball(p) {
   p.specialUsesUsed++;
   showBadge(p, 'MB');
 
-  const { W } = getSize();
   const baseR = basePuck.r;
-
   const spawn = (angleDeg, speed)=> {
     const rad = angleDeg * Math.PI/180;
     const pk = makePuck(p.x + Math.cos(rad)*(p.r + baseR + 2), p.y + Math.sin(rad)*(p.r + baseR + 2), baseR);
@@ -930,8 +1019,9 @@ function trySpawnMultiball(p) {
     }, MULTIBALL_LIFETIME_MS);
   };
   const dir = p.sideTop ? 1 : -1;
-  spawn(dir*80, 18/60);
-  spawn(dir*100,18/60);
+  const initSpeed = Math.max(10, Math.round(puckSpeedMax * 0.42)) / 60; // ~42% maks.
+  spawn(dir*80,  initSpeed);
+  spawn(dir*100, initSpeed);
 }
 
 /* ====== Toast i badge ====== */
@@ -1008,7 +1098,7 @@ function positionTeam(team, cx, cy, W) {
 }
 
 /* ====== Limity i sumy ====== */
-function limitPuckSpeed(pk, max=PUCK_SPEED_LIMIT) { const sp=Math.hypot(pk.vx, pk.vy); if (sp>max){ const s=max/sp; pk.vx*=s; pk.vy*=s; } }
+function limitPuckSpeed(pk, maxSpeed) { const sp=Math.hypot(pk.vx, pk.vy); if (sp>maxSpeed){ const s=maxSpeed/sp; pk.vx*=s; pk.vy*=s; } }
 function listPlayers(onlyTopOrBot=null) {
   const L=[]; L.push(p1); L.push(p2); if (p3) L.push(p3); if (p4) L.push(p4);
   if (onlyTopOrBot===null) return L;
@@ -1030,29 +1120,20 @@ function fit(){
   ctx.setTransform(1,0,0,1,0,0);
   ctx.scale(dpr, dpr);
 }
-
-// Fullscreen helpers
 function isFullscreen() { return !!document.fullscreenElement; }
 async function enterFullscreen() {
-  try {
-    if (!isFullscreen()) await document.documentElement.requestFullscreen();
-  } catch (e) { toast('Nie można wejść w pełny ekran'); console.warn(e); }
+  try { if (!isFullscreen()) await document.documentElement.requestFullscreen(); }
+  catch(e){ toast('Nie można wejść w pełny ekran'); console.warn(e); }
 }
 async function exitFullscreen() {
-  try {
-    if (isFullscreen()) await document.exitFullscreen();
-  } catch (e) { toast('Nie można wyjść z pełnego ekranu'); console.warn(e); }
+  try { if (isFullscreen()) await document.exitFullscreen(); }
+  catch(e){ toast('Nie można wyjść z pełnego ekranu'); console.warn(e); }
 }
-async function toggleFullscreen() {
-  if (!isFullscreen()) await enterFullscreen();
-  else await exitFullscreen();
-}
+async function toggleFullscreen() { if (!isFullscreen()) await enterFullscreen(); else await exitFullscreen(); }
 
-// Re‑fit na zmiany
 window.onresize = fit;
 document.addEventListener('fullscreenchange', () => {
   fit();
-  // Zsynchronizuj checkbox ustawień ze stanem fullscreen (ale pamięć preferencji to osobna flaga)
   const chk = document.getElementById('chkFullscreen');
   if (chk) chk.checked = fullscreenPref || isFullscreen();
 });
@@ -1107,6 +1188,7 @@ function setupLang() {
     btn.onclick = () => { lang = btn.dataset.lang; localStorage.setItem('lang', lang); document.querySelectorAll('.btn-lang').forEach(b => b.classList.remove('active')); btn.classList.add('active'); goalText.text = t('goal'); applyTexts(); };
   });
 }
+
 function setupRoundsUI() {
   const wrap = document.getElementById('roundPresets');
   const customWrap = document.getElementById('customTimeWrap');
@@ -1141,7 +1223,6 @@ function setupRoundsUI() {
   });
 }
 
-/* Sterowanie (P1..P4) */
 function refreshPadLists() {
   const ids = ['P1','P2','P3','P4'];
   const sels = ids.map(id => document.getElementById('selPad'+id));
@@ -1223,7 +1304,7 @@ function applyPlayersCount() {
   resetPositions();
 }
 
-/* ====== Preferencja pełnego ekranu (ustawienie w menu) ====== */
+/* ====== Fullscreen setting ====== */
 let fullscreenPref = (localStorage.getItem('fs') ?? '0') === '1';
 function setupFullscreenSetting(){
   const chk = document.getElementById('chkFullscreen');
@@ -1231,9 +1312,32 @@ function setupFullscreenSetting(){
   chk.addEventListener('change', async () => {
     fullscreenPref = chk.checked;
     localStorage.setItem('fs', fullscreenPref ? '1' : '0');
-    // Zmiana stanu natychmiast (klik = gest użytkownika)
     if (fullscreenPref) await enterFullscreen();
     else await exitFullscreen();
+  });
+}
+
+/* ====== Puck speed setting ====== */
+function setupPuckSpeedUI() {
+  const wrap = document.getElementById('puckSpeedBtns');
+  const map = {
+    very_slow: PUCK_SPEED_PRESETS.very_slow,
+    slow:      PUCK_SPEED_PRESETS.slow,
+    normal:    PUCK_SPEED_PRESETS.normal,
+    fast:      PUCK_SPEED_PRESETS.fast,
+    very_fast: PUCK_SPEED_PRESETS.very_fast
+  };
+  const currentKey = Object.keys(map).find(k => map[k] === puckSpeedMax) || 'normal';
+  wrap.querySelectorAll('.btn-ps').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.speed === currentKey);
+    btn.onclick = () => {
+      wrap.querySelectorAll('.btn-ps').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      const key = btn.dataset.speed;
+      puckSpeedMax = map[key];
+      localStorage.setItem('puckSpeedMax', String(puckSpeedMax));
+      toast(`Max prędkość: ${key.replace('_',' ')}`);
+    };
   });
 }
 
@@ -1282,7 +1386,7 @@ function getInputForPlayer(p, id, dt) {
       dx = (keys['KeyF']?-1:0) + (keys['KeyH']?1:0);
       dy = (keys['KeyT']?-1:0) + (keys['KeyG']?1:0);
       const moving = Math.abs(dx)+Math.abs(dy) > 0.01;
-      const just = (justPressed.has('ShiftLeft')); // CapsLock usunięty
+      const just = (justPressed.has('ShiftLeft')); // zamiast CapsLock
       justStrike = just && moving;
       break;
     }
@@ -1313,7 +1417,6 @@ function autoAssignGamepadsOnPress() {
    ZDARZENIA UI
    =========================================================== */
 const onResumeClick = async () => {
-  // Jeśli preferujemy fullscreen, spróbuj wejść przed startem (to też gest użytkownika)
   if (fullscreenPref && !isFullscreen()) await enterFullscreen();
 
   overlay.style.display = 'none';
@@ -1332,11 +1435,8 @@ document.getElementById('btnSound').onclick = () => {
   document.getElementById('btnSound').innerText = SFX.enabled ? '🔊' : '🔇';
 };
 document.getElementById('btnSound').innerText = SFX.enabled ? '🔊' : '🔇';
-
-// FULLSCREEN (przycisk w HUD)
 document.getElementById('btnFs').onclick = async () => { await toggleFullscreen(); };
 
-// Auto‑pauza przy utracie fokusu / zakładki
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     isPaused = true;
@@ -1353,7 +1453,7 @@ window.addEventListener('blur', () => {
 /* ===========================================================
    START
    =========================================================== */
-fit(); setupBgColors(); setupFlags(); setupLang(); setupRoundsUI(); setupInputSelectors(); setupPlayersUI(); setupFullscreenSetting(); applyPlayersCount(); applyTexts(); enableTouchControls();
+fit(); setupBgColors(); setupFlags(); setupLang(); setupRoundsUI(); setupInputSelectors(); setupPlayersUI(); setupFullscreenSetting(); setupPuckSpeedUI(); applyPlayersCount(); applyTexts(); enableTouchControls();
 
 function loop(now) {
   const dt = Math.min(0.033, (now - lastTime)/1000);
