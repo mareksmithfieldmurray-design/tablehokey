@@ -2,636 +2,1099 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Air Hockey - FX Master v2.6</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Air Hockey — FULL SETTINGS (Touch pads + Goal size x6)</title>
   <style>
-    :root { --cyan:#00e5ff; --bg:#050505; }
-    body { margin:0; background:var(--bg); display:flex; justify-content:center; align-items:center; height:100vh; touch-action:none; overflow:hidden; font-family:'Segoe UI',sans-serif; color:#fff; }
+    :root { --bg:#0b0b0b; --panel:#111; --accent:#00e5ff; --border:#222; }
+    html, body { height:100%; }
+    body {
+      margin:0; background:var(--bg);
+      display:flex; align-items:center; justify-content:center;
+      height:100vh; overflow:hidden; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif; color:#fff;
+      touch-action:none; /* blokuje scroll/zoom podczas gier */
+    }
     .wrap { position:relative; }
-    canvas { display:block; cursor:none; background:white; border-radius:5px; box-shadow:0 0 50px rgba(0,0,0,.5); outline:none; }
-    #ui { position:absolute; top:15px; left:15px; z-index:100; display:flex; gap:10px; }
-    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; z-index:200; backdrop-filter:blur(8px); }
-    .inner { width:92%; max-width:900px; border-radius:24px; padding:24px; background:#111; border:1px solid #333; max-height:90vh; overflow-y:auto; }
-    .grid-btns { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:12px; }
-    .row { display:grid; grid-template-columns:1fr; gap:8px; margin:12px 0 18px; }
-    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0 18px; }
-    .label { font-size:12px; letter-spacing:.5px; color:#aaa; text-transform:uppercase; }
-    button { padding:10px; cursor:pointer; background:var(--cyan); border:none; font-weight:bold; border-radius:8px; color:#000; transition:.2s; }
-    button.sec { background:#1d1d1d; color:#fff; border:1px solid #444; font-size:12px; }
-    .active { border:2px solid #fff !important; background:var(--cyan) !important; color:#000 !important; }
-    #countdown { position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:250; pointer-events:none; font-size:160px; font-weight:900; color:#fff; text-shadow:0 8px 28px rgba(0,0,0,.5); }
-    .flagbtn { display:flex; align-items:center; justify-content:center; padding:6px; background:transparent; border:1px solid #444; border-radius:8px; }
-    .flagbtn svg { width:42px; height:28px; border-radius:3px; display:block; }
-    .bg-swatch { background:transparent; border:1px solid #444; border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; align-items:center; }
-    .swatch { width:48px; height:32px; border-radius:6px; border:1px solid #666; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
-    .swatch-name { font-size:10px; color:#bbb; }
-    .inline { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    input[type='number'], select, input[type='color'], input[type='range'] { background:#1d1d1d; border:1px solid #444; color:#fff; border-radius:8px; padding:8px; }
-    input[type='color'] { width:48px; height:32px; padding:0; border-radius:6px; }
-    .hint { font-size:11px; color:#888; }
-    .toggle { display:flex; gap:8px; align-items:center; }
-    .toggle input { width:18px; height:18px; }
-    .badge { position:absolute; padding:2px 6px; background:#111a; border:1px solid #fff4; color:#fff; font-size:12px; border-radius:6px; pointer-events:none; transform:translate(-50%,-150%); white-space:nowrap; }
-    .toast { position:fixed; top:12px; left:50%; transform:translateX(-50%); background:#111f; border:1px solid #444; color:#fff; padding:8px 12px; border-radius:10px; z-index:300; font-size:13px; opacity:0; transition:opacity .2s ease; max-width:90vw; text-align:center; }
-    #perfHud { position:fixed; right:12px; top:12px; z-index:190; background:#000a; color:#0f0; padding:8px 10px; border:1px solid #0f05; border-radius:10px; font:12px/1.2 monospace; display:none; min-width:150px; }
+    canvas { display:block; background:#f8faff; border-radius:8px; box-shadow:0 30px 80px rgba(0,0,0,.55); }
+
+    /* Szybkie przyciski */
+    #ui { position:absolute; top:14px; left:14px; z-index:4; display:flex; gap:8px; }
+    .btn-quick { appearance:none; border:1px solid #2a2a2a; background:#171717; color:#eaeaea;
+      padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; }
+
+    /* Overlay ustawień */
+    .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.9); z-index:10; }
+    .panel {
+      width:min(94vw, 1000px); background:var(--panel);
+      border:1px solid var(--border); border-radius:18px; padding:18px 18px 20px;
+      box-shadow:0 20px 70px rgba(0,0,0,.6); max-height:92vh; overflow:auto;
+    }
+    h1 { font-size:20px; margin:0 0 10px 0; color:var(--accent) }
+    h2 { font-size:16px; margin:16px 0 8px; color:#ddd }
+    .hint { color:#bbb; font-size:13px; }
+    .row  { display:grid; gap:10px; margin:8px 0 12px; }
+    .grid { display:grid; gap:10px; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .chipbar { display:flex; flex-wrap:wrap; gap:8px; }
+    .chip { appearance:none; border:1px solid #2a2a2a; background:#171717; color:#eaeaea;
+      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; }
+    .chip.active { border-color:#fff; background:var(--accent); color:#001016; }
+    input[type="range"]{ width:260px; accent-color:var(--accent); }
+    input[type="color"], select, input[type="number"]{
+      background:#171717; color:#eaeaea; border:1px solid #2a2a2a; border-radius:8px; padding:8px;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    .btn {
+      appearance:none; border:none; border-radius:10px; padding:12px 16px; font-weight:700;
+      background:var(--accent); color:#001016; cursor:pointer; font-size:16px;
+    }
+    .btn:active { transform:translateY(1px); }
+
+    /* Odliczanie */
+    #countdown {
+      position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+      z-index:3; pointer-events:none; font-size:160px; font-weight:900; color:#fff;
+      text-shadow:0 8px 28px rgba(0,0,0,.5);
+    }
+
+    /* Toast */
+    .errorToast {
+      position:fixed; left:50%; top:12px; transform:translateX(-50%);
+      background:#1b1b1b; color:#f55; border:1px solid #333; padding:8px 12px;
+      border-radius:10px; z-index:20; font:13px/1.2 monospace; opacity:0; transition:opacity .2s;
+      max-width:90vw; text-align:center;
+    }
+
+    /* HUD */
+    #perfHud {
+      position:absolute; right:14px; top:14px; z-index:4; background:#000a; color:#0f0;
+      padding:8px 10px; border:1px solid #0f05; border-radius:10px; font:12px/1.2 monospace;
+      display:none; min-width:150px;
+    }
     #perfHud .dim { color:#9f9; }
-    #keysHud { position:fixed; left:12px; bottom:12px; z-index:180; background:#000a; color:#fff; padding:6px 8px; border:1px solid #fff2; border-radius:8px; font:12px/1.3 monospace; display:none; }
+
+    /* Karty sterowania gracza (prawa strona) */
+    .ctrl-card { border:1px solid #2a2a2a; border-radius:12px; padding:10px; background:#141414; }
+    .ctrl-title { font-weight:700; margin-bottom:6px; color:#eaeaea; }
+    .ctrl-row { display:grid; grid-template-columns: 1fr; gap:8px; margin:6px 0; }
+    .ctrl-hint { font-size:12px; color:#9aa; }
+
+    /* ===== TOUCH PADS ===== */
+    #touchLayer{
+      position:absolute; inset:0; z-index:2; pointer-events:none; /* włączamy lokalnie na elementach */
+    }
+    .tpZone{
+      position:absolute; width:50vw; height:50vh; /* ćwiartki ekranu */
+      pointer-events:none; /* włączymy na dzieciach */
+    }
+    /* ćwiartki: p2=top-left, p4=top-right, p1=bottom-left, p3=bottom-right */
+    .tp-p2{ left:0; top:0; }
+    .tp-p4{ right:0; top:0; }
+    .tp-p1{ left:0; bottom:0; }
+    .tp-p3{ right:0; bottom:0; }
+
+    .stickBase{
+      position:absolute; width:min(32vw, 220px); height:min(32vw, 220px);
+      border-radius:50%; background:#00000030; border:2px solid #ffffff30;
+      left:20px; bottom:20px;
+      pointer-events:auto; touch-action:none;
+    }
+    /* u góry — przenieś bazę w dół (żeby nie nachodziła na bandę) */
+    .tp-p2 .stickBase, .tp-p4 .stickBase{ top:20px; bottom:auto; }
+
+    .stickKnob{
+      position:absolute; width:40%; height:40%; left:30%; top:30%;
+      border-radius:50%; background:#ffffff66; border:2px solid #ffffffaa;
+      pointer-events:none;
+    }
+
+    .tpBtn{
+      position:absolute; width:min(14vw,130px); height:min(14vw,130px);
+      border-radius:50%; background:#00e5ff40; border:2px solid #00e5ffaa;
+      right:20px; bottom:20px;
+      pointer-events:auto; touch-action:none;
+      display:flex; align-items:center; justify-content:center; color:#001016; font-weight:900;
+      text-shadow:0 1px 0 #fff8;
+    }
+    .tpBtn:active{ transform:scale(0.98); }
+    .tp-p2 .tpBtn, .tp-p4 .tpBtn{ top:20px; bottom:auto; }
+
+    /* Podpis na przycisku */
+    .tpBtn span{ pointer-events:none; }
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap" aria-live="polite">
     <div id="ui">
-      <button id="btnMenu" class="sec" aria-label="Ustawienia">⚙️</button>
-      <button id="btnHelp" class="sec" aria-label="Samouczek">❔</button>
-      <button id="btnHud" class="sec" aria-label="Profil wydajności">📈</button>
-      <button id="btnPad" class="sec" aria-label="Gamepad">🎮</button>
-      <button id="btnRestart" class="sec" aria-label="Restart">🔁</button>
-      <button id="btnSound" class="sec" aria-label="Dźwięk">🔊</button>
-      <button id="btnFs" class="sec" title="Pełny ekran" aria-label="Pełny ekran">🖵</button>
+      <button id="btnMenu"  class="btn-quick">⚙️ Ustawienia</button>
+      <button id="btnHelp"  class="btn-quick">❔ Pomoc</button>
+      <button id="btnHud"   class="btn-quick">📈 HUD</button>
+      <button id="btnFs"    class="btn-quick">🖵 Pełny ekran</button>
     </div>
+
     <div id="countdown">3</div>
-    <canvas id="gameCanvas" tabindex="0"></canvas>
-    <div id="badges"></div>
+    <canvas id="game" aria-label="Stół do air hockey"></canvas>
     <div id="perfHud"></div>
-    <div id="keysHud"></div>
+
+    <!-- ===== TOUCH LAYER (wirtualne pady; tworzymy/aktywujemy dynamicznie) ===== -->
+    <div id="touchLayer" style="display:none;">
+      <!-- strefy ćwiartek ekranu -->
+      <div id="tp-p2" class="tpZone tp-p2"></div>
+      <div id="tp-p4" class="tpZone tp-p4"></div>
+      <div id="tp-p1" class="tpZone tp-p1"></div>
+      <div id="tp-p3" class="tpZone tp-p3"></div>
+    </div>
   </div>
 
-  <!-- MENU -->
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true" style="display:none;">
-    <div class="inner">
-      <h2 id="txtTitle" style="text-align:center; margin-top:0; color: var(--cyan);">USTAWIENIA MECZU</h2>
+  <!-- ========= USTAWIENIA ========= -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="panel">
+      <h1>USTAWIENIA MECZU</h1>
 
-      <div class="row">
-        <div class="label">Kolor tła</div>
-        <div class="grid-btns" id="bgColors"></div>
-        <div class="inline"><span class="hint">Własny kolor:</span><input id="colorPicker" type="color" /></div>
-      </div>
-
-      <div class="row">
-        <div class="label">Rozmiar krążka</div>
-        <div class="grid-btns" id="puckSizes">
-          <button class="btn-puck sec" onclick="setPuck(18,0)">S</button>
-          <button class="btn-puck sec active" onclick="setPuck(22,1)">M</button>
-          <button class="btn-puck sec" onclick="setPuck(26,2)">L</button>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="label">Prędkość krążka</div>
-        <div class="grid-btns" id="puckSpeedBtns">
-          <button class="btn-ps sec" data-speed="very_slow">Bardzo wolny</button>
-          <button class="btn-ps sec" data-speed="slow">Wolny</button>
-          <button class="btn-ps sec" data-speed="normal">Normalny</button>
-          <button class="btn-ps sec" data-speed="fast">Szybki</button>
-          <button class="btn-ps sec" data-speed="very_fast">Bardzo szybki</button>
-        </div>
-      </div>
-
-      <div class="row2">
-        <div>
-          <div class="label">Paletka P1</div>
-          <div class="grid-btns" id="malletSizesP1">
-            <button class="btn-mallet-p1 sec" onclick="setMallet('p1',30,0)">S</button>
-            <button class="btn-mallet-p1 sec active" onclick="setMallet('p1',35,1)">M</button>
-            <button class="btn-mallet-p1 sec" onclick="setMallet('p1',42,2)">L</button>
+      <!-- Wspólny wiersz: LICZBA GRACZY + STEROWANIE (dynamiczne) -->
+      <h2>Gracze &amp; Sterowanie</h2>
+      <div class="grid grid-2">
+        <!-- Liczba graczy -->
+        <div class="row">
+          <div class="hint">Liczba graczy</div>
+          <div class="chipbar" id="playersChips">
+            <button class="chip" data-n="1">1</button>
+            <button class="chip" data-n="2" class="active">2</button>
+            <button class="chip" data-n="3">3</button>
+            <button class="chip" data-n="4">4</button>
           </div>
+          <div class="hint">Przy 3–4: P1+P3 dół, P2+P4 góra.</div>
         </div>
-        <div>
-          <div class="label">Paletka P2</div>
-          <div class="grid-btns" id="malletSizesP2">
-            <button class="btn-mallet-p2 sec" onclick="setMallet('p2',30,0)">S</button>
-            <button class="btn-mallet-p2 sec active" onclick="setMallet('p2',35,1)">M</button>
-            <button class="btn-mallet-p2 sec" onclick="setMallet('p2',42,2)">L</button>
+        <!-- Sterowanie (renderowane wg liczby graczy) -->
+        <div class="row">
+          <div class="hint">Sterowanie (dla wybranej liczby graczy)</div>
+          <div id="controlsContainer" class="grid" style="gap:12px;"></div>
+        </div>
+      </div>
+
+      <!-- Wygląd stołu -->
+      <h2>Wygląd</h2>
+      <div class="grid grid-2">
+        <div class="row">
+          <div class="hint">Kolor tła (preset)</div>
+          <div class="chipbar" id="bgPresets"></div>
+          <div class="hint">Własny kolor:</div>
+          <input id="inpBg" type="color" />
+        </div>
+        <div class="row">
+          <div class="hint">Język</div>
+          <div class="chipbar" id="langChips">
+            <button class="chip" data-lang="pl">Polski</button>
+            <button class="chip" data-lang="en">English</button>
+            <button class="chip" data-lang="de">Deutsch</button>
+            <button class="chip" data-lang="es">Español</button>
+            <button class="chip" data-lang="fr">Français</button>
           </div>
         </div>
       </div>
 
-      <div class="row">
-        <div class="label">Flaga Gracza 2</div>
-        <div id="flagsP2" class="grid-btns"></div>
-      </div>
-      <div class="row">
-        <div class="label">Flaga Gracza 1</div>
-        <div id="flagsP1" class="grid-btns"></div>
-      </div>
-
-      <div class="row">
-        <div class="label">Język</div>
-        <div class="grid-btns" id="langBtns">
-          <button class="btn-lang sec" data-lang="pl">Polski</button>
-          <button class="btn-lang sec" data-lang="en">English</button>
-          <button class="btn-lang sec" data-lang="fr">Français</button>
-          <button class="btn-lang sec" data-lang="es">Español</button>
-          <button class="btn-lang sec" data-lang="de">Deutsch</button>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="label">Czas rundy</div>
-        <div class="grid-btns" id="roundPresets">
-          <button class="btn-round sec" data-sec="60">1:00</button>
-          <button class="btn-round sec" data-sec="120">2:00</button>
-          <button class="btn-round sec" data-sec="180">3:00</button>
-          <button class="btn-round sec" data-sec="300">5:00</button>
-          <button class="btn-round sec" data-sec="custom">Własny</button>
-        </div>
-        <div class="inline" id="customTimeWrap" style="display:none;">
-          <input id="inpMinutes" type="number" min="0" max="60" step="1" value="3" /> <span style="color:#aaa">min</span>
-        </div>
-        <label class="toggle" style="margin-top:8px;">
-          <input type="checkbox" id="chkUnlimited" />
-          <span id="lblUnlimited">Czas nieograniczony</span>
-        </label>
-      </div>
-
-      <div class="row2">
-        <div>
-          <div class="label">Sterowanie</div>
-          <div class="row2" style="grid-template-columns: 1fr 1fr;">
-            <div>
-              <div class="label">P1</div>
-              <select id="selInputP1">
-                <option value="keyboard" selected>Klawiatura</option>
-                <option value="gamepad">Gamepad</option>
-                <option value="ai">AI (bot)</option>
-              </select>
-              <select id="selPadP1" style="margin-top:6px; display:none;"></select>
-              <select id="selAiP1" style="margin-top:6px; display:none;">
-                <option value="easy">Łatwy</option>
-                <option value="medium" selected>Średni</option>
-                <option value="hard">Trudny</option>
-              </select>
-              <div class="hint">← → ↑ ↓ | Enter/Numpad0 = cios</div>
-            </div>
-            <div>
-              <div class="label">P2</div>
-              <select id="selInputP2">
-                <option value="keyboard" selected>Klawiatura</option>
-                <option value="gamepad">Gamepad</option>
-                <option value="ai">AI (bot)</option>
-              </select>
-              <select id="selPadP2" style="margin-top:6px; display:none;"></select>
-              <select id="selAiP2" style="margin-top:6px; display:none;">
-                <option value="easy">Łatwy</option>
-                <option value="medium" selected>Średni</option>
-                <option value="hard">Trudny</option>
-              </select>
-              <div class="hint">A D W S | Space/Ctrl = cios</div>
-            </div>
+      <!-- Sprzęt -->
+      <h2>Sprzęt (rozmiar / prędkości)</h2>
+      <div class="grid grid-3">
+        <div class="row">
+          <div class="hint">Rozmiar krążka</div>
+          <div class="chipbar" id="puckSizeChips">
+            <button class="chip" data-r="18">S</button>
+            <button class="chip" data-r="22">M</button>
+            <button class="chip" data-r="26">L</button>
           </div>
         </div>
-        <div>
-          <div class="label">P3 &amp; P4</div>
-          <div class="row2" style="grid-template-columns: 1fr 1fr;">
-            <div id="colP3">
-              <div class="label">P3</div>
-              <select id="selInputP3">
-                <option value="keyboard" selected>Klawiatura</option>
-                <option value="gamepad">Gamepad</option>
-                <option value="ai">AI (bot)</option>
-              </select>
-              <select id="selPadP3" style="margin-top:6px; display:none;"></select>
-              <select id="selAiP3" style="margin-top:6px; display:none;">
-                <option value="easy">Łatwy</option>
-                <option value="medium" selected>Średni</option>
-                <option value="hard">Trudny</option>
-              </select>
-              <div class="hint">J L I K | RightShift = cios</div>
-            </div>
-            <div id="colP4">
-              <div class="label">P4</div>
-              <select id="selInputP4">
-                <option value="keyboard" selected>Klawiatura</option>
-                <option value="gamepad">Gamepad</option>
-                <option value="ai">AI (bot)</option>
-              </select>
-              <select id="selPadP4" style="margin-top:6px; display:none;"></select>
-              <select id="selAiP4" style="margin-top:6px; display:none;">
-                <option value="easy">Łatwy</option>
-                <option value="medium" selected>Średni</option>
-                <option value="hard">Trudny</option>
-              </select>
-              <div class="hint">F H T G | ShiftLeft = cios</div>
-            </div>
+        <div class="row">
+          <div class="hint">Prędkość krążka (max)</div>
+          <div class="chipbar" id="puckSpeedChips">
+            <button class="chip" data-speed="very_slow">Bardzo wolny</button>
+            <button class="chip" data-speed="slow">Wolny</button>
+            <button class="chip" data-speed="normal">Normalny</button>
+            <button class="chip" data-speed="fast">Szybki</button>
+            <button class="chip" data-speed="very_fast">Bardzo szybki</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="hint">Rozmiar paletek</div>
+          <div class="chipbar" id="malletP1Chips">
+            <button class="chip" data-r="30">P1: S</button>
+            <button class="chip" data-r="35">P1: M</button>
+            <button class="chip" data-r="42">P1: L</button>
+          </div>
+          <div class="chipbar" id="malletP2Chips">
+            <button class="chip" data-r="30">P2: S</button>
+            <button class="chip" data-r="35">P2: M</button>
+            <button class="chip" data-r="42">P2: L</button>
           </div>
         </div>
       </div>
 
-      <div class="row2">
-        <div>
-          <div class="label">Liczba graczy</div>
-          <div class="grid-btns" id="playersBtns">
-            <button class="btn-players sec" data-n="1">1</button>
-            <button class="btn-players sec active" data-n="2">2</button>
-            <button class="btn-players sec" data-n="3">3</button>
-            <button class="btn-players sec" data-n="4">4</button>
-          </div>
-          <div class="hint">Przy 3–4 graczach: po 2 paletki na stronę (P1+P3 dół, P2+P4 góra).</div>
+      <!-- NOWOŚĆ: Rozmiar bramki (6 wyborów) -->
+      <h2>Rozmiar bramki</h2>
+      <div class="row">
+        <div class="chipbar" id="goalSizeChips">
+          <!-- 6 presetów szerokości „gw” (px w układzie canvas) -->
+          <button class="chip" data-gw="140">XS</button>
+          <button class="chip" data-gw="180">S</button>
+          <button class="chip" data-gw="220">M</button>
+          <button class="chip" data-gw="260">L</button>
+          <button class="chip" data-gw="300">XL</button>
+          <button class="chip" data-gw="340">XXL</button>
         </div>
-        <div>
-          <div class="label">Specjal (Multiball)</div>
-          <div class="inline">
-            <span class="hint">Ilość użyć na gracza:</span>
+        <div class="hint">Zmienia szerokość okna bramki na bandzie i rozstaw półkoli.</div>
+      </div>
+
+      <!-- Flagi -->
+      <h2>Flagi</h2>
+      <div class="grid grid-2">
+        <div class="row">
+          <div class="hint">Gracz 1</div>
+          <div class="chipbar" id="flagsP1"></div>
+        </div>
+        <div class="row">
+          <div class="hint">Gracz 2</div>
+          <div class="chipbar" id="flagsP2"></div>
+        </div>
+      </div>
+
+      <!-- Czas rundy / Specjal / Wibracje / FS -->
+      <h2>Czas rundy / Specjal / Wibracje / Pełny ekran</h2>
+      <div class="grid grid-2">
+        <div class="row">
+          <div class="chipbar" id="roundChips">
+            <button class="chip" data-sec="60">1:00</button>
+            <button class="chip" data-sec="120">2:00</button>
+            <button class="chip" data-sec="180">3:00</button>
+            <button class="chip" data-sec="300">5:00</button>
+            <button class="chip" data-sec="custom">Własny</button>
+          </div>
+          <div id="customTimeRow" class="row" style="display:none;">
+            <div class="hint">Minuty:</div>
+            <input id="inpMinutes" type="number" min="0" max="60" step="1" value="3" />
+          </div>
+          <label class="hint"><input id="chkUnlimited" type="checkbox" /> Czas nieograniczony</label>
+        </div>
+        <div class="row">
+          <div class="hint">Specjal / Wibracje / FS</div>
+          <div class="row">
+            <div class="hint">Multiball (limit/gracz)</div>
             <select id="selMbLimit">
               <option value="1">1</option>
               <option value="2">2</option>
               <option value="3" selected>3</option>
               <option value="5">5</option>
-              <option value="0">∞ (bez limitu)</option>
+              <option value="0">∞</option>
             </select>
+            <div class="hint">W trakcie ciosu na padzie: <b>A</b> = 2 tymczasowe krążki.</div>
           </div>
-          <div class="hint">Wciśnij <b>A</b> na padzie podczas strzału — pojawią się 2 dodatkowe krążki.</div>
+          <div class="row">
+            <label class="hint"><input id="chkVib" type="checkbox" /> Włącz wibracje</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="hint">Siła:</div>
+              <input id="rngVib" type="range" min="0" max="100" step="5" value="70" />
+              <div id="vibVal" class="hint mono">70%</div>
+            </div>
+            <label class="hint"><input id="chkFs" type="checkbox" /> Pełny ekran przy starcie</label>
+          </div>
         </div>
       </div>
 
-      <div class="row">
-        <div class="label">Pełny ekran</div>
-        <label class="toggle"><input type="checkbox" id="chkFullscreen" /><span class="hint">Włącz/wyłącz tryb pełnoekranowy (zapamiętywany)</span></label>
-      </div>
-
-      <!-- WIBRACJE: ON/OFF + siła -->
-      <div class="row">
-        <div class="label">Wibracje pada</div>
-        <div class="inline">
-          <label class="toggle"><input type="checkbox" id="chkVib" /><span>Włącz wibracje</span></label>
-          <input id="rangeVib" type="range" min="0" max="100" step="5" value="70" style="width:260px" />
-          <span id="vibReadout" class="hint">70%</span>
+      <!-- Fizyka: Odbicie + Tarcie -->
+      <h2>Fizyka kolizji paletki</h2>
+      <div class="grid">
+        <div class="chipbar" id="bounceChips">
+          <button class="chip" data-mode="soft">Soft</button>
+          <button class="chip" data-mode="normal">Normal</button>
+          <button class="chip" data-mode="wall">Wall (jak od ściany)</button>
         </div>
-        <div class="hint">Jeśli przeglądarka nie wspiera wibracji lub nie ma uprawnień, suwak nie zadziała.</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div class="hint">Tarcie styczne (0.000–0.050):</div>
+          <input id="rngFric" type="range" min="0" max="50" step="1" value="10" />
+          <div class="hint mono" id="fricVal">0.010</div>
+        </div>
       </div>
 
-      <div style="display:flex; gap:10px; margin-top:25px">
-        <button id="btnResume" style="flex:2">START / WZNÓW</button>
-        <button id="btnRestart2" class="sec" style="flex:1">🔁 RESTART</button>
+      <div class="row" style="margin-top:14px">
+        <button id="btnStart" class="btn">START / WZNÓW</button>
+      </div>
+      <div class="hint" style="margin-top:6px">
+        Tip: F11 → pełny ekran (jeśli przeglądarka blokuje automatyczny).
       </div>
     </div>
   </div>
 
-  <!-- TUTORIAL -->
-  <div id="tut" class="overlay" role="dialog" aria-modal="true" style="display:none;">
-    <div class="inner">
-      <h2 style="margin-top:0; color: var(--cyan);">Szybki samouczek</h2>
-      <div id="tutBody" class="tut-steps"></div>
-      <div class="tut-nav">
-        <button id="tutPrev" class="sec">⟵ Wstecz</button>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <label class="toggle" style="margin-right:8px;"><input id="tutShowOnStart" type="checkbox" checked /> <span class="hint">Pokazuj przy starcie</span></label>
-          <button id="tutNext">Dalej ⟶</button>
-          <button id="tutClose" class="sec">Zamknij</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div id="toast" class="errorToast" role="status" aria-live="assertive"></div>
 
 <script>
-/*********** KONTEKST ***********/
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+/* =============================================================================
+   DIAGNOSTYKA / TOAST
+   ========================================================================== */
+function showToast(msg, ms=2200){
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg; el.style.opacity = '1';
+  setTimeout(()=>{ el.style.opacity='0'; }, ms);
+}
+window.addEventListener('error', (e)=>{
+  console.error('Błąd JS:', e.message, e.filename, e.lineno, e.error);
+  showToast('Błąd: ' + e.message, 3000);
+});
+
+/* =============================================================================
+   CANVAS / SKALOWANIE (ultra-safe)
+   ========================================================================== */
+const canvas = document.getElementById('game');
+const ctx     = canvas.getContext('2d', { alpha:false });
 const overlay = document.getElementById('overlay');
-const countdownEl = document.getElementById('countdown');
 const perfHud = document.getElementById('perfHud');
-const keysHud = document.getElementById('keysHud');
-let lastTime = performance.now();
+const countdownEl = document.getElementById('countdown');
+const IS_TOUCH = (('ontouchstart' in window) || (navigator.maxTouchPoints||0)>0);
 
-/*********** i18n ***********/
-const I18N = {
-  pl: {
-    settings:'USTAWIENIA MECZU', start:'START / WZNÓW', newMatch:'NOWY MECZ', gameOver:'KONIEC MECZU', ot:'DOGRYWKA', goal:'GOL!',
-    fsEnterErr:'Nie można wejść w pełny ekran', fsExitErr:'Nie można wyjść z pełnego ekranu',
-    gamepadTip:'Naciśnij dowolny przycisk na padzie, aby go wykryć',
-    kbTip:'Jeśli klawisze nie działają: kliknij w płótno lub naciśnij Enter.',
-    httpsTip:'Gamepady najlepiej działają w HTTPS lub na localhost.',
-    noPad:'Brak wykrytego pada. Podłącz go i naciśnij dowolny przycisk.'
-  }
-};
+function fit(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5) || 1;
+  const w = Math.max(320, window.innerWidth || 800);
+  const h = Math.max(240, window.innerHeight || 600);
+  canvas.width  = Math.round(w*dpr);
+  canvas.height = Math.round(h*dpr);
+  canvas.style.width  = w+'px'; canvas.style.height = h+'px';
+  ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr);
+}
+function getSize(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5) || 1;
+  if (!canvas.width || !canvas.height) fit();
+  let W = canvas.width / dpr, H = canvas.height / dpr;
+  if (!isFinite(W) || !isFinite(H) || W < 2 || H < 2){ fit(); W=canvas.width/dpr; H=canvas.height/dpr; }
+  return { W, H, dpr };
+}
+window.addEventListener('resize', ()=>{ fit(); resetPositions(); });
+
+/* =============================================================================
+   I18N (skrócony)
+   ========================================================================== */
 let lang = localStorage.getItem('lang') || 'pl';
-const t = (k)=> (I18N[lang] && I18N[lang][k]) || k;
+const I18N = {
+  pl: { goal:'GOL!', settings:'USTAWIENIA MECZU', start:'START / WZNÓW', newMatch:'NOWY MECZ', gameOver:'KONIEC MECZU', ot:'DOGRYWKA',
+        kbTip:'Jeśli klawisze nie działają: kliknij w płótno lub naciśnij Enter.',
+        gamepadTip:'Naciśnij dowolny przycisk na padzie, aby go wykryć',
+        httpsTip:'Gamepady najlepiej działają w HTTPS lub na localhost.', noPad:'Brak wykrytego pada.' },
+  en: { goal:'GOAL!', settings:'MATCH SETTINGS', start:'START / RESUME', newMatch:'NEW MATCH', gameOver:'MATCH OVER', ot:'OVERTIME',
+        kbTip:'If keys do not work: click the canvas or press Enter.',
+        gamepadTip:'Press any gamepad button to detect it',
+        httpsTip:'Gamepads work best on HTTPS or localhost.', noPad:'No gamepad detected.' }
+};
+const t = (k)=> (I18N[lang] && I18N[lang][k]) || (I18N['pl'][k] || k);
 
-/*********** STAN ***********/
-let isPaused = true, isGameOver = false, inOvertime = false;
-let goalText = { timer:0, color:'', y:0, text:t('goal') };
-let particles = [];
-let roundTimeSec = 180, unlimitedTime = false, matchTime = roundTimeSec, timerInterval;
-let bestOf = 3, roundWinsP1 = 0, roundWinsP2 = 0;
-let multiballLimitPerPlayer = 3; const SPECIAL_COOLDOWN_MS=5000, MULTIBALL_LIFETIME_MS=6000;
+/* =============================================================================
+   FIZYKA / PARAMETRY
+   ========================================================================== */
+const WALL_E = 0.96;
+let malletBounceMode = localStorage.getItem('malletBounceMode') || 'wall'; // 'soft'|'normal'|'wall'
+let TANGENTIAL_DAMPING = parseFloat(localStorage.getItem('tangentialDamping') || '0.01'); // 0..0.05
+function getMalletE(){ return malletBounceMode==='soft'?0.88:malletBounceMode==='normal'?0.96:WALL_E; }
+const MIN_WALL_OUT_SPEED = 0.60;
 
-/*********** TŁO ***********/
-const BG_PRESETS = [
-  {c:'#ffffff', n:'White'}, {c:'#f8faff', n:'SnowBlue'}, {c:'#f3f4f6', n:'Gray100'},
-  {c:'#eef7ff', n:'SkyTint'}, {c:'#f0fff4', n:'Mint'}, {c:'#fff7ed', n:'Peach'},
-  {c:'#fff0f6', n:'Pink'}, {c:'#fefae0', n:'Pale'}, {c:'#f7f5ff', n:'Lavender'},
-  {c:'#f6fff8', n:'SoftGreen'}
-];
+const K1_AIR=0.8, K2_QUAD=0.0008, MUg=80;
+const CORNER_R = 70; /* tylko wizual */
+const arena = { frW:8, gw: parseInt(localStorage.getItem('goalWidth')||'220',10) || 220 };
+
+const PUCK_SPEED_PRESETS = { very_slow:18, slow:24, normal:32, fast:38, very_fast:45 };
+let puckSpeedMax = parseInt(localStorage.getItem('puckSpeedMax')||'') || PUCK_SPEED_PRESETS.normal;
+
 let tableBgColor = localStorage.getItem('tableBgColor') || '#f8faff';
 
-/*********** FIZYKA ***********/
-const K1_AIR=0.8, K2_QUAD=0.0008, MUg=80, WALL_GRAZE_DAMP=0.992;
-const WALL_E=0.96, E_STANDARD=0.95, E_ACTIVE_HIT=1.20, E_PASSIVE=0.98, TANGENTIAL_DAMPING=0.02;
-const MIN_WALL_OUT_SPEED=0.60;
-const PUCK_SPEED_PRESETS={ very_slow:18, slow:24, normal:32, fast:38, very_fast:45 };
-let puckSpeedMax = parseInt(localStorage.getItem('puckSpeedMax')||'')||PUCK_SPEED_PRESETS.normal;
-const arena={ frW:8, gw:195 };
-const CORNER_R=70;
+/* =============================================================================
+   OBIEKTY GRY
+   ========================================================================== */
+function makePlayer(x,y,r,color,sideTop,name){
+  return { name, x,y,r, vx:0,vy:0, color, sideTop, isHitting:false,
+           input: (IS_TOUCH ? 'touch' : 'keyboard'), padIndex:-1, ai:'medium',
+           score:0, lastSpecialAt:0, specialUsesUsed:0, ai_dx:0, ai_dy:0,
+           touch:{dx:0,dy:0,just:false,active:false} };
+}
+function makePuck(x,y,r){ return { x,y,r,vx:0,vy:0, cornerStallTicks:0 }; }
 
-/*********** GRACZE / KRĄŻEK ***********/
-function makePlayer(color, flagCode, sideTop=false, name=''){ return { name, x:0, y:0, r:35, score:0, color, flagCode, vx:0, vy:0, isHitting:false, isControlled:false, trail:[], input:'keyboard', padIndex:-1, ai:'medium', sideTop, lastSpecialAt:0, specialUsesUsed:0, lastAiHit:false }; }
-const p1=makePlayer('#ff1744','PL',false,'P1');
-const p2=makePlayer('#2979ff','US',true,'P2');
-let p3=null, p4=null;
-function makePuck(x,y,r){ return { x,y,r,vx:0,vy:0, cornerStallTicks:0, stallTicks:0 }; }
-let pucks=[]; const basePuck=makePuck(0,0,22);
-let goalPucksCount = parseInt(localStorage.getItem('goalPucks')||'5',10)||5;
-function applyGoalSizeFromCount(n){ const count=Math.max(2,Math.min(10,n|0)); goalPucksCount=count; localStorage.setItem('goalPucks',String(count)); arena.gw = count*(2*basePuck.r); }
+let p1,p2,p3=null,p4=null, pk;
+let isPaused = true;
 
-/*********** TOAST ***********/
-function toast(msg, ms=1800){ const el=document.createElement('div'); el.className='toast'; el.role='status'; el.ariaLive='polite'; el.textContent=msg; document.body.appendChild(el); requestAnimationFrame(()=>{ el.style.opacity='1'; }); setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(), 220); }, ms); }
+/* =============================================================================
+   WEJŚCIA — KLAWIATURA + PAD + DOTYK
+   ========================================================================== */
+const keys = new Map();
+addEventListener('keydown', e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad)/.test(c)) e.preventDefault(); keys.set(c,true); }, {capture:true});
+addEventListener('keyup',   e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad)/.test(c)) e.preventDefault(); keys.set(c,false); }, {capture:true});
 
-/*********** WEJŚCIA ***********/
-const keys={}, justPressed=new Set();
-function setKey(code, down){ keys[code]=down; if (down) justPressed.add(code); }
-const preventCodes = new Set(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','PageUp','PageDown','Home','End']);
-['keydown','keyup'].forEach(type=>{
-  const handler = (e)=>{ if (preventCodes.has(e.code)) e.preventDefault(); setKey(e.code, type==='keydown'); };
-  window.addEventListener(type, handler, {capture:true});
-  document.addEventListener(type, handler, {capture:true});
-  canvas.addEventListener(type, handler, {capture:true});
-});
-function ensureKeyFocus(){ if (document.activeElement!==canvas){ canvas.focus({preventScroll:true}); } }
-canvas.addEventListener('pointerdown', ensureKeyFocus, {passive:true});
-window.addEventListener('blur', ()=>{ for (const k of Object.keys(keys)) keys[k]=false; justPressed.clear(); });
-
-let hudTimer=null, hudVisible=false; window.addEventListener('keydown', (e)=>{ if (e.code==='KeyH'){ if (!hudTimer) hudTimer=setTimeout(()=>{ hudVisible=!hudVisible; keysHud.style.display=hudVisible?'block':'none'; hudTimer=null; }, 800); } }); window.addEventListener('keyup', (e)=>{ if (e.code==='KeyH' && hudTimer){ clearTimeout(hudTimer); hudTimer=null; } });
-function updateKeysHud(){ if (!hudVisible) return; const pressed = Object.entries(keys).filter(([k,v])=>v).map(([k])=>k).slice(0,12).join(' '); keysHud.textContent = 'Keys: ' + pressed; }
-
-// DOTYK
-const touchToPlayer = new Map();
-const touchState = { p1:{active:false, prevX:0, prevY:0, dx:0, dy:0, just:false}, p2:{active:false, prevX:0, prevY:0, dx:0, dy:0, just:false}, p3:{active:false, prevX:0, prevY:0, dx:0, dy:0, just:false}, p4:{active:false, prevX:0, prevY:0, dx:0, dy:0, just:false} };
-const TOUCH_DIV=34, FLICK_PX=28, TOUCH_CLAMP=1.0; const clampTouch=(v)=>Math.max(-TOUCH_CLAMP, Math.min(TOUCH_CLAMP, v));
-function readTouchState(id){ const s=touchState[id]; const justStrike=s.just; s.just=false; const dx=s.dx, dy=s.dy; s.dx=0; s.dy=0; return { dx, dy, justStrike, justAButton:false }; }
-function pickFreePlayerOnSide(isTop){ const cand = isTop ? [p2?'p2':null, p4?'p4':null].filter(Boolean) : [p1?'p1':null, p3?'p3':null].filter(Boolean); if (!cand.length) return null; const cnt=Object.fromEntries(cand.map(id=>[id,0])); for (const id of touchToPlayer.values()) if (cnt[id]!==undefined) cnt[id]++; return cand.reduce((best,id)=>best==null||cnt[id]<cnt[best]?id:best,null); }
-function enableTouchControls(){
-  canvas.addEventListener('pointerdown', (e)=>{
-    try { canvas.setPointerCapture(e.pointerId); } catch(_){ }
-    const rect=canvas.getBoundingClientRect(); const x=e.clientX-rect.left, y=e.clientY-rect.top; const isTop = y < rect.height/2; const who = pickFreePlayerOnSide(isTop); if (!who) return;
-    touchToPlayer.set(e.pointerId, who); const st=touchState[who]; st.active=true; st.prevX=x; st.prevY=y; st.dx=0; st.dy=0; st.just=false;
-  }, {passive:true});
-  canvas.addEventListener('pointermove', (e)=>{
-    const who = touchToPlayer.get(e.pointerId); if (!who) return; const st=touchState[who]; if(!st.active) return; const rect=canvas.getBoundingClientRect();
-    const evs = (typeof e.getCoalescedEvents === 'function') ? e.getCoalescedEvents() : [e]; let sumDxPx=0, sumDyPx=0;
-    for (const ev of evs){ const x=ev.clientX-rect.left, y=ev.clientY-rect.top; const ddx=(x-st.prevX), ddy=(y-st.prevY); sumDxPx+=ddx; sumDyPx+=ddy; st.prevX=x; st.prevY=y; }
-    st.dx = clampTouch(sumDxPx/TOUCH_DIV); st.dy = clampTouch(sumDyPx/TOUCH_DIV);
-    if (Math.hypot(sumDxPx,sumDyPx) > FLICK_PX) st.just=true;
-  }, {passive:true});
-  function endTouch(pid){ const who = touchToPlayer.get(pid); if (!who) return; const st=touchState[who]; st.active=false; st.just=false; st.dx=0; st.dy=0; touchToPlayer.delete(pid); try{ canvas.releasePointerCapture(pid);}catch(_){ } }
-  canvas.addEventListener('pointerup', (e)=> endTouch(e.pointerId), {passive:true});
-  canvas.addEventListener('pointercancel', (e)=> endTouch(e.pointerId), {passive:true});
+/* gamepad */
+const pads=new Map(), gamepadPrevButtons=new Map(); let gpPollTimer=null;
+function pollGamepads(){ const gps=navigator.getGamepads?.()||[]; pads.clear(); for(const gp of gps) if (gp&&gp.connected) pads.set(gp.index,gp); }
+function startGamepadPolling(){ if (gpPollTimer) return; gpPollTimer=setInterval(()=>{ pollGamepads(); refreshPadLists(); }, 1500); }
+function readGamepad(idx){
+  const gps=navigator.getGamepads?navigator.getGamepads():[]; const gp=gps[idx]; if(!gp) return { dx:0, dy:0, justA:false, justZR:false, hit:false };
+  const axLX=gp.axes[0]||0, axLY=gp.axes[1]||0, dead=0.18, norm=v=>Math.abs(v)<dead?0:v;
+  const dx=norm(axLX), dy=norm(axLY); const btns=gp.buttons||[]; let prev=gamepadPrevButtons.get(idx)||Array(btns.length).fill(false);
+  const now=btns.map(b=>!!b?.pressed); gamepadPrevButtons.set(idx, now);
+  const justA=(now[0]&&!prev[0]), justZR=(now[7]&&!prev[7]); const hit=now[0]||now[5]||now[7];
+  return { dx, dy, justA, justZR, hit };
 }
 
-// GAMEPAD
-const pads=new Map(), gamepadPrevButtons=new Map(); let gpPollTimer=null, gpTouched=false;
-function anyGamepadsConnected(){ const gps=navigator.getGamepads?.()||[]; for (const gp of gps) if (gp&&gp.connected) return true; return false; }
-function startGamepadPolling(){ if (gpPollTimer) return; gpPollTimer=setInterval(pollGamepads, 100); }
-function pollGamepads(){ const gps=navigator.getGamepads?.()||[]; pads.clear(); for (const gp of gps) if (gp&&gp.connected) pads.set(gp.index,gp); refreshPadLists(); autoAssignGamepadsOnPress(true); }
-window.addEventListener('gamepadconnected', e=>{ pads.set(e.gamepad.index,e.gamepad); refreshPadLists(); toast(`🎮 Gamepad #${e.gamepad.index} podłączony`); });
-window.addEventListener('gamepaddisconnected', e=>{ pads.delete(e.gamepad.index); refreshPadLists(); toast(`🎮 Gamepad #${e.gamepad.index} odłączony`); });
-function touchGamepadAPI(){ try{ navigator.getGamepads&&navigator.getGamepads(); gpTouched=true; }catch(_){} startGamepadPolling(); }
-function readGamepad(idx){ const gps=navigator.getGamepads?navigator.getGamepads():[]; const gp=gps[idx]; if (!gp) return { dx:0, dy:0, hit:false, justA:false };
-  const axLX=gp.axes[0]||0, axLY=gp.axes[1]||0, dead=0.18; const norm=v=>Math.abs(v)<dead?0:v; const dx=norm(axLX), dy=norm(axLY);
-  const btns=gp.buttons||[]; let prev=gamepadPrevButtons.get(idx); if(!prev) prev=new Array(btns.length).fill(false); const now=btns.map(b=>!!b?.pressed);
-  const justA=(now[0]&&!prev[0]), justZR=(now[7]&&!prev[7]); gamepadPrevButtons.set(idx, now); const hit=now[0]||now[5]||now[7]; return { dx, dy, hit, justA, justZR };
+/* =============================================================================
+   POMOCNICZE
+   ========================================================================== */
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+function naturalBrake(obj, dt){
+  let vx=obj.vx*60, vy=obj.vy*60;
+  const speed=Math.hypot(vx,vy); if (speed<1e-6){ obj.vx=0; obj.vy=0; return; }
+  const lin=Math.exp(-K1_AIR*dt); vx*=lin; vy*=lin;
+  let s2=Math.hypot(vx,vy); const dec2=K2_QUAD*s2*s2*dt; s2=Math.max(0, s2-dec2);
+  if (!s2){ obj.vx=0; obj.vy=0; return; }
+  const sc2=s2/Math.hypot(vx,vy); vx*=sc2; vy*=sc2;
+  let s3=Math.hypot(vx,vy); s3=Math.max(0, s3 - MUg*dt);
+  if (!s3){ obj.vx=0; obj.vy=0; return; }
+  const sc3=s3/Math.hypot(vx,vy); vx*=sc3; vy*=sc3;
+  obj.vx=vx/60; obj.vy=vy/60;
 }
 
-/*********** PERF ***********/
-const PERF={ show:false, fps:60, last:performance.now(), ema:60, particlesScale:1.0, trailMax:8, substepsMax:24, mobile:(navigator.maxTouchPoints||0)>0 };
-function perfTick(now){ const dt=(now-PERF.last)/1000; PERF.last=now; const inst=1/Math.max(dt,1/240); PERF.ema=PERF.ema*0.92+inst*0.08; PERF.fps=PERF.ema; if (PERF.mobile){ if (PERF.fps<45){PERF.particlesScale=0.4; PERF.trailMax=4; PERF.substepsMax=18;} else if (PERF.fps<55){PERF.particlesScale=0.7; PERF.trailMax=6; PERF.substepsMax=22;} else {PERF.particlesScale=1.0; PERF.trailMax=8; PERF.substepsMax=24;} } perfHud.style.display = PERF.show?'block':'none'; if (PERF.show){ perfHud.innerHTML=`FPS: <b>${PERF.fps.toFixed(0)}</b><br><span class='dim'>substeps≤${PERF.substepsMax} · particles×${PERF.particlesScale.toFixed(1)} · trail≤${PERF.trailMax}</span>`; } }
-
-/*********** RYSOWANIE ***********/
-function getSize(){ const dpr=Math.min((window.devicePixelRatio||1), PERF.mobile?1.75:2.5); return { W:canvas.width/dpr, H:canvas.height/dpr, dpr }; }
-function draw(){ const {W,H}=getSize();
-  ctx.fillStyle=tableBgColor; ctx.fillRect(0,0,W,H); canvas.style.background=tableBgColor;
-  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke(); ctx.beginPath(); ctx.arc(W/2,H/2,60,0,Math.PI*2); ctx.stroke();
-  ctx.fillStyle='rgba(0,0,0,0.1)'; ctx.font='bold 24px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; if (unlimitedTime) ctx.fillText('∞', W/2, H/2+8); else { const mins=Math.floor(matchTime/60), secs=matchTime%60; ctx.fillText(`${mins}:${secs<10?'0':''}${secs}`, W/2, H/2+8); }
-  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.font='bold 16px sans-serif'; ctx.textBaseline='top'; const otTxt=inOvertime?` • ${t('ot')}`:''; ctx.fillText(`Rundy: ${roundWinsP1} - ${roundWinsP2}${otTxt}`, W/2, 10);
-
-  const topColor=listPlayers(true)[0]?.color||'#2979ff'; const botColor=listPlayers(false)[0]?.color||'#ff1744'; ctx.lineWidth=arena.frW;
-  ctx.strokeStyle=topColor; ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, arena.frW/2); ctx.lineTo(arena.frW/2, arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, arena.frW/2); ctx.lineTo(W/2+arena.gw/2, arena.frW/2); ctx.stroke();
-  ctx.strokeStyle=botColor; ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, H-arena.frW/2); ctx.lineTo(W/2+arena.gw/2, H-arena.frW/2); ctx.stroke();
-
-  // Półkola nad bramkami
-  const rArc = arena.gw/2 + 16; ctx.save(); ctx.setLineDash([6,6]); ctx.lineWidth=3;
-  ctx.strokeStyle=topColor + 'aa'; ctx.beginPath(); ctx.arc(W/2, arena.frW/2, rArc, Math.PI, 2*Math.PI); ctx.stroke();
-  ctx.strokeStyle=botColor + 'aa'; ctx.beginPath(); ctx.arc(W/2, H - arena.frW/2, rArc, 0, Math.PI); ctx.stroke(); ctx.restore();
-
-  particles.forEach(p=>{ ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,4,4); }); ctx.globalAlpha=1;
-  listPlayers().forEach(p=>{ p.trail.forEach((t,i)=>{ ctx.globalAlpha=(i+1)/p.trail.length*.15; ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(t.x,t.y,p.r,0,Math.PI*2); ctx.fill(); }); ctx.globalAlpha=1; drawFlagOnMallet(p); drawPlayerScoreBadge(p); });
-  ctx.fillStyle='#111'; pucks.forEach(pk=>{ ctx.beginPath(); ctx.arc(pk.x,pk.y,pk.r,0,Math.PI*2); ctx.fill(); });
-  if (goalText.timer>0){ ctx.fillStyle=goalText.color; ctx.font='bold 100px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.globalAlpha=Math.min(1,goalText.timer/20); ctx.fillText(goalText.text, W/2, goalText.y); goalText.timer--; ctx.globalAlpha=1; }
-}
-
-function drawPlayerScoreBadge(p){ const {W,H}=getSize(); const dy = p.sideTop? -(p.r+14) : (p.r+14); const x=p.x, y=p.y+dy; ctx.save(); ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.beginPath(); ctx.arc(x,y,12,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(p.score), x, y+1); ctx.restore(); }
-
-function getFlagCanvas(code, size=128){ const off=document.createElement('canvas'); off.width=size; off.height=size; const c=off.getContext('2d'); const W=size,H=size; const rect=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); }; switch(code){ case 'PL': rect(0,0,W,H/2,'#fff'); rect(0,H/2,W,H/2,'#dc143c'); break; case 'US': rect(0,0,W,H,'#fff'); const stripe=H/13; c.fillStyle='#B22234'; for(let i=0;i<13;i+=2) c.fillRect(0,i*stripe,W,stripe); rect(0,0,W*0.4, stripe*7, '#3C3B6E'); break; default: rect(0,0,W,H,'#999'); } return off; }
-function drawFlagOnMallet(p){ ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.clip(); const off=getFlagCanvas(p.flagCode,256); ctx.drawImage(off, p.x-p.r, p.y-p.r, p.r*2, p.r*2); ctx.restore(); ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.stroke(); }
-
-/*********** KOLIZJE / FIZYKA ***********/
-const MAX_SUBSTEPS_BASE=24, JAM_PEN_EPS=0.5, EJECT_SPEED=22;
-const CORNER_STALL_SPEED=1.2, CORNER_STALL_TICKS=10, CORNER_EJECT_SPEED=28;
-function segmentCircleContactT(ax, ay, bx, by, cx, cy, R){ const dx=bx-ax, dy=by-ay; const A=dx*dx+dy*dy; if (A<1e-8) return null; const t=clamp(((cx-ax)*dx + (cy-ay)*dy)/A, 0, 1); const px=ax+t*dx, py=ay+t*dy; const dist2=(px-cx)*(px-cx)+(py-cy)*(py-cy); if (dist2>R*R) return null; const travel=Math.sqrt(A); const back=(R/(travel||1)); return clamp(t-back,0,1); }
-function resolveCollision(p, pk){ let dx=pk.x-p.x, dy=pk.y-p.y; let distance=Math.hypot(dx,dy); const minDist=p.r+pk.r; if (distance<minDist){ if (distance===0){dx=1e-6; dy=0; distance=1e-6;} const nx=dx/distance, ny=dy/distance; const tx=-ny, ty=nx; let vrel_n=(pk.vx-p.vx)*nx + (pk.vy-p.vy)*ny; const { H }=getSize(); const nearLine = p.sideTop ? Math.abs(p.y - (H/2 - p.r)) < 2.0 : Math.abs(p.y - (H/2 + p.r)) < 2.0; const allowPunch = p.isHitting && nearLine; const isPassive = (!p.isControlled && Math.hypot(p.vx,p.vy)<0.1); const e = p.isHitting?E_ACTIVE_HIT:(isPassive?E_PASSIVE:E_STANDARD); if (vrel_n>0) vrel_n = -Math.min(vrel_n, 0.15); if (allowPunch && vrel_n>-0.4) vrel_n=-0.4; const jn = -(1+e)*vrel_n; pk.vx += jn*nx; pk.vy += jn*ny; const vrel_t=(pk.vx-p.vx)*tx + (pk.vy-p.vy)*ty; const jt = -vrel_t*TANGENTIAL_DAMPING; pk.vx += jt*tx; pk.vy += jt*ty; const penetration=minDist-distance+0.8; pk.x += nx*penetration; pk.y += ny*penetration; if (p.isHitting) { createParticles(pk.x, pk.y, p.color, 15); vibratePadByPlayer(p); }
-} }
-function getOverlappingPlayers(pk){ const colliders=[]; listPlayers().forEach(p=>{ const dx=pk.x-p.x, dy=pk.y-p.y; const dist=Math.hypot(dx,dy); const minDist=p.r+pk.r; if (dist < (minDist - JAM_PEN_EPS)) colliders.push({p,dx,dy,dist,minDist}); }); return colliders; }
-function unjamPuckRandomHorizontal(pk, colliders){ const sign = Math.random()<0.5 ? -1 : 1; let maxPen=0; for (const c of colliders){ const pen=(c.minDist+1) - c.dist; if (pen>maxPen) maxPen=pen; } pk.x += sign*(maxPen+2); pk.vx = sign*EJECT_SPEED; pk.vy += (Math.random()*2-1)*8; createParticles(pk.x, pk.y, '#aaa', 10); }
-function sweepAgainstMallets(pk, oldX, oldY){ const players=listPlayers(); const nx=pk.x-oldX, ny=pk.y-oldY; let best={t:1.1, p:null}; for (const p of players){ const R=p.r+pk.r+0.2; const t=segmentCircleContactT(oldX,oldY,pk.x,pk.y,p.x,p.y,R); if (t!==null && t<best.t){ const vrelx=pk.vx-p.vx, vrely=pk.vy-p.vy; const toNowX=(oldX+nx*t)-p.x, toNowY=(oldY+ny*t)-p.y; const approach=(vrelx*toNowX + vrely*toNowY) < 0; if (approach) best={t,p}; } } if (best.p){ pk.x=oldX+nx*best.t; pk.y=oldY+ny*best.t; resolveCollision(best.p, pk); return true; } return false; }
-function naturalBrake(obj, dt){ let vx=obj.vx*60, vy=obj.vy*60; const speed=Math.hypot(vx,vy); if (speed<1e-6){ obj.vx=0; obj.vy=0; return; } const lin=Math.exp(-K1_AIR*dt); vx*=lin; vy*=lin; let s2=Math.hypot(vx,vy); const dec2=K2_QUAD*s2*s2*dt; s2=Math.max(0, s2-dec2); if (s2===0){ obj.vx=0; obj.vy=0; return; } const scale2=s2/Math.hypot(vx,vy); vx*=scale2; vy*=scale2; let s3=Math.hypot(vx,vy); s3=Math.max(0, s3 - MUg*dt); if (s3===0){ obj.vx=0; obj.vy=0; return; } const scale3=s3/Math.hypot(vx,vy); vx*=scale3; vy*=scale3; obj.vx=vx/60; obj.vy=vy/60; }
-function cornerArcCollision(pk, W, H){ const r=CORNER_R; const cxTL=arena.frW+r, cyTL=arena.frW+r; const cxTR=W-arena.frW-r, cyTR=arena.frW+r; const cxBL=arena.frW+r, cyBL=H-arena.frW-r; const cxBR=W-arena.frW-r, cyBR=H-arena.frW-r; const targets=[ {cx:cxTL, cy:cyTL, q:(x,y)=>x<=cxTL&&y<=cyTL}, {cx:cxTR, cy:cyTR, q:(x,y)=>x>=cxTR&&y<=cyTL}, {cx:cxBL, cy:cyBL, q:(x,y)=>x<=cxBL&&y>=cyBL}, {cx:cxBR, cy:cyBR, q:(x,y)=>x>=cxBR&&y>=cyBR}, ]; for (const c of targets){ if (!c.q(pk.x, pk.y)) continue; const dx=pk.x-c.cx, dy=pk.y-c.cy; const d=Math.hypot(dx,dy)||1e-6; const limit=r+pk.r; if (d<limit){ const nx=dx/d, ny=dy/d; pk.x=c.cx + nx*limit; pk.y=c.cy + ny*limit; const vdotn=pk.vx*nx+pk.vy*ny; if (vdotn<0){ pk.vx = pk.vx - (1+WALL_E)*vdotn*nx; pk.vy = pk.vy - (1+WALL_E)*vdotn*ny; } const outNow=pk.vx*nx+pk.vy*ny; if (outNow<MIN_WALL_OUT_SPEED){ const boost=(MIN_WALL_OUT_SPEED-outNow); pk.vx+=boost*nx; pk.vy+=boost*ny; } } } }
-function cornerBounce(pk, W, H){ const eps=0.5; const left=arena.frW+pk.r+eps, right=W-arena.frW-pk.r-eps, top=arena.frW+pk.r+eps, bottom=H-arena.frW-pk.r-eps; const atLeft=pk.x<=left, atRight=pk.x>=right, atTop=pk.y<=top, atBottom=pk.y>=bottom; if ((atLeft||atRight)&&(atTop||atBottom)){ let nx=0, ny=0; if (atLeft&&atTop){nx=1;ny=1;} if (atRight&&atTop){nx=-1;ny=1;} if (atLeft&&atBottom){nx=1;ny=-1;} if (atRight&&atBottom){nx=-1;ny=-1;} const len=Math.hypot(nx,ny)||1; nx/=len; ny/=len; const vdotn=pk.vx*nx+pk.vy*ny; if (vdotn<0){ pk.vx = pk.vx - (1+WALL_E)*vdotn*nx; pk.vy = pk.vy - (1+WALL_E)*vdotn*ny; } const outNow=pk.vx*nx+pk.vy*ny; if (outNow<MIN_WALL_OUT_SPEED){ const boost=(MIN_WALL_OUT_SPEED-outNow); pk.vx+=boost*nx; pk.vy+=boost*ny; } pk.x+=nx*1.2; pk.y+=ny*1.2; } }
-function cornerEjectIfStalled(pk, W, H){ const r=CORNER_R; const corners=[ {cx:arena.frW+r, cy:arena.frW+r}, {cx:W-arena.frW-r, cy:arena.frW+r}, {cx:arena.frW+r, cy:H-arena.frW-r}, {cx:W-arena.frW-r, cy:H-arena.frW-r} ]; const speed=Math.hypot(pk.vx, pk.vy); const margin=2.0; for (const c of corners){ const dx=pk.x-c.cx, dy=pk.y-c.cy; const d=Math.hypot(dx,dy); const zone=r+pk.r+margin; if (d<=zone){ if (speed<CORNER_STALL_SPEED){ pk.cornerStallTicks++; if (pk.cornerStallTicks>=CORNER_STALL_TICKS){ const nx=(dx||1e-6)/(d||1e-6), ny=(dy||1e-6)/(d||1e-6); pk.vx+=nx*CORNER_EJECT_SPEED; pk.vy+=ny*CORNER_EJECT_SPEED; pk.x=c.cx + nx*(r+pk.r+0.5); pk.y=c.cy + ny*(r+pk.r+0.5); createParticles(pk.x, pk.y, '#bbb', 10); } } else pk.cornerStallTicks=0; return; } } pk.cornerStallTicks=0; }
-
-// NOWOŚĆ: twarde rozwiązywanie nałożenia (bez sweep) — gwarantuje popychanie
-function resolveOverlapsNoSweep(){ const players=listPlayers(); for (const pk of pucks){ for (const p of players){ const dx=pk.x-p.x, dy=pk.y-p.y; const dist=Math.hypot(dx,dy); const minDist=p.r+pk.r; if (dist < minDist-0.1){ resolveCollision(p, pk); } } } }
-
-// Watchdog: gdy krążek praktycznie stoi przez dłuższą chwilę, daj drobne pchnięcie
-const STALL_EPS=0.06, STALL_TICKS_TRIG=90, STALL_NUDGE=0.8;
-function stallWatchdog(){ const players=listPlayers(); for (const pk of pucks){ const sp=Math.hypot(pk.vx, pk.vy); if (sp < STALL_EPS){ pk.stallTicks=(pk.stallTicks||0)+1; } else pk.stallTicks=0; if ((pk.stallTicks||0) > STALL_TICKS_TRIG){ // pchnij w stronę najbliższej paletki
-    let bestP=null,bestD=1e9; for (const p of players){ const d=Math.hypot(pk.x-p.x,pk.y-p.y); if (d<bestD){bestD=d; bestP=p;} }
-    if (bestP){ const nx=(pk.x-bestP.x)/(bestD||1), ny=(pk.y-bestP.y)/(bestD||1); pk.vx += nx*STALL_NUDGE; pk.vy += ny*STALL_NUDGE; createParticles(pk.x, pk.y, '#ccc', 6); }
-    pk.stallTicks=0;
-  } } }
-
-function substepAdvance(sStep){ const {W,H}=getSize(); for (let i=pucks.length-1; i>=0; i--){ const pk=pucks[i]; const oldX=pk.x, oldY=pk.y; pk.x += pk.vx*sStep; pk.y += pk.vy*sStep; naturalBrake(pk, sStep/60); sweepAgainstMallets(pk, oldX, oldY); cornerArcCollision(pk, W, H);
-    const tol=2; if (pk.x - (arena.frW + pk.r) < tol || (W - arena.frW - pk.r) - pk.x < tol) pk.vy *= WALL_GRAZE_DAMP; if (pk.y - (arena.frW + pk.r) < tol || (H - arena.frW - pk.r) - pk.y < tol) pk.vx *= WALL_GRAZE_DAMP;
-    if (pk.x < arena.frW + pk.r || pk.x > W - arena.frW - pk.r){ const nx=(pk.x < W/2)?1:-1; pk.vx = pk.vx - (1+WALL_E)*(pk.vx*nx)*nx; const outX=pk.vx*nx; if (outX<MIN_WALL_OUT_SPEED) pk.vx += (MIN_WALL_OUT_SPEED - outX)*nx; pk.x = pk.x < W/2 ? (arena.frW + pk.r) : (W - arena.frW - pk.r); }
-    const isGoalX = Math.abs(pk.x - W/2) < arena.gw/2; if (!isGoalX){ if (pk.y < arena.frW + pk.r || pk.y > H - arena.frW - pk.r){ const ny=(pk.y < H/2)?1:-1; pk.vy = pk.vy - (1+WALL_E)*(pk.vy*ny)*ny; const outY=pk.vy*ny; if (outY<MIN_WALL_OUT_SPEED) pk.vy += (MIN_WALL_OUT_SPEED - outY)*ny; pk.y = pk.y < H/2 ? (arena.frW + pk.r) : (H - arena.frW - pk.r); } } else { if (pk.y < 0) { onGoal('bottom', pk); continue; } if (pk.y > H) { onGoal('top', pk); continue; } }
+/* Paletka ↔ krążek */
+function resolveMalletPuck(p, pk){
+  let dx=pk.x-p.x, dy=pk.y-p.y, dist=Math.hypot(dx,dy), min=p.r+pk.r;
+  if (dist < min){
+    if (!dist){ dx=1e-6; dy=0; dist=1e-6; }
+    const nx=dx/dist, ny=dy/dist, tx=-ny, ty=nx;
+    let vrel_n=(pk.vx-p.vx)*nx + (pk.vy-p.vy)*ny;
+    let vrel_t=(pk.vx-p.vx)*tx + (pk.vy-p.vy)*ty;
+    if (vrel_n > 0) vrel_n = -Math.min(vrel_n, 0.15);
+    const e = getMalletE();
+    const jn = -(1+e)*vrel_n; pk.vx += jn*nx; pk.vy += jn*ny;
+    const jt = -vrel_t*TANGENTIAL_DAMPING; pk.vx += jt*tx; pk.vy += jt*ty;
+    const pen = (min - dist) + 0.6; pk.x += nx*pen; pk.y += ny*pen;
   }
-  // Anti-jam: jeśli nałożony tylko 1 vs 1 – też zrób kolizję
-  resolveOverlapsNoSweep();
-  for (let i=0;i<pucks.length;i++){ const pk=pucks[i]; const colliders=getOverlappingPlayers(pk); if (colliders.length>=2) unjamPuckRandomHorizontal(pk, colliders); }
-  for (const pk of pucks){ cornerBounce(pk, W, H); cornerEjectIfStalled(pk, W, H); }
 }
 
-/*********** LOGIKA ***********/
-function handleLogic(dt){ const s=dt*60;
-  listPlayers().forEach((p, idx)=>{ const id=`p${idx+1}`; const input=getInputForPlayer(p,id,dt); const movingNow=Math.abs(input.dx)+Math.abs(input.dy)>0.01; const justStrike=!!input.justStrike && movingNow; updatePlayer(p, input.dx, input.dy, justStrike, p.sideTop?arena.frW:canvas.height, p.sideTop?canvas.height/2:(canvas.height), canvas.width, s); if (input.justZR) tryZRPush(p); if (input.justAButton && p.isHitting){ showBadge(p,'A'); trySpawnMultiball(p); } });
-  if (pucks.length>0){ let maxDispPx=0; for (const pk of pucks){ const disp=Math.hypot(pk.vx, pk.vy)*s; if (disp>maxDispPx) maxDispPx=disp; } const refR=Math.min(...listPlayers().map(p=>p.r).concat([basePuck.r])); const refStepPx=Math.max(3, Math.floor(refR*0.20)); const MAXS=Math.min(MAX_SUBSTEPS_BASE, PERF.substepsMax); const substeps=Math.max(1, Math.min(MAXS, Math.ceil(maxDispPx / refStepPx))); const sStep=s/substeps; for (let st=0; st<substeps; st++) substepAdvance(sStep); }
-  pucks.forEach(pk=>limitPuckSpeed(pk, puckSpeedMax)); updateParticles(); stallWatchdog(); autoAssignGamepadsOnPress(false); justPressed.clear(); updateKeysHud(); }
-
-function updatePlayer(p, dx, dy, justHit, minY, maxY, W, s){ const base=9, boost=25; p.isHitting=!!justHit; p.isControlled=(Math.abs(dx)>0||Math.abs(dy)>0); if (p.isHitting){ p.trail.push({x:p.x,y:p.y}); if (p.trail.length>PERF.trailMax) p.trail.shift(); } else { if (p.trail.length>0) p.trail.shift(); } const speed=(p.isHitting?boost:base); p.vx=dx*speed; p.vy=dy*speed; p.x+=p.vx*s; p.y+=p.vy*s; const {W:VW,H:VH}=getSize(); p.x=Math.max(arena.frW+p.r, Math.min(VW - arena.frW - p.r, p.x)); const mid=VH/2; if (p.sideTop){ p.y=Math.max(arena.frW+p.r, Math.min(mid - p.r, p.y)); } else { p.y=Math.max(mid+p.r, Math.min(VH - arena.frW - p.r, p.y)); } }
-function limitPuckSpeed(pk, maxSpeed){ const sp=Math.hypot(pk.vx, pk.vy); if (sp>maxSpeed){ const s=maxSpeed/sp; pk.vx*=s; pk.vy*=s; } }
-function listPlayers(onlyTopOrBot=null){ const L=[p1,p2]; if (p3) L.push(p3); if (p4) L.push(p4); if (onlyTopOrBot===null) return L; return L.filter(pp=> pp.sideTop === !!onlyTopOrBot); }
-function sumScores(top){ return listPlayers(top).reduce((s,p)=>s+p.score,0); }
-
-/*********** GOL / RUNDY ***********/
-function onGoal(scoringSide, pk){ const { H }=getSize(); const topTeam=listPlayers(true), botTeam=listPlayers(false); if (scoringSide==='bottom'){ botTeam.forEach(p=>p.score++); showGoal(topTeam[0]?.color||'#2979ff', H*0.65); } else { topTeam.forEach(p=>p.score++); showGoal(botTeam[0]?.color||'#ff1744', H*0.35); } const idx=pucks.indexOf(pk); if (idx>=0) pucks.splice(idx,1); if (inOvertime){ pucks.length=0; setTimeout(()=>endRound(), 50); return; } if (pucks.length===0) setTimeout(()=>resetPositions(), 400); }
-function showGoal(color, y){ goalText={ timer:40, color, y, text:t('goal') }; createParticles(canvas.width/2/(window.devicePixelRatio||1), y, color, 40); }
-function startTimer(){ clearInterval(timerInterval); timerInterval=setInterval(()=>{ if (!isPaused && !isGameOver && !unlimitedTime && matchTime>0){ matchTime--; if (matchTime===0){ if (sumScores(false)!==sumScores(true)) endRound(); else startOvertime(); } } },1000); }
-function startOvertime(){ inOvertime=true; }
-function endRound(){ if (sumScores(false) > sumScores(true)) roundWinsP1++; else if (sumScores(true) > sumScores(false)) roundWinsP2++; inOvertime=false; const need=Math.ceil(bestOf/2); if (roundWinsP1===need || roundWinsP2===need) endMatch(); else startNewRound(); }
-function startNewRound(){ listPlayers().forEach(p=>{ p.score=0; p.specialUsesUsed=0; p.lastSpecialAt=0; }); matchTime = unlimitedTime ? 0 : roundTimeSec; resetPositions(); showCountdown(()=>{ isPaused=false; }); }
-function endMatch(){ isGameOver=true; isPaused=true; overlay.style.display='flex'; applyTexts(); const btn=document.getElementById('btnResume'); btn.textContent = t('newMatch'); btn.onclick = ()=>{ roundWinsP1=0; roundWinsP2=0; listPlayers().forEach(p=>{ p.score=0; p.specialUsesUsed=0; p.lastSpecialAt=0; }); isGameOver=false; inOvertime=false; matchTime = unlimitedTime ? 0 : roundTimeSec; overlay.style.display='none'; applyTexts(); resetPositions(); isPaused=false; startTimer(); btn.onclick = onResumeClick; }; }
-
-function positionTeam(team,cx,cy,W){ if (team.length===1){ team[0].x=cx; team[0].y=cy; return; } if (team.length===2){ team[0].x=W*0.35; team[0].y=cy; team[1].x=W*0.65; team[1].y=cy; } }
-function resetPositions(){ const {W,H}=getSize(); const topTeam=listPlayers(true), botTeam=listPlayers(false); positionTeam(botTeam, W/2, H-100, W); positionTeam(topTeam, W/2, 100, W); pucks=[]; pucks.push(makePuck(W/2,H/2,basePuck.r)); }
-
-/*********** SPECJAŁY & HAPTICS ***********/
-function tryZRPush(p){ let best=null, bestD=1e9; for (const pk of pucks){ const dx=pk.x-p.x, dy=pk.y-p.y; const d=Math.hypot(dx,dy); if (d<bestD){ bestD=d; best=pk; } } if (!best) return; const reach=p.r+best.r+22; if (bestD>reach) return; const nx=(best.x-p.x)/(bestD||1), ny=(best.y-p.y)/(bestD||1); const mag=Math.max(0.55*puckSpeedMax, puckSpeedMax-8); best.vx += nx*mag; best.vy += ny*mag; createParticles(best.x,best.y,p.color,18); vibratePadByPlayer(p, true); }
-function trySpawnMultiball(p){ const now=performance.now(); if (now - p.lastSpecialAt < SPECIAL_COOLDOWN_MS) return; if (multiballLimitPerPlayer!==0 && p.specialUsesUsed>=multiballLimitPerPlayer) return; p.lastSpecialAt=now; p.specialUsesUsed++; showBadge(p,'MB'); const baseR=basePuck.r; const spawn=(angDeg,speed)=>{ const rad=angDeg*Math.PI/180; const pk=makePuck(p.x+Math.cos(rad)*(p.r+baseR+2), p.y+Math.sin(rad)*(p.r+baseR+2), baseR); pk.vx=Math.cos(rad)*speed; pk.vy=Math.sin(rad)*speed; pucks.push(pk); setTimeout(()=>{ const i=pucks.indexOf(pk); if (i>=0) pucks.splice(i,1); }, MULTIBALL_LIFETIME_MS); }; const dir=p.sideTop?1:-1; const initSpeed=Math.max(10, Math.round(puckSpeedMax*0.42)); spawn(dir*80, initSpeed); spawn(dir*100, initSpeed); }
-
-let vibEnabled = (localStorage.getItem('vibEnabled') ?? '1') !== '0';
-let vibStrength = Math.max(0, Math.min(100, parseInt(localStorage.getItem('vibStrength') || '70', 10)));
-function vibrateGamepad(index, duration=50, weak=0.5, strong=1.0){ try{ if (!vibEnabled) return; const gp=navigator.getGamepads?.()[index]; if (!gp) return; const mult = vibStrength/100; if (mult<=0) return; const act = gp.vibrationActuator || (gp.hapticActuators && gp.hapticActuators[0]); const dur = Math.max(10, Math.round(duration* (0.6 + 0.8*mult))); const w = Math.max(0, Math.min(1, weak*mult)); const s = Math.max(0, Math.min(1, strong*mult)); if (act && typeof act.playEffect==='function'){ act.playEffect('dual-rumble', { duration: dur, strongMagnitude: s, weakMagnitude: w }); } else if (act && typeof act.pulse==='function'){ act.pulse(s, dur); } else if (navigator.vibrate) { navigator.vibrate(Math.round(dur*0.8)); } }catch(e){} }
-function vibratePadByPlayer(p, short=false){ if (p.padIndex<0) return; vibrateGamepad(p.padIndex, short?30:70, 0.4, 0.9); }
-
-/*********** UI / PEŁNY EKRAN ***********/
-function fit(){ const dpr=Math.min((window.devicePixelRatio||1), PERF.mobile?1.75:2.5); const w=window.innerWidth,h=window.innerHeight; canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr); canvas.style.width=w+'px'; canvas.style.height=h+'px'; ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr); }
-function isFullscreen(){ return !!document.fullscreenElement; }
-async function enterFullscreen(){ try{ if (!isFullscreen()) await document.documentElement.requestFullscreen(); } catch(e){ toast(t('fsEnterErr')); } }
-async function exitFullscreen(){ try{ if (isFullscreen()) await document.exitFullscreen(); } catch(e){ toast(t('fsExitErr')); } }
-async function toggleFullscreen(){ if (!isFullscreen()) await enterFullscreen(); else await exitFullscreen(); }
-window.onresize=()=>{ fit(); resetPositions(); };
-
-function setupBgColors(){ const wrap=document.getElementById('bgColors'); wrap.innerHTML=''; BG_PRESETS.forEach(({c,n})=>{ const b=document.createElement('button'); b.className='bg-swatch'; b.innerHTML=`<div class=\"swatch\" style=\"background:${c}\"></div><div class=\"swatch-name\">${n}</div>`; if (tableBgColor.toLowerCase()===c.toLowerCase()) b.classList.add('active'); b.onclick=()=>{ tableBgColor=c; localStorage.setItem('tableBgColor',c); Array.from(wrap.children).forEach(cn=>cn.classList.remove('active')); b.classList.add('active'); canvas.style.background=tableBgColor; }; wrap.appendChild(b); }); const cp=document.getElementById('colorPicker'); if (cp){ cp.value=(function toHex(col){ const c=document.createElement('canvas').getContext('2d'); c.fillStyle=col; return c.fillStyle; })(tableBgColor); cp.oninput=e=>{ tableBgColor=e.target.value; localStorage.setItem('tableBgColor',tableBgColor); canvas.style.background=tableBgColor; Array.from(wrap.children).forEach(cn=>cn.classList.remove('active')); }; } }
-function toHex(col){ const c=document.createElement('canvas').getContext('2d'); c.fillStyle=col; return c.fillStyle; }
-function setPuck(r, idx){ basePuck.r=r; if (pucks[0]) pucks[0].r=r; document.querySelectorAll('.btn-puck').forEach((b,i)=>b.classList.toggle('active', i===idx)); applyGoalSizeFromCount(goalPucksCount); resetPositions(); }
-function setMallet(which, r, idx){ if (which==='p1'){ p1.r=r; document.querySelectorAll('.btn-mallet-p1').forEach((b,i)=>b.classList.toggle('active', i===idx)); } else { p2.r=r; document.querySelectorAll('.btn-mallet-p2').forEach((b,i)=>b.classList.toggle('active', i===idx)); } resetPositions(); }
-
-const FLAG_CODES=['PL','US','GB','FR','DE','ES','BR','JP','IT','NL','PT'];
-function flagSVG(code){ switch(code){ case 'PL': return `<svg viewBox=\"0 0 4 3\"><rect width=\"4\" height=\"1.5\" fill=\"#fff\"/><rect y=\"1.5\" width=\"4\" height=\"1.5\" fill=\"#dc143c\"/></svg>`; case 'FR': return `<svg viewBox=\"0 0 3 2\"><rect width=\"1\" height=\"2\" fill=\"#0055A4\"/><rect x=\"1\" width=\"1\" height=\"2\" fill=\"#fff\"/><rect x=\"2\" width=\"1\" height=\"2\" fill=\"#EF4135\"/></svg>`; case 'DE': return `<svg viewBox=\"0 0 5 3\"><rect width=\"5\" height=\"1\" fill=\"#000\"/><rect y=\"1\" width=\"5\" height=\"1\" fill=\"#DD0000\"/><rect y=\"2\" width=\"5\" height=\"1\" fill=\"#FFCE00\"/></svg>`; case 'ES': return `<svg viewBox=\"0 0 4 3\"><rect width=\"4\" height=\"3\" fill=\"#AA151B\"/><rect y=\"0.5\" width=\"4\" height=\"2\" fill=\"#F1BF00\"/></svg>`; case 'JP': return `<svg viewBox=\"0 0 3 2\"><rect width=\"3\" height=\"2\" fill=\"#fff\"/><circle cx=\"1.5\" cy=\"1\" r=\"0.5\" fill=\"#BC002D\"/></svg>`; case 'IT': return `<svg viewBox=\"0 0 3 2\"><rect width=\"1\" height=\"2\" fill=\"#009246\"/><rect x=\"1\" width=\"1\" height=\"2\" fill=\"#fff\"/><rect x=\"2\" width=\"1\" height=\"2\" fill=\"#CE2B37\"/></svg>`; case 'NL': return `<svg viewBox=\"0 0 3 2\"><rect width=\"3\" height=\"2\" fill=\"#AE1C28\"/><rect y=\"0.6667\" width=\"3\" height=\"0.6667\" fill=\"#fff\"/><rect y=\"1.3333\" width=\"3\" height=\"0.6667\" fill=\"#21468B\"/></svg>`; case 'PT': return `<svg viewBox=\"0 0 3 2\"><rect width=\"1.2\" height=\"2\" fill=\"#006600\"/><rect x=\"1.2\" width=\"1.8\" height=\"2\" fill=\"#FF0000\"/></svg>`; case 'US': return `<svg viewBox=\"0 0 19 10\"><rect width=\"19\" height=\"10\" fill=\"#fff\"/><rect y=\"0\" width=\"19\" height=\"0.77\" fill=\"#B22234\"/><rect y=\"1.54\" width=\"19\" height=\"0.77\" fill=\"#B22234\"/><rect y=\"3.08\" width=\"19\" height=\"0.77\" fill=\"#B22234\"/><rect y=\"4.62\" width=\"19\" height=\"0.77\" fill=\"#B22234\"/><rect y=\"6.16\" width=\"19\" height=\"0.77\" fill=\"#B22234\"/><rect y=\"7.7\" width=\"19\" height=\"0.77\" fill=\"#B22234\"/><rect y=\"9.23\" width=\"19\" height=\"0.77\" fill=\"#B22234\"/><rect width=\"7.6\" height=\"5.38\" fill=\"#3C3B6E\"/></svg>`; case 'GB': return `<svg viewBox=\"0 0 60 30\"><path d=\"M0 0h60v30H0z\" fill=\"#012169\"/><path d=\"M0 0l60 30M60 0L0 30\" stroke=\"#FFF\" stroke-width=\"6\"/><path d=\"M0 0l60 30M60 0L0 30\" stroke=\"#C8102E\" stroke-width=\"3\"/><path d=\"M0 15h60M30 0v30\" stroke=\"#FFF\" stroke-width=\"10\"/><path d=\"M0 15h60M30 0v30\" stroke=\"#C8102E\" stroke-width=\"6\"/></svg>`; case 'BR': return `<svg viewBox=\"0 0 10 7\"><rect width=\"10\" height=\"7\" fill=\"#009B3A\"/><polygon points=\"5,1 8,3.5 5,6 2,3.5\" fill=\"#FFDF00\"/><circle cx=\"5\" cy=\"3.5\" r=\"1.25\" fill=\"#002776\"/></svg>`; default: return `<svg viewBox=\"0 0 3 2\"><rect width=\"3\" height=\"2\" fill=\"#999\"/></svg>`; } }
-function setupFlags(){ const targets=[ {player:p2, divId:'flagsP2'}, {player:p1, divId:'flagsP1'} ]; targets.forEach(({player,divId})=>{ const div=document.getElementById(divId); div.innerHTML=''; FLAG_CODES.forEach(code=>{ const b=document.createElement('button'); b.className='flagbtn'; b.innerHTML=flagSVG(code); b.title=code; b.onclick=()=>{ player.flagCode=code; Array.from(div.children).forEach(c=>c.classList.remove('active')); b.classList.add('active'); }; if (player.flagCode===code) b.classList.add('active'); div.appendChild(b); }); }); }
-
-function setupLang(){ document.querySelectorAll('.btn-lang').forEach(btn=>{ btn.classList.toggle('active', btn.dataset.lang===lang); btn.onclick=()=>{ lang=btn.dataset.lang; localStorage.setItem('lang', lang); document.querySelectorAll('.btn-lang').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); goalText.text=t('goal'); applyTexts(); }; }); }
-
-function setupRoundsUI(){ const wrap=document.getElementById('roundPresets'); const customWrap=document.getElementById('customTimeWrap'); const inpMinutes=document.getElementById('inpMinutes'); const chkUnlimited=document.getElementById('chkUnlimited'); Array.from(wrap.children).forEach(b=>b.classList.toggle('active', b.dataset.sec==='180')); inpMinutes.value=3; customWrap.style.display='none'; chkUnlimited.checked=false; wrap.querySelectorAll('.btn-round').forEach(btn=>{ btn.onclick=()=>{ Array.from(wrap.children).forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const val=btn.dataset.sec; if (val==='custom'){ customWrap.style.display='flex'; unlimitedTime=false; chkUnlimited.checked=false; } else { customWrap.style.display='none'; unlimitedTime=false; chkUnlimited.checked=false; roundTimeSec=parseInt(val,10); } matchTime=unlimitedTime?0:roundTimeSec; }; }); inpMinutes.addEventListener('change', ()=>{ const m=Math.max(0, Math.min(60, parseInt(inpMinutes.value||'0',10))); roundTimeSec=m*60; matchTime=unlimitedTime?0:roundTimeSec; }); chkUnlimited.addEventListener('change', ()=>{ unlimitedTime=chkUnlimited.checked; if (unlimitedTime){ Array.from(wrap.children).forEach(b=>b.classList.remove('active')); customWrap.style.display='none'; matchTime=0; } else { const activeBtn=Array.from(wrap.children).find(b=>b.classList.contains('active')); if (activeBtn && activeBtn.dataset.sec!=='custom'){ roundTimeSec=parseInt(activeBtn.dataset.sec,10); matchTime=roundTimeSec; } else { roundTimeSec=180; matchTime=180; } } }); document.querySelectorAll('.btn-format').forEach(btn=>{ btn.onclick=()=>{ document.querySelectorAll('.btn-format').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); bestOf=parseInt(btn.dataset.bo,10); }; }); }
-
-function setupHapticsUI(){ const slider=document.getElementById('rangeVib'); const read=document.getElementById('vibReadout'); const chk=document.getElementById('chkVib'); chk.checked = vibEnabled; slider.value=String(vibStrength); read.textContent = vibStrength + '%'; const apply=()=>{ vibEnabled = chk.checked; localStorage.setItem('vibEnabled', vibEnabled?'1':'0'); vibStrength = Math.max(0, Math.min(100, parseInt(slider.value||'0',10))); read.textContent = vibStrength + '%'; localStorage.setItem('vibStrength', String(vibStrength)); slider.style.opacity = vibEnabled? '1':'0.5'; };
-  chk.addEventListener('change', apply); slider.addEventListener('input', apply); apply(); }
-
-function refreshPadLists(){ const ids=['P1','P2','P3','P4']; const sels=ids.map(id=>document.getElementById('selPad'+id)); sels.forEach(sel=>{ if (sel) sel.innerHTML=''; }); const gps=navigator.getGamepads?navigator.getGamepads():[]; let any=false; for (let i=0;i<gps.length;i++){ const gp=gps[i]; if(!gp) continue; any=true; sels.forEach(sel=>{ if (!sel) return; const opt=document.createElement('option'); opt.value=gp.index; opt.textContent=`#${gp.index} ${gp.id}`; sel.appendChild(opt); }); }
-  if (!any){ sels.forEach(sel=>{ if (!sel) return; const opt=document.createElement('option'); opt.value=''; opt.textContent='— brak padów —'; opt.disabled=true; opt.selected=true; sel.appendChild(opt); }); }
-  if (p1.padIndex>=0){ const el=document.getElementById('selPadP1'); if (el) el.value=p1.padIndex; }
-  if (p2.padIndex>=0){ const el=document.getElementById('selPadP2'); if (el) el.value=p2.padIndex; }
-  if (p3?.padIndex>=0){ const el=document.getElementById('selPadP3'); if (el) el.value=p3.padIndex; }
-  if (p4?.padIndex>=0){ const el=document.getElementById('selPadP4'); if (el) el.value=p4.padIndex; }
-}
-
-function setupInputSelectors(){ const map=[ {p:p1,inSel:'selInputP1',padSel:'selPadP1',aiSel:'selAiP1'}, {p:p2,inSel:'selInputP2',padSel:'selPadP2',aiSel:'selAiP2'}, {p:()=>p3,inSel:'selInputP3',padSel:'selPadP3',aiSel:'selAiP3',col:'colP3'}, {p:()=>p4,inSel:'selInputP4',padSel:'selPadP4',aiSel:'selAiP4',col:'colP4'} ];
-  const applyVis=(selInId,padSelId,aiSelId)=>{ const selIn=document.getElementById(selInId); const padSel=document.getElementById(padSelId); const aiSel=document.getElementById(aiSelId); if(!selIn) return; if (padSel) padSel.style.display=(selIn.value==='gamepad')?'block':'none'; if (aiSel) aiSel.style.display=(selIn.value==='ai')?'block':'none'; };
-  map.forEach(row=>{ const getP=(typeof row.p==='function')?row.p:()=>row.p; const pRef=getP(); const selIn=document.getElementById(row.inSel); const padSel=document.getElementById(row.padSel); const aiSel=document.getElementById(row.aiSel); if (!selIn) return; selIn.addEventListener('change',()=>{ const pObj=getP(); if (pObj) pObj.input=selIn.value; applyVis(row.inSel,row.padSel,row.aiSel); if (selIn.value==='gamepad') { touchGamepadAPI(); setTimeout(()=>{ if (!anyGamepadsConnected()) toast(`${t('noPad')} ${t('httpsTip')}`); }, 150); } }); if (padSel) padSel.addEventListener('change', ()=>{ const pObj=getP(); if (pObj) pObj.padIndex=parseInt(padSel.value,10)||-1; }); if (aiSel) aiSel.addEventListener('change', ()=>{ const pObj=getP(); if (pObj) pObj.ai=aiSel.value; }); if (pRef) pRef.input=selIn.value; applyVis(row.inSel,row.padSel,row.aiSel); });
-  refreshPadLists(); if (!gpPollTimer) startGamepadPolling(); setInterval(refreshPadLists, 2000);
-}
-
-let playersCount=2;
-function setupPlayersUI(){ const btns=document.querySelectorAll('.btn-players'); btns.forEach(b=> b.onclick=()=>{ btns.forEach(x=>x.classList.remove('active')); b.classList.add('active'); playersCount=parseInt(b.dataset.n,10); applyPlayersCount(); }); document.getElementById('selMbLimit').addEventListener('change',(e)=>{ multiballLimitPerPlayer=parseInt(e.target.value,10); listPlayers().forEach(p=>{ p.specialUsesUsed=0; p.lastSpecialAt=0; }); }); }
-function applyPlayersCount(){ if (playersCount>=3 && !p3) p3 = makePlayer(p1.color, p1.flagCode, false, 'P3'); if (playersCount<3) p3=null; if (playersCount>=4 && !p4) p4 = makePlayer(p2.color, p2.flagCode, true, 'P4'); if (playersCount<4) p4=null; document.getElementById('colP3').style.display = playersCount>=3?'block':'none'; document.getElementById('colP4').style.display = playersCount>=4?'block':'none'; p1.sideTop=false; p2.sideTop=true; if (p3) p3.sideTop=false; if (p4) p4.sideTop=true; setupInputSelectors(); resetPositions(); }
-
-let fullscreenPref = (localStorage.getItem('fs') ?? '0') === '1';
-function setupFullscreenSetting(){ const chk=document.getElementById('chkFullscreen'); chk.checked = fullscreenPref || isFullscreen(); chk.addEventListener('change', async ()=>{ fullscreenPref=chk.checked; localStorage.setItem('fs', fullscreenPref?'1':'0'); if (fullscreenPref) await enterFullscreen(); else await exitFullscreen(); }); }
-
-function setupPuckSpeedUI(){ const wrap=document.getElementById('puckSpeedBtns'); const map={ very_slow:PUCK_SPEED_PRESETS.very_slow, slow:PUCK_SPEED_PRESETS.slow, normal:PUCK_SPEED_PRESETS.normal, fast:PUCK_SPEED_PRESETS.fast, very_fast:PUCK_SPEED_PRESETS.very_fast }; const currentKey=Object.keys(map).find(k=>map[k]===puckSpeedMax)||'normal'; wrap.querySelectorAll('.btn-ps').forEach(btn=>{ btn.classList.toggle('active', btn.dataset.speed===currentKey); btn.onclick=()=>{ wrap.querySelectorAll('.btn-ps').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); const key=btn.dataset.speed; puckSpeedMax=map[key]; localStorage.setItem('puckSpeedMax', String(puckSpeedMax)); toast(`Max speed: ${key.replaceAll('_',' ')}`); }; }); }
-
-function getInputForPlayer(p, id, dt){ if (p.input==='gamepad' && p.padIndex>=0){ const gp=readGamepad(p.padIndex); const moving=Math.abs(gp.dx)+Math.abs(gp.dy)>0.01; const justStrike=gp.justA && moving; return { dx:gp.dx, dy:gp.dy, justStrike, justAButton:gp.justA, justZR:gp.justZR }; } if (p.input==='ai'){ const ai=aiInputFor(p,id,dt); return { dx:ai.dx, dy:ai.dy, justStrike:ai.justStrike, justAButton:false }; }
-  let dx=0, dy=0, justStrike=false; switch(id){ case 'p1': dx=(keys['ArrowLeft']?-1:0)+(keys['ArrowRight']?1:0); dy=(keys['ArrowUp']?-1:0)+(keys['ArrowDown']?1:0); { const moving=Math.abs(dx)+Math.abs(dy)>0.01; const just=(justPressed.has('Enter')||justPressed.has('Numpad0')||justPressed.has('NumpadEnter')); justStrike=just && moving; } break; case 'p2': dx=(keys['KeyA']?-1:0)+(keys['KeyD']?1:0); dy=(keys['KeyW']?-1:0)+(keys['KeyS']?1:0); { const moving=Math.abs(dx)+Math.abs(dy)>0.01; const just=(justPressed.has('Space')||justPressed.has('ControlLeft')); justStrike=just && moving; } break; case 'p3': dx=(keys['KeyJ']?-1:0)+(keys['KeyL']?1:0); dy=(keys['KeyI']?-1:0)+(keys['KeyK']?1:0); { const moving=Math.abs(dx)+Math.abs(dy)>0.01; const just=(justPressed.has('ShiftRight')); justStrike=just && moving; } break; case 'p4': dx=(keys['KeyF']?-1:0)+(keys['KeyH']?1:0); dy=(keys['KeyT']?-1:0)+(keys['KeyG']?1:0); { const moving=Math.abs(dx)+Math.abs(dy)>0.01; const just=(justPressed.has('ShiftLeft')); justStrike=just && moving; } break; } return { dx, dy, justStrike, justAButton:false }; }
-
-let autoAssignShown=false; function autoAssignGamepadsOnPress(fromPoll){ const gps=navigator.getGamepads?navigator.getGamepads():[]; for (let i=0;i<gps.length;i++){ const gp=gps[i]; if (!gp) continue; const anyPressed = (gp.buttons||[]).some(b=> (typeof b==='object'?b.pressed:b>0.5)) || (gp.axes||[]).some(a=> Math.abs(a)>0.4 ); if (!anyPressed && !fromPoll) continue; const usedPads=new Set(listPlayers().map(p=>p.padIndex).filter(i=>i>=0)); if (!usedPads.has(gp.index)){
-      let targets=listPlayers().filter(p=> p.input==='gamepad' && p.padIndex<0);
-      if (targets.length===0){ targets = [p1,p2,p3,p4].filter(Boolean).filter(p=> p.input!=='gamepad'); }
-      if (targets.length>0){ const pick=targets[0]; pick.input='gamepad'; pick.padIndex=gp.index; refreshPadLists(); const sel=document.getElementById(pick===p1?'selInputP1':pick===p2?'selInputP2':pick===p3?'selInputP3':'selInputP4'); if (sel){ sel.value='gamepad'; sel.dispatchEvent(new Event('change')); }
-        toast(`Gamepad #${gp.index} przypisany do ${pick.name}`); autoAssignShown=true; setTimeout(()=>autoAssignShown=false, 1200); return; }
+/* Ściany / okna bramek (bez fizyki rogów) */
+function wallsAndGoals(pk, W, H){
+  if (pk.x < arena.frW + pk.r || pk.x > W - arena.frW - pk.r){
+    const nx=(pk.x < W/2)?1:-1; pk.vx = pk.vx - (1+WALL_E)*(pk.vx*nx)*nx;
+    const out = pk.vx*nx; if (out<MIN_WALL_OUT_SPEED) pk.vx += (MIN_WALL_OUT_SPEED-out)*nx;
+    pk.x = (pk.x < W/2)? (arena.frW + pk.r) : (W - arena.frW - pk.r);
+  }
+  const isGoalX = Math.abs(pk.x - W/2) < arena.gw/2;
+  if (!isGoalX){
+    if (pk.y < arena.frW + pk.r || pk.y > H - arena.frW - pk.r){
+      const ny=(pk.y < H/2)?1:-1; pk.vy = pk.vy - (1+WALL_E)*(pk.vy*ny)*ny;
+      const out = pk.vy*ny; if (out<MIN_WALL_OUT_SPEED) pk.vy += (MIN_WALL_OUT_SPEED-out)*ny;
+      pk.y = (pk.y < H/2)? (arena.frW + pk.r) : (H - arena.frW - pk.r);
     }
+  } else {
+    if (pk.y < 0 || pk.y > H){ pk.x=W/2; pk.y=H/2; pk.vx=0; pk.vy=0; }
   }
 }
 
-/*********** COUNTDOWN ***********/
-function showCountdown(cb){ let c=3; countdownEl.style.display='flex'; countdownEl.innerText=c; const tmr=setInterval(()=>{ c--; if (c>0) countdownEl.innerText=c; else { clearInterval(tmr); countdownEl.style.display='none'; cb&&cb(); startTimer(); } }, 700); }
+/* =============================================================================
+   AI (działa)
+   ========================================================================== */
+function aiInputFor(p,id,dt){
+  const params = {
+    easy:   { gain:0.8,  vmax:0.75, react:0.14, aimNoise:22, strikeDist:46 },
+    medium: { gain:1.2,  vmax:0.95, react:0.08, aimNoise:12, strikeDist:52 },
+    hard:   { gain:1.6,  vmax:1.00, react:0.05, aimNoise: 6, strikeDist:58 },
+  };
+  const cfg = params[p.ai] || params.medium;
+  const {W,H} = getSize();
+  const puck = pk;
+  const coming = p.sideTop ? (puck.vy < 0) : (puck.vy > 0);
+  const defendLineY = p.sideTop ? H*0.24 : H*0.76;
 
-/*********** TUTORIAL ***********/
-const TUT = { step:0, steps:[
-  { h:'Sterowanie', p:`<b>P1:</b> Strzałki • Enter/Numpad0 = cios<br><b>P2:</b> WASD • Space/Ctrl = cios<br><b>Pad:</b> A = cios, RT/RB • ZR = pchnięcie` },
-  { h:'Zasady', p:`Uderz krążek do bramki przeciwnika. <br>„Cios” (szybki ruch + klawisz) daje mocniejsze odbicie.` },
-  { h:'Specjal', p:`W trakcie ciosu na padzie wciśnij <b>A</b> – pojawią się 2 dodatkowe krążki (czasowe).` },
-  { h:'Wskazówki', p:`${t('kbTip')}<br>${t('gamepadTip')}<br>${t('httpsTip')}` }
-] };
-function renderTut(){ const wrap=document.getElementById('tutBody'); const s=TUT.steps[TUT.step]; wrap.innerHTML = `<h3 style=\"margin:0 0 6px 0\">${s.h}</h3><div class=\"hint\">Krok ${TUT.step+1}/${TUT.steps.length}</div><div style=\"margin-top:8px; line-height:1.6\">${s.p}</div>`; document.getElementById('tutPrev').disabled = (TUT.step===0); document.getElementById('tutNext').textContent = (TUT.step===TUT.steps.length-1)?'Zakończ':'Dalej ⟶'; }
-function openTut(){ document.getElementById('tut').style.display='flex'; renderTut(); }
-function closeTut(){ document.getElementById('tut').style.display='none'; }
+  let targetX = puck.x;
+  if (coming && Math.abs(puck.vy) > 0.08){
+    const lineY = p.sideTop ? (H*0.34) : (H*0.66);
+    const frames = (lineY - puck.y) / (puck.vy || 1e-6);
+    let predX = puck.x + puck.vx * frames;
+    const left = arena.frW + puck.r, right = W - arena.frW - puck.r, span = right - left;
+    if (span > 1){
+      let px = predX - left;
+      px = ((px % (2*span)) + 2*span) % (2*span);
+      predX = (px > span) ? (left + (2*span - px)) : (left + px);
+    }
+    targetX = predX + (Math.random()*2 - 1) * cfg.aimNoise;
+  } else {
+    targetX = W*0.5 + (p.sideTop ? -24 : 24);
+  }
 
-/*********** ZDARZENIA UI ***********/
-function applyTexts(){ const title=document.getElementById('txtTitle'); if (title) title.textContent = isGameOver ? `${t('gameOver')} — R:${roundWinsP1}:${roundWinsP2}` : t('settings'); const btn=document.getElementById('btnResume'); if (btn) btn.textContent = isGameOver ? t('newMatch') : t('start'); }
-const onResumeClick = async () => { if (fullscreenPref && !isFullscreen()) await enterFullscreen(); overlay.style.display='none'; ensureKeyFocus(); touchGamepadAPI(); if (!anyGamepadsConnected()) toast(`${t('noPad')} ${t('httpsTip')}`); showCountdown(()=>{ isPaused=false; applyTexts(); ensureKeyFocus(); }); };
-document.getElementById('btnResume').onclick = onResumeClick;
+  let aimY;
+  if (coming){
+    const offset = p.sideTop ? -28 : 28;
+    aimY = clamp(puck.y + offset, p.sideTop ? (arena.frW + p.r) : (H/2 + p.r),
+                                p.sideTop ? (H/2 - p.r)        : (H - arena.frW - p.r));
+  } else {
+    aimY = defendLineY;
+  }
 
-function restartMatch(){ // pełny soft-restart
-  isGameOver=false; inOvertime=false; isPaused=false; goalText.timer=0; particles.length=0;
-  listPlayers().forEach(p=>{ p.score=0; p.trail.length=0; p.isHitting=false; p.specialUsesUsed=0; p.lastSpecialAt=0; });
-  matchTime = unlimitedTime ? 0 : roundTimeSec; resetPositions(); overlay.style.display='none'; ensureKeyFocus(); startTimer(); toast('🔁 Restart'); }
+  const dx = targetX - p.x, dy = aimY - p.y, len = Math.hypot(dx,dy) || 1;
+  const ndx = dx/len, ndy = dy/len;
 
-document.getElementById('btnRestart').onclick = ()=> restartMatch();
-document.getElementById('btnRestart2').onclick = ()=> restartMatch();
+  p.ai_dx = p.ai_dx*(1 - cfg.react) + ndx*cfg.react;
+  p.ai_dy = p.ai_dy*(1 - cfg.react) + ndy*cfg.react;
 
-document.getElementById('btnMenu').onclick = () => { overlay.style.display = 'flex'; isPaused = true; applyTexts(); };
-document.getElementById('btnHelp').onclick = () => { openTut(); };
-document.getElementById('btnHud').onclick = () => { PERF.show = !PERF.show; };
-document.getElementById('btnPad').onclick = () => { touchGamepadAPI(); if (!anyGamepadsConnected()) toast(`${t('noPad')} ${t('httpsTip')}`); else toast('Gamepady gotowe ✅'); };
-document.getElementById('btnSound').onclick = () => { SFX.enabled = !SFX.enabled; localStorage.setItem('sfx', SFX.enabled ? '1' : '0'); const btn=document.getElementById('btnSound'); btn.innerText = SFX.enabled ? '🔊' : '🔇'; btn.setAttribute('aria-label', SFX.enabled ? 'Dźwięk włączony' : 'Dźwięk wyłączony'); btn.setAttribute('aria-pressed', SFX.enabled ? 'true' : 'false'); };
-document.getElementById('btnSound').innerText = ((localStorage.getItem('sfx') ?? '1')!=='0') ? '🔊' : '🔇';
-document.getElementById('btnFs').onclick = async () => { await toggleFullscreen(); };
+  let out_dx = clamp(p.ai_dx * cfg.gain, -cfg.vmax, cfg.vmax);
+  let out_dy = clamp(p.ai_dy * cfg.gain, -cfg.vmax, cfg.vmax);
 
-// Tutorial nav
-(function(){ const elPrev=document.getElementById('tutPrev'); const elNext=document.getElementById('tutNext'); const elClose=document.getElementById('tutClose'); const chk=document.getElementById('tutShowOnStart'); elPrev.onclick=()=>{ if (TUT.step>0){TUT.step--; renderTut();} }; elNext.onclick=()=>{ if (TUT.step < TUT.steps.length-1){ TUT.step++; renderTut(); } else { closeTut(); } }; elClose.onclick=()=>closeTut(); chk.onchange=()=>{ localStorage.setItem('tutOnStart', chk.checked? '1':'0'); }; if (localStorage.getItem('tutOnStart') === null) localStorage.setItem('tutOnStart','1'); })();
-function maybeShowTutOnStart(){ if (localStorage.getItem('tutOnStart') === '1'){ openTut(); } }
+  const distToPuck = Math.hypot(puck.x - p.x, puck.y - p.y);
+  const goingToRival = p.sideTop ? (out_dy < -0.2) : (out_dy > 0.2);
+  const justStrike = coming && goingToRival && (distToPuck < cfg.strikeDist);
 
-/*********** DŹWIĘK ***********/
-const SFX = { enabled: (localStorage.getItem('sfx') ?? '1') !== '0', ctx: null,
-  ensureCtx(){ if (!this.ctx){ const AC = window.AudioContext || window.webkitAudioContext; this.ctx = new AC(); } if (this.ctx.state === 'suspended') this.ctx.resume(); },
-  play(f, d){ if (!this.enabled) return; this.ensureCtx(); const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); g.gain.setValueAtTime(0.2, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); o.frequency.setValueAtTime(f, this.ctx.currentTime); o.connect(g).connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + d); }
+  return { dx: out_dx, dy: out_dy, justStrike, justAButton:false, justZR:false };
+}
+
+/* =============================================================================
+   TOUCH‑PAD — logika
+   ========================================================================== */
+const touchLayer = document.getElementById('touchLayer');
+const touchState = {
+  p1:{dx:0,dy:0,just:false,active:false}, p2:{dx:0,dy:0,just:false,active:false},
+  p3:{dx:0,dy:0,just:false,active:false}, p4:{dx:0,dy:0,just:false,active:false},
 };
-document.addEventListener('click', ()=>{ if (SFX.enabled) SFX.ensureCtx(); if (!gpTouched) touchGamepadAPI(); ensureKeyFocus(); }, { once:true });
 
-/*********** EFEKTY ***********/
-function createParticles(x,y,color,n){ for (let i=0;i<n;i++){ particles.push({ x:x+(Math.random()*8-4), y:y+(Math.random()*8-4), vx:(Math.random()*2-1)*0.8, vy:(Math.random()*2-1)*0.8, life:1.0, color:color||'#fff' }); } }
+function mountTouchForPlayer(pid){
+  const zone = document.getElementById('tp-'+pid);
+  if (!zone || zone.childElementCount>0) return;
 
-/*********** START ***********/
-function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-function updateParticles(){ for (let i = particles.length-1; i>=0; i--){ const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.04; if (p.life <= 0) particles.splice(i, 1); } }
-function showBadge(p, text){ const el=document.createElement('div'); el.className='badge'; el.textContent=text; const rect=canvas.getBoundingClientRect(); const {W,H}=getSize(); el.style.left=(rect.left + (p.x/W)*rect.width)+'px'; el.style.top=(rect.top + (p.y/H)*rect.height)+'px'; document.body.appendChild(el); setTimeout(()=>el.remove(), 450); }
+  // baza + gałka
+  const base = document.createElement('div'); base.className='stickBase';
+  const knob = document.createElement('div'); knob.className='stickKnob';
+  base.appendChild(knob);
 
-fit();
-setupBgColors();
-setupFlags();
-setupLang();
-setupRoundsUI();
-setupPlayersUI();
-setupFullscreenSetting();
-setupPuckSpeedUI();
-setupHapticsUI();
-applyPlayersCount();
-applyGoalSizeFromCount(goalPucksCount);
-applyTexts();
-enableTouchControls();
-maybeShowTutOnStart();
-startGamepadPolling();
+  // przycisk ciosu
+  const btn  = document.createElement('div'); btn.className='tpBtn';
+  const lbl  = document.createElement('span'); lbl.textContent='Cios';
+  btn.appendChild(lbl);
 
-function loop(now){ perfTick(now); const dt=Math.min(0.033,(now-lastTime)/1000); lastTime=now; if (!isPaused) handleLogic(dt); draw(); requestAnimationFrame(loop); }
-requestAnimationFrame(loop);
+  // do strefy
+  zone.appendChild(base); zone.appendChild(btn);
+
+  // joystick — pointer events
+  const maxR = ()=> (Math.min(base.clientWidth, base.clientHeight)/2)*0.9; // promień ruchu gałki
+  let baseRect = null;
+  function updateRect(){ baseRect = base.getBoundingClientRect(); }
+  const st = touchState[pid];
+
+  function setKnob(dx,dy){
+    // dx,dy mieści się w [-1,1]
+    const r = maxR();
+    knob.style.left = (base.clientWidth/2  + dx*r - knob.clientWidth/2)  + 'px';
+    knob.style.top  = (base.clientHeight/2 + dy*r - knob.clientHeight/2) + 'px';
+  }
+  function stickTo(dx,dy){
+    const len = Math.hypot(dx,dy);
+    if (len>1){ dx/=len; dy/=len; }
+    st.dx = clamp(dx, -1, 1);
+    st.dy = clamp(dy, -1, 1);
+    setKnob(st.dx, st.dy);
+    st.active = true;
+  }
+  function stickCenter(){
+    st.dx=0; st.dy=0; st.active=false; setKnob(0,0);
+  }
+
+  base.addEventListener('pointerdown', (e)=>{
+    base.setPointerCapture?.(e.pointerId);
+    updateRect();
+    const dx = (e.clientX - (baseRect.left + baseRect.width/2))/maxR();
+    const dy = (e.clientY - (baseRect.top  + baseRect.height/2))/maxR();
+    stickTo(dx,dy);
+    e.preventDefault();
+  }, {passive:false});
+  base.addEventListener('pointermove', (e)=>{
+    if (!baseRect) return;
+    if (e.buttons===0){ baseRect=null; return; }
+    const dx = (e.clientX - (baseRect.left + baseRect.width/2))/maxR();
+    const dy = (e.clientY - (baseRect.top  + baseRect.height/2))/maxR();
+    stickTo(dx,dy);
+    e.preventDefault();
+  }, {passive:false});
+  base.addEventListener('pointerup', ()=>{ stickCenter(); baseRect=null; }, {passive:true});
+  base.addEventListener('pointercancel', ()=>{ stickCenter(); baseRect=null; }, {passive:true});
+  setKnob(0,0);
+
+  // przycisk ciosu
+  btn.addEventListener('pointerdown', (e)=>{ st.just = true; e.preventDefault(); }, {passive:false});
+}
+
+/* pokaż/ukryj touch layer w zależności od graczy używających „Dotyk” */
+function refreshTouchLayerVisibility(){
+  const anyTouch = [p1,p2,p3,p4].filter(Boolean).some(p=>p.input==='touch');
+  touchLayer.style.display = anyTouch ? 'block' : 'none';
+
+  // Montuj pady tylko dla graczy „touch”
+  if (p1 && p1.input==='touch') mountTouchForPlayer('p1'); else document.getElementById('tp-p1').innerHTML='';
+  if (p2 && p2.input==='touch') mountTouchForPlayer('p2'); else document.getElementById('tp-p2').innerHTML='';
+  if (p3 && p3.input==='touch') mountTouchForPlayer('p3'); else document.getElementById('tp-p3').innerHTML='';
+  if (p4 && p4.input==='touch') mountTouchForPlayer('p4'); else document.getElementById('tp-p4').innerHTML='';
+}
+
+/* =============================================================================
+   WEJŚCIA — ZBIERANIE (KB/Pad/AI/Touch)
+   ========================================================================== */
+function getInputForPlayer(p, id, dt){
+  // TOUCH
+  if (p.input==='touch'){
+    const st = touchState[id];
+    const moving = Math.abs(st.dx)+Math.abs(st.dy)>0.01;
+    const justStrike = !!st.just && moving; st.just=false;
+    return { dx:st.dx, dy:st.dy, justStrike, justAButton:false, justZR:false };
+  }
+
+  // GAMEPAD
+  if (p.input==='gamepad' && p.padIndex>=0){
+    const gp=readGamepad(p.padIndex);
+    const moving=Math.abs(gp.dx)+Math.abs(gp.dy)>0.01;
+    const justStrike=gp.justA && moving;
+    return { dx:gp.dx, dy:gp.dy, justStrike, justAButton:gp.justA, justZR:gp.justZR };
+  }
+
+  // AI
+  if (p.input==='ai'){ return aiInputFor(p,id,dt); }
+
+  // KEYBOARD
+  let dx=0, dy=0, justStrike=false;
+  if (id==='p1'){
+    dx=(keys.get('ArrowLeft')?-1:0)+(keys.get('ArrowRight')?1:0);
+    dy=(keys.get('ArrowUp')?-1:0)+(keys.get('ArrowDown')?1:0);
+    const moving=Math.abs(dx)+Math.abs(dy)>0; const just = keys.get('Enter')||keys.get('NumpadEnter')||keys.get('Numpad0');
+    justStrike=!!just && moving;
+  } else if (id==='p2'){
+    dx=(keys.get('KeyA')?-1:0)+(keys.get('KeyD')?1:0);
+    dy=(keys.get('KeyW')?-1:0)+(keys.get('KeyS')?1:0);
+    const moving=Math.abs(dx)+Math.abs(dy)>0; const just = keys.get('Space')||keys.get('ControlLeft');
+    justStrike=!!just && moving;
+  } else if (id==='p3'){
+    dx=(keys.get('KeyJ')?-1:0)+(keys.get('KeyL')?1:0);
+    dy=(keys.get('KeyI')?-1:0)+(keys.get('KeyK')?1:0);
+    const moving=Math.abs(dx)+Math.abs(dy)>0; const just = keys.get('ShiftRight');
+    justStrike=!!just && moving;
+  } else if (id==='p4'){
+    dx=(keys.get('KeyF')?-1:0)+(keys.get('KeyH')?1:0);
+    dy=(keys.get('KeyT')?-1:0)+(keys.get('KeyG')?1:0);
+    const moving=Math.abs(dx)+Math.abs(dy)>0; const just = keys.get('ShiftLeft');
+    justStrike=!!just && moving;
+  }
+  return { dx, dy, justStrike, justAButton:false, justZR:false };
+}
+
+/* =============================================================================
+   PHYSICS STEP
+   ========================================================================== */
+function updatePlayer(p, dx, dy, justHit, W, H, s){
+  const base=9, boost=25;
+  p.isHitting=!!justHit;
+  const v=(p.isHitting?boost:base);
+  p.vx=dx*v; p.vy=dy*v;
+  p.x += p.vx*s; p.y += p.vy*s;
+
+  const mid=H/2;
+  p.x = clamp(p.x, arena.frW+p.r, W - arena.frW - p.r);
+  if (p.sideTop) p.y = clamp(p.y, arena.frW+p.r, mid - p.r);
+  else           p.y = clamp(p.y, mid + p.r, H - arena.frW - p.r);
+}
+function physicsStep(dt){
+  const s=dt*60, {W,H}=getSize();
+  const players = [p1,p2].concat(p3?[p3]:[]).concat(p4?[p4]:[]);
+  players.forEach((p,i)=>{
+    const input=getInputForPlayer(p, 'p'+(i+1), dt);
+    updatePlayer(p, input.dx, input.dy, input.justStrike, W, H, s);
+  });
+
+  pk.x += pk.vx*s; pk.y += pk.vy*s;
+  naturalBrake(pk, dt);
+
+  players.forEach(p=> resolveMalletPuck(p, pk));
+
+  wallsAndGoals(pk, W, H);
+
+  const sp=Math.hypot(pk.vx, pk.vy);
+  if (sp>puckSpeedMax){ const sc=puckSpeedMax/sp; pk.vx*=sc; pk.vy*=sc; }
+}
+
+/* =============================================================================
+   RYSOWANIE
+   ========================================================================== */
+function draw(){
+  const {W,H}=getSize();
+  ctx.fillStyle=tableBgColor; ctx.fillRect(0,0,W,H);
+
+  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W/2,H/2,60,0,Math.PI*2); ctx.stroke();
+
+  const top='#2979ff', bot='#ff1744'; ctx.lineWidth=arena.frW;
+  // góra
+  ctx.strokeStyle=top;
+  ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, arena.frW/2); ctx.lineTo(arena.frW/2, arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, arena.frW/2); ctx.lineTo(W/2+arena.gw/2, arena.frW/2); ctx.stroke();
+  // dół
+  ctx.strokeStyle=bot;
+  ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, H-arena.frW/2); ctx.lineTo(W/2+arena.gw/2, H-arena.frW/2); ctx.stroke();
+
+  // półkola nad bramkami
+  const rArc = arena.gw/2 + 18;
+  ctx.save(); ctx.setLineDash([6,6]); ctx.lineWidth=3;
+  ctx.strokeStyle = top + 'aa'; ctx.beginPath(); ctx.arc(W/2, arena.frW/2, rArc, Math.PI, 2*Math.PI); ctx.stroke();
+  ctx.strokeStyle = bot + 'aa'; ctx.beginPath(); ctx.arc(W/2, H - arena.frW/2, rArc, 0, Math.PI); ctx.stroke();
+  ctx.restore();
+
+  // rogi wizualnie
+  const r=CORNER_R; ctx.lineWidth=arena.frW; ctx.strokeStyle=top;
+  ctx.beginPath(); ctx.arc(arena.frW/2 + r, arena.frW/2 + r, r, Math.PI, 1.5*Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W - (arena.frW/2 + r), arena.frW/2 + r, r, 1.5*Math.PI, 2*Math.PI); ctx.stroke();
+  ctx.strokeStyle=bot;
+  ctx.beginPath(); ctx.arc(arena.frW/2 + r, H - (arena.frW/2 + r), r, 0.5*Math.PI, Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W - (arena.frW/2 + r), H - (arena.frW/2 + r), r, 0, 0.5*Math.PI); ctx.stroke();
+
+  function disk(x,y,R,col){ ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.stroke(); }
+  [p1,p2].concat(p3?[p3]:[]).concat(p4?[p4]:[]).forEach(p=> disk(p.x,p.y,p.r,p.color));
+  disk(pk.x,pk.y,pk.r,'#111');
+}
+
+/* =============================================================================
+   PĘTLA GŁÓWNA / HUD
+   ========================================================================== */
+const PERF={ show:false, fps:60, last:performance.now(), ema:60 };
+function perfTick(now){
+  const dt=(now-PERF.last)/1000; PERF.last=now;
+  const inst=1/Math.max(dt,1/240); PERF.ema=PERF.ema*0.92+inst*0.08; PERF.fps=PERF.ema;
+  perfHud.style.display = PERF.show ? 'block' : 'none';
+  if (PERF.show){ perfHud.innerHTML=`FPS: <b>${PERF.fps.toFixed(0)}</b>`; }
+}
+let lastTime = performance.now();
+function loop(now){
+  perfTick(now);
+  const dt=Math.min(0.033,(now-lastTime)/1000); lastTime=now;
+  if (!isPaused) physicsStep(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* =============================================================================
+   GOL / RESET
+   ========================================================================== */
+function onGoal(scoringSide, pkRef){
+  const {W,H}=getSize();
+  pkRef.x=W/2; pkRef.y=H/2; pkRef.vx=0; pkRef.vy=0;
+}
+
+/* =============================================================================
+   INIT OBIEKTÓW
+   ========================================================================== */
+function initObjects(){
+  const {W,H}=getSize();
+  p1 = makePlayer(W*0.5, H-100, 35, '#ff1744', false, 'P1');
+  p2 = makePlayer(W*0.5, 100,   35, '#2979ff', true,  'P2');
+  pk = makePuck(W*0.5, H*0.5, 22);
+}
+function resetPositions(){
+  const {W,H}=getSize();
+  p1.x=W*0.5; p1.y=H-100; p1.vx=p1.vy=0;
+  p2.x=W*0.5; p2.y=100;   p2.vx=p2.vy=0;
+  if (p3){ p3.x=W*0.35; p3.y=H-100; p3.vx=p3.vy=0; }
+  if (p4){ p4.x=W*0.65; p4.y=100;   p4.vx=p4.vy=0; }
+  pk.x=W*0.5; pk.y=H*0.5; pk.vx=pk.vy=0;
+}
+
+/* =============================================================================
+   U I — JĘZYK / TŁO / SPRZĘT / FLAGI / CZAS
+   ========================================================================== */
+function setupLangUI(){
+  const wrap=document.getElementById('langChips');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    if (btn.dataset.lang===lang) btn.classList.add('active');
+    btn.onclick=()=>{ lang=btn.dataset.lang; localStorage.setItem('lang', lang);
+      wrap.querySelectorAll('.chip').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); };
+  });
+}
+function setupBgUI(){
+  const PRESETS=['#ffffff','#f8faff','#f3f4f6','#eef7ff','#f0fff4','#fff7ed','#fff0f6','#fefae0','#f7f5ff','#f6fff8'];
+  const wrap=document.getElementById('bgPresets'); wrap.innerHTML='';
+  PRESETS.forEach(col=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=col;
+    if (tableBgColor.toLowerCase()===col.toLowerCase()) b.classList.add('active');
+    b.onclick=()=>{
+      tableBgColor=col; localStorage.setItem('tableBgColor', col);
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+    };
+    wrap.appendChild(b);
+  });
+  const inp=document.getElementById('inpBg'); inp.value = tableBgColor;
+  inp.oninput=(e)=>{ tableBgColor=e.target.value; localStorage.setItem('tableBgColor', tableBgColor); };
+}
+function setupMalletUI(){
+  const u=(id, player)=>{
+    const wrap=document.getElementById(id);
+    wrap.querySelectorAll('.chip').forEach(btn=>{
+      if (player.r===parseInt(btn.dataset.r,10)) btn.classList.add('active');
+      btn.onclick=()=>{
+        player.r=parseInt(btn.dataset.r,10);
+        wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+        resetPositions();
+      };
+    });
+  };
+  u('malletP1Chips', p1); u('malletP2Chips', p2);
+}
+function setupPuckUI(){
+  const wrap=document.getElementById('puckSizeChips');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    const r=parseInt(btn.dataset.r,10);
+    if (pk.r===r) btn.classList.add('active');
+    btn.onclick=()=>{ pk.r=r; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); };
+  });
+  const spWrap=document.getElementById('puckSpeedChips');
+  const map=PUCK_SPEED_PRESETS; const currentKey=Object.keys(map).find(k=>map[k]===puckSpeedMax)||'normal';
+  spWrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.speed===currentKey);
+    btn.onclick=()=>{
+      spWrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+      puckSpeedMax = map[btn.dataset.speed]; localStorage.setItem('puckSpeedMax', String(puckSpeedMax));
+    };
+  });
+}
+
+/* NOWOŚĆ: Rozmiar bramki x6 */
+function setupGoalSizeUI(){
+  const wrap=document.getElementById('goalSizeChips');
+  const current = arena.gw;
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    const gw = parseInt(btn.dataset.gw,10);
+    if (gw===current) btn.classList.add('active');
+    btn.onclick=()=>{
+      arena.gw = gw;
+      localStorage.setItem('goalWidth', String(gw));
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+    };
+  });
+}
+
+function setupFlagsUI(){
+  const FLAGS=['PL','US','GB','FR','DE','ES','BR','JP','IT','NL','PT'];
+  const mk=(wrapId, player)=>{
+    const wrap=document.getElementById(wrapId); wrap.innerHTML='';
+    FLAGS.forEach(code=>{
+      const b=document.createElement('button'); b.className='chip'; b.textContent=code;
+      b.onclick=()=>{ player.flagCode=code; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active'); };
+      wrap.appendChild(b);
+    });
+  };
+  p1.flagCode=p1.flagCode||'PL'; p2.flagCode=p2.flagCode||'US';
+  mk('flagsP1', p1); mk('flagsP2', p2);
+}
+function setupRoundUI(){
+  const wrap=document.getElementById('roundChips');
+  const customRow=document.getElementById('customTimeRow');
+  const inp=document.getElementById('inpMinutes');
+  const chk=document.getElementById('chkUnlimited');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.sec==='180');
+    btn.onclick=()=>{
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+      const v=btn.dataset.sec;
+      if (v==='custom'){ customRow.style.display='grid'; unlimitedTime=false; chk.checked=false; }
+      else { roundTimeSec=parseInt(v,10); matchTime=roundTimeSec; customRow.style.display='none'; unlimitedTime=false; chk.checked=false; }
+    };
+  });
+  inp.onchange=()=>{ const m=Math.max(0, Math.min(60, parseInt(inp.value||'0',10))); roundTimeSec=m*60; matchTime=roundTimeSec; };
+  chk.onchange=()=>{ unlimitedTime=chk.checked; matchTime=unlimitedTime?0:roundTimeSec; customRow.style.display='none'; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); };
+}
+
+/* LICZBA GRACZY + DYNAMICZNE STEROWANIE (z opcją „Dotyk”) */
+let selectedPlayers = 2;
+function createOrDestroyPlayers(n){
+  const {W,H}=getSize();
+  if (!p1) p1 = makePlayer(W*0.5, H-100, 35, '#ff1744', false, 'P1');
+  if (!p2) p2 = makePlayer(W*0.5, 100,   35, '#2979ff', true,  'P2');
+  if (n>=3 && !p3) p3=makePlayer(W*0.35, H-100, 35, p1.color, false, 'P3'); else if (n<3) p3=null;
+  if (n>=4 && !p4) p4=makePlayer(W*0.65, 100,   35, p2.color, true,  'P4'); else if (n<4) p4=null;
+}
+function renderControls(n){
+  const cont = document.getElementById('controlsContainer'); cont.innerHTML='';
+  const hints = {
+    1: '← → ↑ ↓  •  Enter = cios',
+    2: 'A D W S   •  Spacja/Ctrl = cios',
+    3: 'J L I K   •  ShiftRight = cios',
+    4: 'F H T G   •  ShiftLeft  = cios',
+  };
+  function cardHTML(idx, player){
+    const name = 'P'+idx, inSelId=`selInputP${idx}`, padSelId=`selPadP${idx}`, aiSelId=`selAiP${idx}`;
+    return `
+      <div class="ctrl-card" id="ctrlCardP${idx}">
+        <div class="ctrl-title">${name}</div>
+        <div class="ctrl-row">
+          <select id="${inSelId}">
+            <option value="keyboard"${player.input==='keyboard'?' selected':''}>Klawiatura</option>
+            <option value="gamepad"${player.input==='gamepad'?' selected':''}>Gamepad</option>
+            <option value="ai"${player.input==='ai'?' selected':''}>AI (bot)</option>
+            <option value="touch"${player.input==='touch'?' selected':''}>Dotyk</option>
+          </select>
+          <select id="${padSelId}" data-role="padSelect" style="display:${player.input==='gamepad'?'block':'none'};"></select>
+          <select id="${aiSelId}"  style="display:${player.input==='ai'?'block':'none'};">
+            <option value="easy"${player.ai==='easy'?' selected':''}>Łatwy</option>
+            <option value="medium"${player.ai==='medium'?' selected':''}>Średni</option>
+            <option value="hard"${player.ai==='hard'?' selected':''}>Trudny</option>
+          </select>
+          <div class="ctrl-hint">${hints[idx]||''} • „Dotyk” = joystick + przycisk „Cios”</div>
+        </div>
+      </div>
+    `;
+  }
+  const arr=[p1,p2].concat(n>=3?[p3||p1]:[]).concat(n>=4?[p4||p2]:[]);
+  arr.forEach((pp,i)=> cont.insertAdjacentHTML('beforeend', cardHTML(i+1, pp)));
+
+  arr.forEach((pp,i)=>{
+    const idx=i+1, id='p'+idx;
+    const inSel=document.getElementById(`selInputP${idx}`);
+    const padSel=document.getElementById(`selPadP${idx}`);
+    const aiSel =document.getElementById(`selAiP${idx}`);
+    inSel.onchange=()=>{ pp.input=inSel.value;
+      if (padSel) padSel.style.display=(pp.input==='gamepad')?'block':'none';
+      if (aiSel)  aiSel.style.display =(pp.input==='ai')?'block':'none';
+      if (pp.input==='gamepad') { touchGamepadAPI(); refreshPadLists(); }
+      refreshTouchLayerVisibility();
+    };
+    if (padSel) padSel.onchange=()=>{ pp.padIndex=parseInt(padSel.value,10)||-1; };
+    if (aiSel)  aiSel.onchange =()=>{ pp.ai=aiSel.value; };
+  });
+
+  refreshPadLists();
+  refreshTouchLayerVisibility();
+}
+function setupPlayersAndControlsUI(){
+  const wrap=document.getElementById('playersChips');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.classList.toggle('active', parseInt(btn.dataset.n,10)===selectedPlayers);
+    btn.onclick=()=>{
+      selectedPlayers = parseInt(btn.dataset.n,10);
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      btn.classList.add('active');
+      createOrDestroyPlayers(selectedPlayers);
+      renderControls(selectedPlayers);
+      resetPositions();
+    };
+  });
+  createOrDestroyPlayers(selectedPlayers);
+  renderControls(selectedPlayers);
+}
+
+/* Specjal / Wibracje / Pełny ekran / Fizyka UI */
+function setupSpecialVibFsUI(){
+  const selMb=document.getElementById('selMbLimit');
+  selMb.onchange=()=>{ multiballLimitPerPlayer=parseInt(selMb.value,10); };
+  const chkVib=document.getElementById('chkVib');
+  const rngVib=document.getElementById('rngVib'); const vibVal=document.getElementById('vibVal');
+  let vibEnabled = (localStorage.getItem('vibEnabled') ?? '1') !== '0';
+  let vibStrength = Math.max(0, Math.min(100, parseInt(localStorage.getItem('vibStrength') || '70', 10)));
+  chkVib.checked=vibEnabled; rngVib.value=String(vibStrength); vibVal.textContent=vibStrength+'%';
+  const apply=()=>{ vibEnabled=chkVib.checked; localStorage.setItem('vibEnabled', vibEnabled?'1':'0');
+    vibStrength = Math.max(0, Math.min(100, parseInt(rngVib.value||'0',10)));
+    vibVal.textContent=vibStrength+'%'; localStorage.setItem('vibStrength', String(vibStrength)); };
+  chkVib.onchange=apply; rngVib.oninput=apply;
+
+  const chkFs=document.getElementById('chkFs');
+  let fullscreenPref = (localStorage.getItem('fs') ?? '0') === '1';
+  chkFs.checked=fullscreenPref;
+  chkFs.onchange=()=>{ fullscreenPref=chkFs.checked; localStorage.setItem('fs', fullscreenPref?'1':'0'); };
+  window.__fullscreenPref__=fullscreenPref;
+}
+function setupBounceUI(){
+  const wrap=document.getElementById('bounceChips');
+  const setAct=()=> wrap.querySelectorAll('.chip').forEach(b=> b.classList.toggle('active', b.dataset.mode===malletBounceMode));
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.onclick=()=>{ malletBounceMode=btn.dataset.mode; localStorage.setItem('malletBounceMode', malletBounceMode); setAct(); };
+  });
+  setAct();
+  const rng=document.getElementById('rngFric'); const lbl=document.getElementById('fricVal');
+  rng.value = String(Math.round(TANGENTIAL_DAMPING*1000)); lbl.textContent=TANGENTIAL_DAMPING.toFixed(3);
+  rng.oninput=()=>{ const v=clamp(parseInt(rng.value,10)||0, 0, 50); TANGENTIAL_DAMPING=v/1000;
+    localStorage.setItem('tangentialDamping', String(TANGENTIAL_DAMPING)); lbl.textContent=TANGENTIAL_DAMPING.toFixed(3); };
+}
+
+/* Lista padów (dynamiczne kontrolki) */
+function refreshPadLists(){
+  const gps=navigator.getGamepads?navigator.getGamepads():[];
+  const padSelects = document.querySelectorAll('select[data-role="padSelect"]');
+  padSelects.forEach(sel=>{
+    const prev = sel.value;
+    sel.innerHTML='';
+    let any=false;
+    for (let i=0;i<gps.length;i++){
+      const gp=gps[i]; if (!gp) continue; any=true;
+      const opt=document.createElement('option');
+      opt.value=gp.index; opt.textContent=`#${gp.index} ${gp.id}`;
+      sel.appendChild(opt);
+    }
+    if (!any){
+      const opt=document.createElement('option');
+      opt.value=''; opt.textContent='— brak padów —';
+      opt.disabled=true; opt.selected=true;
+      sel.appendChild(opt);
+    } else {
+      if (prev) sel.value = prev;
+    }
+  });
+}
+
+/* START / COUNTDOWN / PRZYCISKI */
+function showCountdown(cb){
+  let c=3; countdownEl.style.display='flex'; countdownEl.innerText=c;
+  const tmr=setInterval(()=>{
+    c--; if (c>0) countdownEl.innerText=c;
+    else { clearInterval(tmr); countdownEl.style.display='none'; cb&&cb(); }
+  }, 700);
+}
+async function onStart(){
+  if ((window.__fullscreenPref__ ?? ((localStorage.getItem('fs') ?? '0')==='1')) && !document.fullscreenElement){
+    try{ await document.documentElement.requestFullscreen?.(); }
+    catch(fsErr){ console.warn('[Start] FS odmówiony (OK):', fsErr); }
+  }
+  overlay.style.display='none';
+  showCountdown(()=>{ isPaused=false; });
+}
+document.getElementById('btnMenu').onclick = ()=>{ overlay.style.display='flex'; isPaused=true; };
+document.getElementById('btnHud').onclick  = ()=>{ PERF.show = !PERF.show; };
+document.getElementById('btnHelp').onclick = ()=>{ showToast(t('kbTip')+' '+t('gamepadTip')+' '+t('httpsTip'), 3000); };
+document.getElementById('btnFs').onclick   = async ()=>{ try{ if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); }catch(e){ showToast('Pełny ekran: błąd', 2000); } };
+document.getElementById('btnStart').onclick= onStart;
+
+/* BOOT */
+window.addEventListener('load', ()=>{
+  try{
+    fit();
+    initObjects();
+    resetPositions();
+
+    // UI
+    setupPlayersAndControlsUI();
+    setupLangUI();
+    setupBgUI();
+    setupPuckUI();
+    setupMalletUI();
+    setupGoalSizeUI();     // ← NOWOŚĆ: rozmiar bramki (6 opcji)
+    setupFlagsUI();
+    setupRoundUI();
+    setupSpecialVibFsUI();
+    setupBounceUI();
+
+    // Touch layer dla „Dotyk”
+    refreshTouchLayerVisibility();
+
+    // Gamepads
+    startGamepadPolling();
+
+    requestAnimationFrame(loop);
+  }catch(e){
+    console.error('Init error:', e);
+    showToast('Init error: ' + (e?.message || e), 3000);
+  }
+});
 </script>
 </body>
 </html>
