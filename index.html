@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Air Hockey — FULL SETTINGS (Touch pads + Goal size x6)</title>
+  <title>Air Hockey — Touch: Joystick / Bezpośredni dotyk</title>
   <style>
     :root { --bg:#0b0b0b; --panel:#111; --accent:#00e5ff; --border:#222; }
     html, body { height:100%; }
@@ -12,7 +12,7 @@
       margin:0; background:var(--bg);
       display:flex; align-items:center; justify-content:center;
       height:100vh; overflow:hidden; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif; color:#fff;
-      touch-action:none; /* blokuje scroll/zoom podczas gier */
+      touch-action:none; /* brak scrolla/gestów w trakcie gry */
     }
     .wrap { position:relative; }
     canvas { display:block; background:#f8faff; border-radius:8px; box-shadow:0 30px 80px rgba(0,0,0,.55); }
@@ -82,47 +82,30 @@
     .ctrl-row { display:grid; grid-template-columns: 1fr; gap:8px; margin:6px 0; }
     .ctrl-hint { font-size:12px; color:#9aa; }
 
-    /* ===== TOUCH PADS ===== */
-    #touchLayer{
-      position:absolute; inset:0; z-index:2; pointer-events:none; /* włączamy lokalnie na elementach */
-    }
-    .tpZone{
-      position:absolute; width:50vw; height:50vh; /* ćwiartki ekranu */
-      pointer-events:none; /* włączymy na dzieciach */
-    }
-    /* ćwiartki: p2=top-left, p4=top-right, p1=bottom-left, p3=bottom-right */
-    .tp-p2{ left:0; top:0; }
-    .tp-p4{ right:0; top:0; }
-    .tp-p1{ left:0; bottom:0; }
-    .tp-p3{ right:0; bottom:0; }
+    /* ===== TOUCH PADS (Joystick) ===== */
+    #touchLayer{ position:absolute; inset:0; z-index:2; pointer-events:none; }
+    .tpZone{ position:absolute; width:50vw; height:50vh; pointer-events:none; }
+    .tp-p2{ left:0; top:0; } .tp-p4{ right:0; top:0; }
+    .tp-p1{ left:0; bottom:0; } .tp-p3{ right:0; bottom:0; }
 
     .stickBase{
       position:absolute; width:min(32vw, 220px); height:min(32vw, 220px);
       border-radius:50%; background:#00000030; border:2px solid #ffffff30;
-      left:20px; bottom:20px;
-      pointer-events:auto; touch-action:none;
+      left:20px; bottom:20px; pointer-events:auto; touch-action:none;
     }
-    /* u góry — przenieś bazę w dół (żeby nie nachodziła na bandę) */
     .tp-p2 .stickBase, .tp-p4 .stickBase{ top:20px; bottom:auto; }
-
     .stickKnob{
       position:absolute; width:40%; height:40%; left:30%; top:30%;
-      border-radius:50%; background:#ffffff66; border:2px solid #ffffffaa;
-      pointer-events:none;
+      border-radius:50%; background:#ffffff66; border:2px solid #ffffffaa; pointer-events:none;
     }
-
     .tpBtn{
       position:absolute; width:min(14vw,130px); height:min(14vw,130px);
       border-radius:50%; background:#00e5ff40; border:2px solid #00e5ffaa;
-      right:20px; bottom:20px;
-      pointer-events:auto; touch-action:none;
-      display:flex; align-items:center; justify-content:center; color:#001016; font-weight:900;
-      text-shadow:0 1px 0 #fff8;
+      right:20px; bottom:20px; pointer-events:auto; touch-action:none;
+      display:flex; align-items:center; justify-content:center; color:#001016; font-weight:900; text-shadow:0 1px 0 #fff8;
     }
     .tpBtn:active{ transform:scale(0.98); }
     .tp-p2 .tpBtn, .tp-p4 .tpBtn{ top:20px; bottom:auto; }
-
-    /* Podpis na przycisku */
     .tpBtn span{ pointer-events:none; }
   </style>
 </head>
@@ -139,9 +122,8 @@
     <canvas id="game" aria-label="Stół do air hockey"></canvas>
     <div id="perfHud"></div>
 
-    <!-- ===== TOUCH LAYER (wirtualne pady; tworzymy/aktywujemy dynamicznie) ===== -->
+    <!-- Touch layer — joysticki (tylko dla graczy z Dotyk=Joystick) -->
     <div id="touchLayer" style="display:none;">
-      <!-- strefy ćwiartek ekranu -->
       <div id="tp-p2" class="tpZone tp-p2"></div>
       <div id="tp-p4" class="tpZone tp-p4"></div>
       <div id="tp-p1" class="tpZone tp-p1"></div>
@@ -154,7 +136,7 @@
     <div class="panel">
       <h1>USTAWIENIA MECZU</h1>
 
-      <!-- Wspólny wiersz: LICZBA GRACZY + STEROWANIE (dynamiczne) -->
+      <!-- Gracze + Sterowanie (dynamiczne) -->
       <h2>Gracze &amp; Sterowanie</h2>
       <div class="grid grid-2">
         <!-- Liczba graczy -->
@@ -168,14 +150,14 @@
           </div>
           <div class="hint">Przy 3–4: P1+P3 dół, P2+P4 góra.</div>
         </div>
-        <!-- Sterowanie (renderowane wg liczby graczy) -->
+        <!-- Sterowanie -->
         <div class="row">
           <div class="hint">Sterowanie (dla wybranej liczby graczy)</div>
           <div id="controlsContainer" class="grid" style="gap:12px;"></div>
         </div>
       </div>
 
-      <!-- Wygląd stołu -->
+      <!-- Wygląd -->
       <h2>Wygląd</h2>
       <div class="grid grid-2">
         <div class="row">
@@ -232,11 +214,10 @@
         </div>
       </div>
 
-      <!-- NOWOŚĆ: Rozmiar bramki (6 wyborów) -->
+      <!-- Rozmiar bramki (6 opcji) -->
       <h2>Rozmiar bramki</h2>
       <div class="row">
         <div class="chipbar" id="goalSizeChips">
-          <!-- 6 presetów szerokości „gw” (px w układzie canvas) -->
           <button class="chip" data-gw="140">XS</button>
           <button class="chip" data-gw="180">S</button>
           <button class="chip" data-gw="220">M</button>
@@ -244,7 +225,7 @@
           <button class="chip" data-gw="300">XL</button>
           <button class="chip" data-gw="340">XXL</button>
         </div>
-        <div class="hint">Zmienia szerokość okna bramki na bandzie i rozstaw półkoli.</div>
+        <div class="hint">Zmienia szerokość okna bramki i półkoli.</div>
       </div>
 
       <!-- Flagi -->
@@ -372,20 +353,18 @@ function getSize(){
 window.addEventListener('resize', ()=>{ fit(); resetPositions(); });
 
 /* =============================================================================
-   I18N (skrócony)
+   I18N (skrót)
    ========================================================================== */
 let lang = localStorage.getItem('lang') || 'pl';
 const I18N = {
-  pl: { goal:'GOL!', settings:'USTAWIENIA MECZU', start:'START / WZNÓW', newMatch:'NOWY MECZ', gameOver:'KONIEC MECZU', ot:'DOGRYWKA',
-        kbTip:'Jeśli klawisze nie działają: kliknij w płótno lub naciśnij Enter.',
-        gamepadTip:'Naciśnij dowolny przycisk na padzie, aby go wykryć',
-        httpsTip:'Gamepady najlepiej działają w HTTPS lub na localhost.', noPad:'Brak wykrytego pada.' },
-  en: { goal:'GOAL!', settings:'MATCH SETTINGS', start:'START / RESUME', newMatch:'NEW MATCH', gameOver:'MATCH OVER', ot:'OVERTIME',
-        kbTip:'If keys do not work: click the canvas or press Enter.',
-        gamepadTip:'Press any gamepad button to detect it',
-        httpsTip:'Gamepads work best on HTTPS or localhost.', noPad:'No gamepad detected.' }
+  pl: {
+    goal:'GOL!', settings:'USTAWIENIA MECZU', start:'START / WZNÓW', newMatch:'NOWY MECZ', gameOver:'KONIEC MECZU', ot:'DOGRYWKA',
+    kbTip:'Jeśli klawisze nie działają: kliknij w płótno lub naciśnij Enter.',
+    gamepadTip:'Naciśnij dowolny przycisk na padzie, aby go wykryć',
+    httpsTip:'Gamepady najlepiej działają w HTTPS lub na localhost.', noPad:'Brak wykrytego pada.'
+  }
 };
-const t = (k)=> (I18N[lang] && I18N[lang][k]) || (I18N['pl'][k] || k);
+const t = (k)=> (I18N[lang] && I18N[lang][k]) || k;
 
 /* =============================================================================
    FIZYKA / PARAMETRY
@@ -410,9 +389,13 @@ let tableBgColor = localStorage.getItem('tableBgColor') || '#f8faff';
    ========================================================================== */
 function makePlayer(x,y,r,color,sideTop,name){
   return { name, x,y,r, vx:0,vy:0, color, sideTop, isHitting:false,
-           input: (IS_TOUCH ? 'touch' : 'keyboard'), padIndex:-1, ai:'medium',
+           input: (IS_TOUCH ? 'touch' : 'keyboard'),     /* domyślnie „Dotyk” na mobile */
+           touchMode: 'direct',                           /* domyślnie: Bezpośredni dotyk */
+           padIndex:-1, ai:'medium',
            score:0, lastSpecialAt:0, specialUsesUsed:0, ai_dx:0, ai_dy:0,
-           touch:{dx:0,dy:0,just:false,active:false} };
+           touch:{dx:0,dy:0,just:false,active:false},     /* joystick touch state */
+           direct:{active:false,x:0,y:0,just:false}       /* direct touch state */
+  };
 }
 function makePuck(x,y,r){ return { x,y,r,vx:0,vy:0, cornerStallTicks:0 }; }
 
@@ -420,7 +403,7 @@ let p1,p2,p3=null,p4=null, pk;
 let isPaused = true;
 
 /* =============================================================================
-   WEJŚCIA — KLAWIATURA + PAD + DOTYK
+   WEJŚCIA — KLAWIATURA + PAD + TOUCH
    ========================================================================== */
 const keys = new Map();
 addEventListener('keydown', e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad)/.test(c)) e.preventDefault(); keys.set(c,true); }, {capture:true});
@@ -437,6 +420,123 @@ function readGamepad(idx){
   const now=btns.map(b=>!!b?.pressed); gamepadPrevButtons.set(idx, now);
   const justA=(now[0]&&!prev[0]), justZR=(now[7]&&!prev[7]); const hit=now[0]||now[5]||now[7];
   return { dx, dy, justA, justZR, hit };
+}
+
+/* =============================================================================
+   TOUCH — JOYSTICK (warstwa overlay)
+   ========================================================================== */
+const touchLayer = document.getElementById('touchLayer');
+const touchState = {
+  p1:{dx:0,dy:0,just:false,active:false}, p2:{dx:0,dy:0,just:false,active:false},
+  p3:{dx:0,dy:0,just:false,active:false}, p4:{dx:0,dy:0,just:false,active:false},
+};
+function mountTouchForPlayer(pid){
+  const zone = document.getElementById('tp-'+pid);
+  if (!zone || zone.childElementCount>0) return;
+
+  const base = document.createElement('div'); base.className='stickBase';
+  const knob = document.createElement('div'); knob.className='stickKnob';
+  base.appendChild(knob);
+  const btn  = document.createElement('div'); btn.className='tpBtn';
+  const lbl  = document.createElement('span'); lbl.textContent='Cios';
+  btn.appendChild(lbl);
+
+  zone.appendChild(base); zone.appendChild(btn);
+
+  const st = touchState[pid];
+  const maxR = ()=> (Math.min(base.clientWidth, base.clientHeight)/2)*0.9;
+  let baseRect = null;
+  function updateRect(){ baseRect = base.getBoundingClientRect(); }
+  function setKnob(dx,dy){
+    const r = maxR();
+    knob.style.left = (base.clientWidth/2  + dx*r - knob.clientWidth/2)  + 'px';
+    knob.style.top  = (base.clientHeight/2 + dy*r - knob.clientHeight/2) + 'px';
+  }
+  function stickTo(dx,dy){
+    const len = Math.hypot(dx,dy); if (len>1){ dx/=len; dy/=len; }
+    st.dx = dx; st.dy = dy; st.active = true; setKnob(dx,dy);
+  }
+  function stickCenter(){ st.dx=0; st.dy=0; st.active=false; setKnob(0,0); }
+
+  base.addEventListener('pointerdown', (e)=>{
+    base.setPointerCapture?.(e.pointerId);
+    updateRect();
+    const dx = (e.clientX - (baseRect.left + baseRect.width/2))/maxR();
+    const dy = (e.clientY - (baseRect.top  + baseRect.height/2))/maxR();
+    stickTo(dx,dy); e.preventDefault();
+  }, {passive:false});
+  base.addEventListener('pointermove', (e)=>{
+    if (!baseRect) return; if (e.buttons===0){ baseRect=null; return; }
+    const dx = (e.clientX - (baseRect.left + baseRect.width/2))/maxR();
+    const dy = (e.clientY - (baseRect.top  + baseRect.height/2))/maxR();
+    stickTo(dx,dy); e.preventDefault();
+  }, {passive:false});
+  base.addEventListener('pointerup', ()=>{ stickCenter(); baseRect=null; }, {passive:true});
+  base.addEventListener('pointercancel', ()=>{ stickCenter(); baseRect=null; }, {passive:true});
+  setKnob(0,0);
+
+  btn.addEventListener('pointerdown', (e)=>{ st.just = true; e.preventDefault(); }, {passive:false});
+}
+
+/* =============================================================================
+   TOUCH — BEZPOŚREDNI DOTYK NA CANVAS
+   ========================================================================== */
+const directPtrToPlayer = new Map(); // pointerId -> 'p1'|'p2'|'p3'|'p4'
+const directTouch = {
+  p1:{active:false,x:0,y:0,just:false}, p2:{active:false,x:0,y:0,just:false},
+  p3:{active:false,x:0,y:0,just:false}, p4:{active:false,x:0,y:0,just:false},
+};
+
+function pickDirectPlayerFor(y){
+  const {H} = getSize();
+  const topSide = (y < H/2);
+  // preferuj istniejących graczy o danej stronie
+  const arr = [p1,p2,p3,p4].filter(Boolean).filter(p=> p.sideTop === topSide);
+  if (!arr.length) return null;
+  // jeśli dwóch na stronie (np. p1+p3), wybierz bliższego po X ustawimy później — tu zwracamy obiekt,
+  // a właściwy wybór zrobimy w onPointerDownDirect.
+  return arr;
+}
+function onPointerDownDirect(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  const cand = pickDirectPlayerFor(y);
+  if (!cand) return;
+  // wybierz najbliższego po X
+  let best = null, bestD = Infinity;
+  cand.forEach(p=>{
+    const d = Math.abs(p.x - x);
+    if (d < bestD){ bestD=d; best=p; }
+  });
+  if (!best) return;
+  const id = 'p'+(best===p1?1:best===p2?2:best===p3?3:4);
+  directPtrToPlayer.set(e.pointerId, id);
+  const st = directTouch[id];
+  st.active = true; st.x=x; st.y=y; st.just = true; // „dotyk zaczyna się dotykiem”
+}
+function onPointerMoveDirect(e){
+  const id = directPtrToPlayer.get(e.pointerId); if (!id) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  const st = directTouch[id]; st.x=x; st.y=y;
+}
+function onPointerUpDirect(e){
+  const id = directPtrToPlayer.get(e.pointerId); if (!id) return;
+  const st = directTouch[id]; st.active=false;
+  directPtrToPlayer.delete(e.pointerId);
+}
+function enableDirectTouchControls(){
+  canvas.addEventListener('pointerdown', (e)=>{
+    // Obsługuj tylko jeśli są gracze w trybie „Dotyk: Bezpośredni”
+    if (![p1,p2,p3,p4].filter(Boolean).some(p=>p.input==='touch' && p.touchMode==='direct')) return;
+    onPointerDownDirect(e);
+  }, {passive:true});
+  canvas.addEventListener('pointermove', (e)=>{
+    if (![p1,p2,p3,p4].filter(Boolean).some(p=>p.input==='touch' && p.touchMode==='direct')) return;
+    onPointerMoveDirect(e);
+  }, {passive:true});
+  canvas.addEventListener('pointerup', (e)=> onPointerUpDirect(e), {passive:true});
+  canvas.addEventListener('pointercancel', (e)=> onPointerUpDirect(e), {passive:true});
 }
 
 /* =============================================================================
@@ -491,21 +591,15 @@ function wallsAndGoals(pk, W, H){
   }
 }
 
-/* =============================================================================
-   AI (działa)
-   ========================================================================== */
+/* AI (działa) */
 function aiInputFor(p,id,dt){
-  const params = {
-    easy:   { gain:0.8,  vmax:0.75, react:0.14, aimNoise:22, strikeDist:46 },
-    medium: { gain:1.2,  vmax:0.95, react:0.08, aimNoise:12, strikeDist:52 },
-    hard:   { gain:1.6,  vmax:1.00, react:0.05, aimNoise: 6, strikeDist:58 },
-  };
+  const params = { easy:{gain:0.8,vmax:0.75,react:0.14,aimNoise:22,strikeDist:46},
+                   medium:{gain:1.2,vmax:0.95,react:0.08,aimNoise:12,strikeDist:52},
+                   hard:{gain:1.6,vmax:1.00,react:0.05,aimNoise:6,strikeDist:58} };
   const cfg = params[p.ai] || params.medium;
-  const {W,H} = getSize();
-  const puck = pk;
+  const {W,H} = getSize(); const puck = pk;
   const coming = p.sideTop ? (puck.vy < 0) : (puck.vy > 0);
   const defendLineY = p.sideTop ? H*0.24 : H*0.76;
-
   let targetX = puck.x;
   if (coming && Math.abs(puck.vy) > 0.08){
     const lineY = p.sideTop ? (H*0.34) : (H*0.66);
@@ -513,30 +607,23 @@ function aiInputFor(p,id,dt){
     let predX = puck.x + puck.vx * frames;
     const left = arena.frW + puck.r, right = W - arena.frW - puck.r, span = right - left;
     if (span > 1){
-      let px = predX - left;
-      px = ((px % (2*span)) + 2*span) % (2*span);
+      let px = predX - left; px = ((px % (2*span)) + 2*span) % (2*span);
       predX = (px > span) ? (left + (2*span - px)) : (left + px);
     }
     targetX = predX + (Math.random()*2 - 1) * cfg.aimNoise;
-  } else {
-    targetX = W*0.5 + (p.sideTop ? -24 : 24);
-  }
+  } else targetX = W*0.5 + (p.sideTop ? -24 : 24);
 
   let aimY;
   if (coming){
     const offset = p.sideTop ? -28 : 28;
     aimY = clamp(puck.y + offset, p.sideTop ? (arena.frW + p.r) : (H/2 + p.r),
                                 p.sideTop ? (H/2 - p.r)        : (H - arena.frW - p.r));
-  } else {
-    aimY = defendLineY;
-  }
+  } else { aimY = defendLineY; }
 
-  const dx = targetX - p.x, dy = aimY - p.y, len = Math.hypot(dx,dy) || 1;
-  const ndx = dx/len, ndy = dy/len;
-
+  const dx = targetX - p.x, dy = aimY - p.y, len=Math.hypot(dx,dy)||1;
+  const ndx=dx/len, ndy=dy/len;
   p.ai_dx = p.ai_dx*(1 - cfg.react) + ndx*cfg.react;
   p.ai_dy = p.ai_dy*(1 - cfg.react) + ndy*cfg.react;
-
   let out_dx = clamp(p.ai_dx * cfg.gain, -cfg.vmax, cfg.vmax);
   let out_dy = clamp(p.ai_dy * cfg.gain, -cfg.vmax, cfg.vmax);
 
@@ -548,101 +635,35 @@ function aiInputFor(p,id,dt){
 }
 
 /* =============================================================================
-   TOUCH‑PAD — logika
-   ========================================================================== */
-const touchLayer = document.getElementById('touchLayer');
-const touchState = {
-  p1:{dx:0,dy:0,just:false,active:false}, p2:{dx:0,dy:0,just:false,active:false},
-  p3:{dx:0,dy:0,just:false,active:false}, p4:{dx:0,dy:0,just:false,active:false},
-};
-
-function mountTouchForPlayer(pid){
-  const zone = document.getElementById('tp-'+pid);
-  if (!zone || zone.childElementCount>0) return;
-
-  // baza + gałka
-  const base = document.createElement('div'); base.className='stickBase';
-  const knob = document.createElement('div'); knob.className='stickKnob';
-  base.appendChild(knob);
-
-  // przycisk ciosu
-  const btn  = document.createElement('div'); btn.className='tpBtn';
-  const lbl  = document.createElement('span'); lbl.textContent='Cios';
-  btn.appendChild(lbl);
-
-  // do strefy
-  zone.appendChild(base); zone.appendChild(btn);
-
-  // joystick — pointer events
-  const maxR = ()=> (Math.min(base.clientWidth, base.clientHeight)/2)*0.9; // promień ruchu gałki
-  let baseRect = null;
-  function updateRect(){ baseRect = base.getBoundingClientRect(); }
-  const st = touchState[pid];
-
-  function setKnob(dx,dy){
-    // dx,dy mieści się w [-1,1]
-    const r = maxR();
-    knob.style.left = (base.clientWidth/2  + dx*r - knob.clientWidth/2)  + 'px';
-    knob.style.top  = (base.clientHeight/2 + dy*r - knob.clientHeight/2) + 'px';
-  }
-  function stickTo(dx,dy){
-    const len = Math.hypot(dx,dy);
-    if (len>1){ dx/=len; dy/=len; }
-    st.dx = clamp(dx, -1, 1);
-    st.dy = clamp(dy, -1, 1);
-    setKnob(st.dx, st.dy);
-    st.active = true;
-  }
-  function stickCenter(){
-    st.dx=0; st.dy=0; st.active=false; setKnob(0,0);
-  }
-
-  base.addEventListener('pointerdown', (e)=>{
-    base.setPointerCapture?.(e.pointerId);
-    updateRect();
-    const dx = (e.clientX - (baseRect.left + baseRect.width/2))/maxR();
-    const dy = (e.clientY - (baseRect.top  + baseRect.height/2))/maxR();
-    stickTo(dx,dy);
-    e.preventDefault();
-  }, {passive:false});
-  base.addEventListener('pointermove', (e)=>{
-    if (!baseRect) return;
-    if (e.buttons===0){ baseRect=null; return; }
-    const dx = (e.clientX - (baseRect.left + baseRect.width/2))/maxR();
-    const dy = (e.clientY - (baseRect.top  + baseRect.height/2))/maxR();
-    stickTo(dx,dy);
-    e.preventDefault();
-  }, {passive:false});
-  base.addEventListener('pointerup', ()=>{ stickCenter(); baseRect=null; }, {passive:true});
-  base.addEventListener('pointercancel', ()=>{ stickCenter(); baseRect=null; }, {passive:true});
-  setKnob(0,0);
-
-  // przycisk ciosu
-  btn.addEventListener('pointerdown', (e)=>{ st.just = true; e.preventDefault(); }, {passive:false});
-}
-
-/* pokaż/ukryj touch layer w zależności od graczy używających „Dotyk” */
-function refreshTouchLayerVisibility(){
-  const anyTouch = [p1,p2,p3,p4].filter(Boolean).some(p=>p.input==='touch');
-  touchLayer.style.display = anyTouch ? 'block' : 'none';
-
-  // Montuj pady tylko dla graczy „touch”
-  if (p1 && p1.input==='touch') mountTouchForPlayer('p1'); else document.getElementById('tp-p1').innerHTML='';
-  if (p2 && p2.input==='touch') mountTouchForPlayer('p2'); else document.getElementById('tp-p2').innerHTML='';
-  if (p3 && p3.input==='touch') mountTouchForPlayer('p3'); else document.getElementById('tp-p3').innerHTML='';
-  if (p4 && p4.input==='touch') mountTouchForPlayer('p4'); else document.getElementById('tp-p4').innerHTML='';
-}
-
-/* =============================================================================
-   WEJŚCIA — ZBIERANIE (KB/Pad/AI/Touch)
+   WEJŚCIA — ZBIERANIE (KB/Pad/AI/Touch-joystick/Touch-direct)
    ========================================================================== */
 function getInputForPlayer(p, id, dt){
-  // TOUCH
-  if (p.input==='touch'){
+  // TOUCH: Joystick
+  if (p.input==='touch' && p.touchMode==='joystick'){
     const st = touchState[id];
     const moving = Math.abs(st.dx)+Math.abs(st.dy)>0.01;
     const justStrike = !!st.just && moving; st.just=false;
     return { dx:st.dx, dy:st.dy, justStrike, justAButton:false, justZR:false };
+  }
+  // TOUCH: Bezpośredni dotyk
+  if (p.input==='touch' && p.touchMode==='direct'){
+    const st = directTouch[id];
+    // gdy aktywny dotyk – kieruj się do punktu
+    if (st.active){
+      const {W,H} = getSize();
+      // Strefowe ograniczenie: nie wychodź poza połowę gracza
+      const mid = H/2;
+      const targetX = clamp(st.x, arena.frW + p.r, W - arena.frW - p.r);
+      const targetY = clamp(st.y, p.sideTop ? (arena.frW + p.r) : (mid + p.r),
+                                  p.sideTop ? (mid - p.r)      : (H - arena.frW - p.r));
+      const dx = targetX - p.x, dy = targetY - p.y;
+      const len = Math.hypot(dx,dy) || 1;
+      const ndx = dx/len, ndy = dy/len;
+      const justStrike = !!st.just; st.just=false; // pierwszy dotyk wyzwala „cios”
+      return { dx: ndx, dy: ndy, justStrike, justAButton:false, justZR:false };
+    } else {
+      return { dx:0, dy:0, justStrike:false, justAButton:false, justZR:false };
+    }
   }
 
   // GAMEPAD
@@ -717,7 +738,7 @@ function physicsStep(dt){
 }
 
 /* =============================================================================
-   RYSOWANIE
+   RYSOWANIE (półkola nad bramkami + zaokrąglone rogi WIZUALNIE)
    ========================================================================== */
 function draw(){
   const {W,H}=getSize();
@@ -744,7 +765,7 @@ function draw(){
   ctx.strokeStyle = bot + 'aa'; ctx.beginPath(); ctx.arc(W/2, H - arena.frW/2, rArc, 0, Math.PI); ctx.stroke();
   ctx.restore();
 
-  // rogi wizualnie
+  // rogi (wizual)
   const r=CORNER_R; ctx.lineWidth=arena.frW; ctx.strokeStyle=top;
   ctx.beginPath(); ctx.arc(arena.frW/2 + r, arena.frW/2 + r, r, Math.PI, 1.5*Math.PI); ctx.stroke();
   ctx.beginPath(); ctx.arc(W - (arena.frW/2 + r), arena.frW/2 + r, r, 1.5*Math.PI, 2*Math.PI); ctx.stroke();
@@ -803,7 +824,7 @@ function resetPositions(){
 }
 
 /* =============================================================================
-   U I — JĘZYK / TŁO / SPRZĘT / FLAGI / CZAS
+   U I — JĘZYK / TŁO / SPRZĘT / BRAMKA / FLAGI / CZAS
    ========================================================================== */
 function setupLangUI(){
   const wrap=document.getElementById('langChips');
@@ -859,8 +880,6 @@ function setupPuckUI(){
     };
   });
 }
-
-/* NOWOŚĆ: Rozmiar bramki x6 */
 function setupGoalSizeUI(){
   const wrap=document.getElementById('goalSizeChips');
   const current = arena.gw;
@@ -868,13 +887,11 @@ function setupGoalSizeUI(){
     const gw = parseInt(btn.dataset.gw,10);
     if (gw===current) btn.classList.add('active');
     btn.onclick=()=>{
-      arena.gw = gw;
-      localStorage.setItem('goalWidth', String(gw));
+      arena.gw = gw; localStorage.setItem('goalWidth', String(gw));
       wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
     };
   });
 }
-
 function setupFlagsUI(){
   const FLAGS=['PL','US','GB','FR','DE','ES','BR','JP','IT','NL','PT'];
   const mk=(wrapId, player)=>{
@@ -906,7 +923,9 @@ function setupRoundUI(){
   chk.onchange=()=>{ unlimitedTime=chk.checked; matchTime=unlimitedTime?0:roundTimeSec; customRow.style.display='none'; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); };
 }
 
-/* LICZBA GRACZY + DYNAMICZNE STEROWANIE (z opcją „Dotyk”) */
+/* =============================================================================
+   LICZBA GRACZY + DYNAMICZNE STEROWANIE (z Dotyk: Joystick/Bezpośredni)
+   ========================================================================== */
 let selectedPlayers = 2;
 function createOrDestroyPlayers(n){
   const {W,H}=getSize();
@@ -924,7 +943,7 @@ function renderControls(n){
     4: 'F H T G   •  ShiftLeft  = cios',
   };
   function cardHTML(idx, player){
-    const name = 'P'+idx, inSelId=`selInputP${idx}`, padSelId=`selPadP${idx}`, aiSelId=`selAiP${idx}`;
+    const name='P'+idx, inSelId=`selInputP${idx}`, padSelId=`selPadP${idx}`, aiSelId=`selAiP${idx}`, touchModeId=`selTouchModeP${idx}`;
     return `
       <div class="ctrl-card" id="ctrlCardP${idx}">
         <div class="ctrl-title">${name}</div>
@@ -935,13 +954,28 @@ function renderControls(n){
             <option value="ai"${player.input==='ai'?' selected':''}>AI (bot)</option>
             <option value="touch"${player.input==='touch'?' selected':''}>Dotyk</option>
           </select>
+
+          <!-- Dla Gamepad -->
           <select id="${padSelId}" data-role="padSelect" style="display:${player.input==='gamepad'?'block':'none'};"></select>
-          <select id="${aiSelId}"  style="display:${player.input==='ai'?'block':'none'};">
+
+          <!-- Dla AI -->
+          <select id="${aiSelId}" style="display:${player.input==='ai'?'block':'none'};">
             <option value="easy"${player.ai==='easy'?' selected':''}>Łatwy</option>
             <option value="medium"${player.ai==='medium'?' selected':''}>Średni</option>
             <option value="hard"${player.ai==='hard'?' selected':''}>Trudny</option>
           </select>
-          <div class="ctrl-hint">${hints[idx]||''} • „Dotyk” = joystick + przycisk „Cios”</div>
+
+          <!-- Dla Dotyk -->
+          <div id="touchRowP${idx}" style="display:${player.input==='touch'?'block':'none'};">
+            <label class="hint">Tryb dotyku:</label>
+            <select id="${touchModeId}">
+              <option value="direct"${player.touchMode==='direct'?' selected':''}>Bezpośredni dotyk</option>
+              <option value="joystick"${player.touchMode==='joystick'?' selected':''}>Joystick</option>
+            </select>
+            <div class="ctrl-hint">„Bezpośredni dotyk” — malujesz palcem po swojej połowie; pierwszy dotyk = cios. „Joystick” — wirtualny pad + przycisk.</div>
+          </div>
+
+          <div class="ctrl-hint">${hints[idx]||''}</div>
         </div>
       </div>
     `;
@@ -949,24 +983,32 @@ function renderControls(n){
   const arr=[p1,p2].concat(n>=3?[p3||p1]:[]).concat(n>=4?[p4||p2]:[]);
   arr.forEach((pp,i)=> cont.insertAdjacentHTML('beforeend', cardHTML(i+1, pp)));
 
+  // podpinanie logiki
   arr.forEach((pp,i)=>{
     const idx=i+1, id='p'+idx;
     const inSel=document.getElementById(`selInputP${idx}`);
     const padSel=document.getElementById(`selPadP${idx}`);
     const aiSel =document.getElementById(`selAiP${idx}`);
-    inSel.onchange=()=>{ pp.input=inSel.value;
+    const touchRow=document.getElementById(`touchRowP${idx}`);
+    const touchModeSel=document.getElementById(`selTouchModeP${idx}`);
+
+    inSel.onchange=()=>{
+      pp.input=inSel.value;
       if (padSel) padSel.style.display=(pp.input==='gamepad')?'block':'none';
       if (aiSel)  aiSel.style.display =(pp.input==='ai')?'block':'none';
-      if (pp.input==='gamepad') { touchGamepadAPI(); refreshPadLists(); }
+      if (touchRow) touchRow.style.display=(pp.input==='touch')?'block':'none';
+      if (pp.input==='gamepad'){ touchGamepadAPI(); refreshPadLists(); }
       refreshTouchLayerVisibility();
     };
     if (padSel) padSel.onchange=()=>{ pp.padIndex=parseInt(padSel.value,10)||-1; };
     if (aiSel)  aiSel.onchange =()=>{ pp.ai=aiSel.value; };
+    if (touchModeSel) touchModeSel.onchange=()=>{ pp.touchMode = touchModeSel.value; refreshTouchLayerVisibility(); };
   });
 
   refreshPadLists();
   refreshTouchLayerVisibility();
 }
+
 function setupPlayersAndControlsUI(){
   const wrap=document.getElementById('playersChips');
   wrap.querySelectorAll('.chip').forEach(btn=>{
@@ -984,65 +1026,40 @@ function setupPlayersAndControlsUI(){
   renderControls(selectedPlayers);
 }
 
-/* Specjal / Wibracje / Pełny ekran / Fizyka UI */
-function setupSpecialVibFsUI(){
-  const selMb=document.getElementById('selMbLimit');
-  selMb.onchange=()=>{ multiballLimitPerPlayer=parseInt(selMb.value,10); };
-  const chkVib=document.getElementById('chkVib');
-  const rngVib=document.getElementById('rngVib'); const vibVal=document.getElementById('vibVal');
-  let vibEnabled = (localStorage.getItem('vibEnabled') ?? '1') !== '0';
-  let vibStrength = Math.max(0, Math.min(100, parseInt(localStorage.getItem('vibStrength') || '70', 10)));
-  chkVib.checked=vibEnabled; rngVib.value=String(vibStrength); vibVal.textContent=vibStrength+'%';
-  const apply=()=>{ vibEnabled=chkVib.checked; localStorage.setItem('vibEnabled', vibEnabled?'1':'0');
-    vibStrength = Math.max(0, Math.min(100, parseInt(rngVib.value||'0',10)));
-    vibVal.textContent=vibStrength+'%'; localStorage.setItem('vibStrength', String(vibStrength)); };
-  chkVib.onchange=apply; rngVib.oninput=apply;
+/* =============================================================================
+   TOUCH LAYER widoczność (montuj joysticki tylko dla touchMode=joystick)
+   ========================================================================== */
+function refreshTouchLayerVisibility(){
+  const anyJoystick = [p1,p2,p3,p4].filter(Boolean).some(p=> p.input==='touch' && p.touchMode==='joystick');
+  touchLayer.style.display = anyJoystick ? 'block' : 'none';
 
-  const chkFs=document.getElementById('chkFs');
-  let fullscreenPref = (localStorage.getItem('fs') ?? '0') === '1';
-  chkFs.checked=fullscreenPref;
-  chkFs.onchange=()=>{ fullscreenPref=chkFs.checked; localStorage.setItem('fs', fullscreenPref?'1':'0'); };
-  window.__fullscreenPref__=fullscreenPref;
-}
-function setupBounceUI(){
-  const wrap=document.getElementById('bounceChips');
-  const setAct=()=> wrap.querySelectorAll('.chip').forEach(b=> b.classList.toggle('active', b.dataset.mode===malletBounceMode));
-  wrap.querySelectorAll('.chip').forEach(btn=>{
-    btn.onclick=()=>{ malletBounceMode=btn.dataset.mode; localStorage.setItem('malletBounceMode', malletBounceMode); setAct(); };
-  });
-  setAct();
-  const rng=document.getElementById('rngFric'); const lbl=document.getElementById('fricVal');
-  rng.value = String(Math.round(TANGENTIAL_DAMPING*1000)); lbl.textContent=TANGENTIAL_DAMPING.toFixed(3);
-  rng.oninput=()=>{ const v=clamp(parseInt(rng.value,10)||0, 0, 50); TANGENTIAL_DAMPING=v/1000;
-    localStorage.setItem('tangentialDamping', String(TANGENTIAL_DAMPING)); lbl.textContent=TANGENTIAL_DAMPING.toFixed(3); };
+  function mountOrClear(p, pid){
+    const el = document.getElementById('tp-'+pid);
+    if (!el) return;
+    if (p && p.input==='touch' && p.touchMode==='joystick'){ if (!el.childElementCount) mountTouchForPlayer(pid); }
+    else { el.innerHTML=''; }
+  }
+  mountOrClear(p2,'p2'); mountOrClear(p4,'p4'); mountOrClear(p1,'p1'); mountOrClear(p3,'p3');
 }
 
-/* Lista padów (dynamiczne kontrolki) */
+/* =============================================================================
+   LISTA PADÓW
+   ========================================================================== */
 function refreshPadLists(){
   const gps=navigator.getGamepads?navigator.getGamepads():[];
   const padSelects = document.querySelectorAll('select[data-role="padSelect"]');
   padSelects.forEach(sel=>{
-    const prev = sel.value;
-    sel.innerHTML='';
-    let any=false;
-    for (let i=0;i<gps.length;i++){
-      const gp=gps[i]; if (!gp) continue; any=true;
-      const opt=document.createElement('option');
-      opt.value=gp.index; opt.textContent=`#${gp.index} ${gp.id}`;
-      sel.appendChild(opt);
-    }
-    if (!any){
-      const opt=document.createElement('option');
-      opt.value=''; opt.textContent='— brak padów —';
-      opt.disabled=true; opt.selected=true;
-      sel.appendChild(opt);
-    } else {
-      if (prev) sel.value = prev;
-    }
+    const prev = sel.value; sel.innerHTML=''; let any=false;
+    for (let i=0;i<gps.length;i++){ const gp=gps[i]; if(!gp) continue; any=true;
+      const opt=document.createElement('option'); opt.value=gp.index; opt.textContent=`#${gp.index} ${gp.id}`; sel.appendChild(opt); }
+    if (!any){ const opt=document.createElement('option'); opt.value=''; opt.textContent='— brak padów —'; opt.disabled=true; opt.selected=true; sel.appendChild(opt); }
+    else if (prev) sel.value=prev;
   });
 }
 
-/* START / COUNTDOWN / PRZYCISKI */
+/* =============================================================================
+   START / COUNTDOWN / PRZYCISKI
+   ========================================================================== */
 function showCountdown(cb){
   let c=3; countdownEl.style.display='flex'; countdownEl.innerText=c;
   const tmr=setInterval(()=>{
@@ -1051,9 +1068,10 @@ function showCountdown(cb){
   }, 700);
 }
 async function onStart(){
-  if ((window.__fullscreenPref__ ?? ((localStorage.getItem('fs') ?? '0')==='1')) && !document.fullscreenElement){
-    try{ await document.documentElement.requestFullscreen?.(); }
-    catch(fsErr){ console.warn('[Start] FS odmówiony (OK):', fsErr); }
+  // pełny ekran – opcjonalnie; nie blokuje startu
+  const fsPref = (localStorage.getItem('fs') || '0')==='1';
+  if (fsPref && !document.fullscreenElement){
+    try{ await document.documentElement.requestFullscreen?.(); } catch(_){}
   }
   overlay.style.display='none';
   showCountdown(()=>{ isPaused=false; });
@@ -1064,7 +1082,9 @@ document.getElementById('btnHelp').onclick = ()=>{ showToast(t('kbTip')+' '+t('g
 document.getElementById('btnFs').onclick   = async ()=>{ try{ if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); }catch(e){ showToast('Pełny ekran: błąd', 2000); } };
 document.getElementById('btnStart').onclick= onStart;
 
-/* BOOT */
+/* =============================================================================
+   BOOT
+   ========================================================================== */
 window.addEventListener('load', ()=>{
   try{
     fit();
@@ -1077,13 +1097,40 @@ window.addEventListener('load', ()=>{
     setupBgUI();
     setupPuckUI();
     setupMalletUI();
-    setupGoalSizeUI();     // ← NOWOŚĆ: rozmiar bramki (6 opcji)
+    setupGoalSizeUI();
     setupFlagsUI();
     setupRoundUI();
-    setupSpecialVibFsUI();
-    setupBounceUI();
 
-    // Touch layer dla „Dotyk”
+    // Specjal / wibracje / fizyka
+    const selMb=document.getElementById('selMbLimit');
+    selMb.onchange=()=>{ /* limit Multiball – logika może być dopięta przy dodaniu samej funkcji */ };
+    const chkVib=document.getElementById('chkVib');
+    const rngVib=document.getElementById('rngVib'); const vibVal=document.getElementById('vibVal');
+    let vibEnabled = (localStorage.getItem('vibEnabled') ?? '1') !== '0';
+    let vibStrength = Math.max(0, Math.min(100, parseInt(localStorage.getItem('vibStrength') || '70', 10)));
+    chkVib.checked=vibEnabled; rngVib.value=String(vibStrength); vibVal.textContent=vibStrength+'%';
+    const applyV=()=>{ vibEnabled=chkVib.checked; localStorage.setItem('vibEnabled', vibEnabled?'1':'0');
+      vibStrength = Math.max(0, Math.min(100, parseInt(rngVib.value||'0',10))); vibVal.textContent=vibStrength+'%';
+      localStorage.setItem('vibStrength', String(vibStrength)); };
+    chkVib.onchange=applyV; rngVib.oninput=applyV;
+
+    const chkFs=document.getElementById('chkFs');
+    let fullscreenPref = (localStorage.getItem('fs') ?? '0') === '1';
+    chkFs.checked=fullscreenPref;
+    chkFs.onchange=()=>{ fullscreenPref=chkFs.checked; localStorage.setItem('fs', fullscreenPref?'1':'0'); };
+
+    const wrapB=document.getElementById('bounceChips');
+    const setAct=()=> wrapB.querySelectorAll('.chip').forEach(b=> b.classList.toggle('active', b.dataset.mode===malletBounceMode));
+    wrapB.querySelectorAll('.chip').forEach(btn=>{
+      btn.onclick=()=>{ malletBounceMode=btn.dataset.mode; localStorage.setItem('malletBounceMode', malletBounceMode); setAct(); };
+    });
+    setAct();
+    const rng=document.getElementById('rngFric'); const lbl=document.getElementById('fricVal');
+    rng.value = String(Math.round(TANGENTIAL_DAMPING*1000)); lbl.textContent=TANGENTIAL_DAMPING.toFixed(3);
+    rng.oninput=()=>{ const v=clamp(parseInt(rng.value,10)||0, 0, 50); TANGENTIAL_DAMPING=v/1000; localStorage.setItem('tangentialDamping', String(TANGENTIAL_DAMPING)); lbl.textContent=TANGENTIAL_DAMPING.toFixed(3); };
+
+    // Touch
+    enableDirectTouchControls();
     refreshTouchLayerVisibility();
 
     // Gamepads
