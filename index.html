@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
-  <title>Air Hockey — Touch: Joystick / Bezpośredni dotyk</title>
+  <title>Air Hockey — Narożne przyciski + START + gest 2 palców</title>
 
-  <!-- Samowystarczalny: brak zewnętrznych plików (manifest, ikony, itd.) -->
+  <!-- Samowystarczalny: brak zewnętrznych plików -->
 
   <style>
     :root { --bg:#0b0b0b; --panel:#111; --accent:#00e5ff; --border:#222; --app-h: 100svh; }
@@ -28,10 +28,30 @@
 
     canvas { display:block; background:#f8faff; border-radius:8px; box-shadow:0 30px 80px rgba(0,0,0,.55); }
 
-    #ui { position:absolute; top:14px; left:14px; z-index:4; display:flex; gap:8px; }
-    .btn-quick { appearance:none; border:1px solid #2a2a2a; background:#171717; color:#eaeaea;
-      padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; }
+    /* ===========================
+       Narożne przyciski (4 rogi)
+       =========================== */
+    #cornerUI { position:absolute; inset:0; pointer-events:none; z-index:6; }
+    .corner-slot {
+      position:absolute; display:flex; gap:8px; pointer-events:auto;
+    }
+    .tl { top:14px; left:14px; }
+    .tr { top:14px; right:14px; justify-content:flex-end; }
+    .bl { bottom:14px; left:14px; }
+    .br { bottom:14px; right:14px; justify-content:flex-end; }
 
+    .btn-quick {
+      appearance:none; border:1px solid #2a2a2a; background:#171717; color:#eaeaea;
+      padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:700; font-size:14px;
+      box-shadow:0 6px 18px rgba(0,0,0,.28);
+    }
+    .btn-quick:active { transform:translateY(1px); }
+    .btn-start { background:#00e676; color:#04160a; border-color:#146b3b; }
+
+    /* Schowanie całego UI (np. w fullscreen) */
+    .hiddenUI { display:none !important; }
+
+    /* Overlay ustawień */
     .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
       background:rgba(0,0,0,.9); z-index:10; }
     .panel {
@@ -55,7 +75,6 @@
       background:#171717; color:#eaeaea; border:1px solid #2a2a2a; border-radius:8px; padding:8px;
     }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-
     .btn {
       appearance:none; border:none; border-radius:10px; padding:12px 16px; font-weight:700;
       background:var(--accent); color:#001016; cursor:pointer; font-size:16px;
@@ -64,7 +83,7 @@
 
     #countdown {
       position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-      z-index:3; pointer-events:none; font-size:160px; font-weight:900; color:#fff;
+      z-index:5; pointer-events:none; font-size:160px; font-weight:900; color:#fff;
       text-shadow:0 8px 28px rgba(0,0,0,.5);
     }
 
@@ -115,11 +134,22 @@
 </head>
 <body>
   <div class="wrap" aria-live="polite">
-    <div id="ui">
-      <button id="btnMenu"  class="btn-quick">⚙️ Ustawienia</button>
-      <button id="btnHelp"  class="btn-quick">❔ Pomoc</button>
-      <button id="btnHud"   class="btn-quick">📈 HUD</button>
-      <button id="btnFs"    class="btn-quick">🖵 Pełny ekran</button>
+    <!-- ===========================
+         Narożne przyciski
+         =========================== -->
+    <div id="cornerUI">
+      <div class="corner-slot tl">
+        <button id="btnMenu"  class="btn-quick">⚙️ Ustawienia</button>
+      </div>
+      <div class="corner-slot tr">
+        <button id="btnHud"   class="btn-quick">📈 HUD</button>
+      </div>
+      <div class="corner-slot bl">
+        <button id="btnHelp"  class="btn-quick">❔ Pomoc</button>
+      </div>
+      <div class="corner-slot br">
+        <button id="btnStartCorner" class="btn-quick btn-start">▶ START</button>
+      </div>
     </div>
 
     <div id="countdown">3</div>
@@ -136,7 +166,6 @@
   </div>
 
   <!-- ========= USTAWIENIA ========= -->
-  <!-- Ukryte na starcie -->
   <div id="overlay" class="overlay" role="dialog" aria-modal="true" style="display:none;">
     <div class="panel">
       <h1>USTAWIENIA MECZU</h1>
@@ -144,7 +173,6 @@
       <!-- Gracze + Sterowanie (dynamiczne) -->
       <h2>Gracze &amp; Sterowanie</h2>
       <div class="grid grid-2">
-        <!-- Liczba graczy -->
         <div class="row">
           <div class="hint">Liczba graczy</div>
           <div class="chipbar" id="playersChips">
@@ -155,7 +183,6 @@
           </div>
           <div class="hint">Przy 3–4: P1+P3 dół, P2+P4 góra.</div>
         </div>
-        <!-- Sterowanie -->
         <div class="row">
           <div class="hint">Sterowanie (dla wybranej liczby graczy)</div>
           <div id="controlsContainer" class="grid" style="gap:12px;"></div>
@@ -246,8 +273,8 @@
         </div>
       </div>
 
-      <!-- Czas rundy / Specjal / Wibracje / FS / Dźwięk -->
-      <h2>Czas rundy / Specjal / Wibracje / Pełny ekran / Dźwięk</h2>
+      <!-- Czas / Specjal / Wibracje / Dźwięk / FS -->
+      <h2>Czas rundy / Specjal / Wibracje / Dźwięk / Pełny ekran</h2>
       <div class="grid grid-2">
         <div class="row">
           <div class="chipbar" id="roundChips">
@@ -286,8 +313,13 @@
               <div id="vibVal" class="hint mono">70%</div>
             </div>
 
-            <!-- NOWE: Dźwięk ON/OFF -->
-            <label class="hint"><input id="chkAudio" type="checkbox" /> Dźwięk odbicia ON</label>
+            <!-- Dźwięk: ON/OFF + głośność -->
+            <label class="hint"><input id="chkAudio" type="checkbox" /> Dźwięk odbić ON</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="hint">Głośność:</div>
+              <input id="rngAudio" type="range" min="0" max="100" step="1" value="70" />
+              <div id="audioVal" class="hint mono">70%</div>
+            </div>
 
             <label class="hint"><input id="chkFs" type="checkbox" /> Pełny ekran przy starcie</label>
           </div>
@@ -310,7 +342,7 @@
       </div>
 
       <div class="row" style="margin-top:14px">
-        <button id="btnStart" class="btn">START / WZNÓW</button>
+        <button id="btnStartOverlay" class="btn">START / WZNÓW</button>
       </div>
       <div class="hint" style="margin-top:6px">
         Tip: F11 → pełny ekran (jeśli przeglądarka blokuje automatyczny).
@@ -321,7 +353,9 @@
   <div id="toast" class="errorToast" role="status" aria-live="assertive"></div>
 
 <script>
-/* ================== iOS viewport ================== */
+/* =============================================================================
+   iOS viewport / bezpieczna wysokość
+   ========================================================================== */
 function isIOS(){
   return /iP(hone|ad|od)/.test(navigator.platform)
       || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
@@ -339,7 +373,9 @@ document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:fals
 document.addEventListener('gesturechange', (e)=>e.preventDefault(), {passive:false});
 document.addEventListener('gestureend', (e)=>e.preventDefault(), {passive:false});
 
-/* ================== Toast / błędy ================== */
+/* =============================================================================
+   Toast / błędy
+   ========================================================================== */
 function showToast(msg, ms=2200){
   const el = document.getElementById('toast');
   if (!el) return;
@@ -351,12 +387,15 @@ window.addEventListener('error', (e)=>{
   showToast('Błąd: ' + e.message, 3000);
 });
 
-/* ================== Canvas / rozmiar ================== */
+/* =============================================================================
+   Canvas / rozmiar
+   ========================================================================== */
 const canvas = document.getElementById('game');
 const ctx     = canvas.getContext('2d', { alpha:false });
 const overlay = document.getElementById('overlay');
 const perfHud = document.getElementById('perfHud');
 const countdownEl = document.getElementById('countdown');
+const cornerUI = document.getElementById('cornerUI');
 const IS_TOUCH = (('ontouchstart' in window) || (navigator.maxTouchPoints||0)>0);
 function fit(){
   const dpr = Math.min(window.devicePixelRatio || 1, 2.5) || 1;
@@ -385,20 +424,24 @@ if ('visualViewport' in window){
   window.visualViewport.addEventListener('scroll', onViewportMaybeChanged);
 }
 
-/* ================== I18N skrót ================== */
+/* =============================================================================
+   I18N (skrót)
+   ========================================================================== */
 let lang = localStorage.getItem('lang') || 'pl';
 const I18N = {
   pl: {
     goal:'GOL!', settings:'USTAWIENIA MECZU', start:'START / WZNÓW', newMatch:'NOWY MECZ',
     gameOver:'KONIEC MECZU', ot:'DOGRYWKA',
-    kbTip:'Jeśli klawisze nie działają: kliknij w płótno lub naciśnij Enter.',
-    gamepadTip:'Naciśnij dowolny przycisk na padzie, aby go wykryć',
+    kbTip:'Klawiatura: Strzałki lub WASD — wciśnij, by rozpocząć.',
+    gamepadTip:'Pad: A (0) = START, X (2) = Ustawienia',
     httpsTip:'Gamepady najlepiej działają w HTTPS lub na localhost.', noPad:'Brak wykrytego pada.'
   }
 };
 const t = (k)=> (I18N[lang] && I18N[lang][k]) || k;
 
-/* ================== Fizyka / parametry ================== */
+/* =============================================================================
+   Fizyka / parametry
+   ========================================================================== */
 const WALL_E = 0.96;
 let malletBounceMode = localStorage.getItem('malletBounceMode') || 'wall';
 let TANGENTIAL_DAMPING = parseFloat(localStorage.getItem('tangentialDamping') || '0.01');
@@ -414,12 +457,16 @@ let puckSpeedMax = parseInt(localStorage.getItem('puckSpeedMax')||'') || PUCK_SP
 
 let tableBgColor = localStorage.getItem('tableBgColor') || '#f8faff';
 
-/* ================== Czas rundy (fix: brak referencji) ================== */
-let roundTimeSec = 180;  // 3 min domyślnie
+/* =============================================================================
+   Czas rundy (zmienne globalne)
+   ========================================================================== */
+let roundTimeSec = 180;
 let matchTime    = roundTimeSec;
 let unlimitedTime = false;
 
-/* ================== Obiekty gry ================== */
+/* =============================================================================
+   Obiekty gry
+   ========================================================================== */
 function makePlayer(x,y,r,color,sideTop,name){
   return { name, x,y,r, vx:0,vy:0, color, sideTop, isHitting:false,
            input: (IS_TOUCH ? 'touch' : 'keyboard'),
@@ -435,7 +482,7 @@ function makePuck(x, y, r){
   return {
     x, y, r,
     vx: 0, vy: 0,
-    prevX: x, prevY: y,      // dla anti‑tunnel
+    prevX: x, prevY: y,
     cornerStallTicks: 0
   };
 }
@@ -443,74 +490,111 @@ function makePuck(x, y, r){
 let p1,p2,p3=null,p4=null, pk;
 let isPaused = true;
 
-/* ================== Audio (WebAudio) ================== */
-// ----------------------------------------------------
-// Prosty dźwięk „klik” przy kolizji z paletką
-// - ON/OFF zapamiętywane w localStorage
-// - odblokowywany przy pierwszym geście (onStart)
-// ----------------------------------------------------
+/* =============================================================================
+   Audio (WebAudio) — odbicia, banda, GOL
+   ========================================================================== */
 let audioEnabled = (localStorage.getItem('audioEnabled') ?? '1') !== '0';
-let AC = null;
-let lastHitSoundAt = 0;
-const HIT_DEBOUNCE_MS = 60;
-
+let audioVolume  = Math.max(0, Math.min(1, parseFloat(localStorage.getItem('audioVolume') || '0.70')));
+let AC = null, masterGain = null;
 function ensureAudio(){
-  if (AC) return;
+  if (AC) { if (!masterGain) { masterGain = AC.createGain(); masterGain.gain.value = audioVolume; masterGain.connect(AC.destination); } return; }
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if (!Ctx) return;
   AC = new Ctx();
+  masterGain = AC.createGain();
+  masterGain.gain.value = audioVolume;
+  masterGain.connect(AC.destination);
 }
-
-function playHitSound(intensity=0.2){
-  if (!audioEnabled) return;
-  if (!AC) return;
-  const now = AC.currentTime;
-  // limiter częstotliwości odtwarzania
-  const nowMs = performance.now();
-  if (nowMs - lastHitSoundAt < HIT_DEBOUNCE_MS) return;
-  lastHitSoundAt = nowMs;
-
+function scheduleBeep(t0, freq0, freq1, dur, peak, type='triangle'){
+  if (!AC || !masterGain) return;
   const osc = AC.createOscillator();
-  const gain = AC.createGain();
+  const g   = AC.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq0, t0);
+  if (freq1 && freq1>0) osc.frequency.exponentialRampToValueAtTime(freq1, t0 + dur*0.7);
 
-  // wysokość zależna od intensywności zderzenia
-  const clamped = Math.max(0.05, Math.min(0.9, intensity));
-  const f0 = 220 + clamped * 520;   // 220–740 Hz
-  const f1 = f0 * 0.62;             // szybki spadek (klik)
-  osc.frequency.setValueAtTime(f0, now);
-  osc.frequency.exponentialRampToValueAtTime(f1, now + 0.07);
+  g.gain.setValueAtTime(0.00001, t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.01, peak), t0 + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.00001, t0 + dur);
 
-  // głośność z krótką obwiednią
-  const a0 = 0.0001 + 0.14 * clamped; // ~0.005–0.15
-  gain.gain.setValueAtTime(0.00001, now);
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.02, a0), now + 0.005);
-  gain.gain.exponentialRampToValueAtTime(0.00001, now + 0.11);
+  osc.connect(g).connect(masterGain);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.02);
+}
+const lastSoundAt = { mallet:0, wall:0, goal:0 };
+function playHit(type, intensity=0.2){
+  if (!audioEnabled || !AC || !masterGain) return;
+  const nowMs = performance.now();
+  const limit = (type==='goal') ? 120 : (type==='wall'? 50 : 25);
+  if (nowMs - (lastSoundAt[type]||0) < limit) return;
+  lastSoundAt[type] = nowMs;
 
-  osc.type = 'triangle'; // miększy klik
-  osc.connect(gain).connect(AC.destination);
-  osc.start(now);
-  osc.stop(now + 0.12);
+  const t  = Math.max(0.05, Math.min(1.0, intensity));
+  const tn = AC.currentTime;
+
+  if (type==='mallet'){
+    const f0 = 220 + t*520, f1 = f0 * 0.62;
+    scheduleBeep(tn, f0, f1, 0.12, 0.10 + 0.12*t, 'triangle');
+  } else if (type==='wall'){
+    const f0 = 180 + t*420, f1 = f0 * 0.75;
+    scheduleBeep(tn, f0, f1, 0.10, 0.08 + 0.10*t, 'square');
+  } else if (type==='goal'){
+    scheduleBeep(tn,      640, 480, 0.12, 0.16, 'sawtooth');
+    scheduleBeep(tn+0.10, 540, 380, 0.14, 0.14, 'triangle');
+  }
 }
 
-/* ================== Wejścia KB/Pad/Touch ================== */
+/* =============================================================================
+   Wejścia KB/Pad/Touch
+   ========================================================================== */
 const keys = new Map();
-addEventListener('keydown', e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad)/.test(c)) e.preventDefault(); keys.set(c,true); }, {capture:true});
-addEventListener('keyup',   e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad)/.test(c)) e.preventDefault(); keys.set(c,false); }, {capture:true});
+addEventListener('keydown', e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad|KeyW|KeyA|KeyS|KeyD)/.test(c)) e.preventDefault();
+  keys.set(c,true);
+  // SZYBKI START: Strzałki / WASD — jeśli pauza i brak overlay → start
+  if (isPaused && overlay.style.display==='none' && (
+      c.startsWith('Arrow') || c==='KeyW' || c==='KeyA' || c==='KeyS' || c==='KeyD'
+    )) { tryStartFromShortcut('keyboard'); }
+}, {capture:true});
+addEventListener('keyup',   e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad|KeyW|KeyA|KeyS|KeyD)/.test(c)) e.preventDefault(); keys.set(c,false); }, {capture:true});
 
 /* gamepad */
 const pads=new Map(), gamepadPrevButtons=new Map(); let gpPollTimer=null;
 function pollGamepads(){ const gps=navigator.getGamepads?.()||[]; pads.clear(); for(const gp of gps) if (gp&&gp.connected) pads.set(gp.index,gp); }
-function startGamepadPolling(){ if (gpPollTimer) return; gpPollTimer=setInterval(()=>{ pollGamepads(); refreshPadLists(); }, 1500); }
+function startGamepadPolling(){ if (gpPollTimer) return; gpPollTimer=setInterval(()=>{ pollGamepads(); refreshPadLists(); }, 1200); }
 function readGamepad(idx){
-  const gps=navigator.getGamepads?navigator.getGamepads():[]; const gp=gps[idx]; if(!gp) return { dx:0, dy:0, justA:false, justZR:false, hit:false };
+  const gps=navigator.getGamepads?navigator.getGamepads():[]; const gp=gps[idx]; if(!gp) return { dx:0, dy:0, justA:false, justZR:false, hit:false, justX:false };
   const axLX=gp.axes[0]||0, axLY=gp.axes[1]||0, dead=0.18, norm=v=>Math.abs(v)<dead?0:v;
-  const dx=norm(axLX), dy=norm(axLY); const btns=gp.buttons||[]; let prev=gamepadPrevButtons.get(idx)||Array(btns.length).fill(false);
+  const dx=norm(axLX), dy=norm(axLY); const btns=gp.buttons||[];
+  let prev=gamepadPrevButtons.get(idx)||Array(btns.length).fill(false);
   const now=btns.map(b=>!!b?.pressed); gamepadPrevButtons.set(idx, now);
-  const justA=(now[0]&&!prev[0]), justZR=(now[7]&&!prev[7]); const hit=now[0]||now[5]||now[7];
-  return { dx, dy, justA, justZR, hit };
+  const justA =(now[0]&&!prev[0]);   // A / Cross
+  const justX =(now[2]&&!prev[2]);   // X / Square (index 2) → Ustawienia
+  const justZR=(now[7]&&!prev[7]);
+  const hit=now[0]||now[5]||now[7];
+  return { dx, dy, justA, justZR, hit, justX };
 }
 
-/* ================== Touch — Joystick ================== */
+/* Szybki START / Ustawienia z PAD-a: odpytywanie wszystkich */
+function checkGamepadStartShortcuts(){
+  const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const gp of gps){
+    if (!gp) continue;
+    const idx = gp.index;
+    const info = readGamepad(idx);
+    // A (0) → START jeśli pauza i overlay zamknięty
+    if (info.justA && isPaused && overlay.style.display==='none'){ tryStartFromShortcut('gamepad'); return; }
+    // X (2) → toggle Ustawienia
+    if (info.justX){
+      if (overlay.style.display==='none'){ overlay.style.display='flex'; isPaused=true; cornerShow(true); }
+      else { overlay.style.display='none'; }
+      return;
+    }
+  }
+}
+
+/* =============================================================================
+   Touch — Joystick i Bezpośredni dotyk (jak wcześniej)
+   ========================================================================== */
 const touchLayer = document.getElementById('touchLayer');
 const touchState = {
   p1:{dx:0,dy:0,just:false,active:false}, p2:{dx:0,dy:0,just:false,active:false},
@@ -564,7 +648,7 @@ function mountTouchForPlayer(pid){
   btn.addEventListener('pointerdown', (e)=>{ st.just = true; e.preventDefault(); }, {passive:false});
 }
 
-/* ================== Touch — Bezpośredni dotyk ================== */
+/* Bezpośredni dotyk na canvas */
 const directPtrToPlayer = new Map();
 const directTouch = {
   p1:{active:false,x:0,y:0,just:false}, p2:{active:false,x:0,y:0,just:false},
@@ -617,9 +701,10 @@ function enableDirectTouchControls(){
   canvas.addEventListener('pointercancel', (e)=> onPointerUpDirect(e), {passive:true});
 }
 
-/* ================== Pomocnicze ================== */
+/* =============================================================================
+   Pomocnicze / Fizyka
+   ========================================================================== */
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
-
 function naturalBrake(obj, dt){
   let vx=obj.vx*60, vy=obj.vy*60;
   const speed=Math.hypot(vx,vy); if (speed<1e-6){ obj.vx=0; obj.vy=0; return; }
@@ -633,10 +718,9 @@ function naturalBrake(obj, dt){
   obj.vx=vx/60; obj.vy=vy/60;
 }
 
-/* ================== Kolizja Paletka ↔ Krążek (anti‑tunnel + wall-like) ================== */
+/* Kolizja Paletka ↔ Krążek (anti‑tunnel + wall-like) */
 const EPS = 1e-6;
 const rndSign = ()=> (Math.random() < 0.5 ? -1 : 1);
-
 function resolveMalletPuck(p, pk){
   let dx = pk.x - p.x, dy = pk.y - p.y;
   let dist = Math.hypot(dx, dy);
@@ -650,23 +734,19 @@ function resolveMalletPuck(p, pk){
 
     const malletSpeed = Math.hypot(p.vx, p.vy);
 
-    // = A = Paletka stoi → odbicie jak od ściany
     if (malletSpeed < 0.05){
       const vN = pk.vx*nx + pk.vy*ny;
       if (vN < 0){
         pk.vx = pk.vx - (1 + WALL_E) * vN * nx;
         pk.vy = pk.vy - (1 + WALL_E) * vN * ny;
-        // dźwięk (intensywność ~ |vN|)
-        playHitSound(Math.min(1, Math.abs(vN)*12));
+        playHit('mallet', Math.min(1, Math.abs(vN)*12));
       }
-
       pk.x = p.x + nx * (min + 0.5);
       pk.y = p.y + ny * (min + 0.5);
       pk.x += tx * 1.2 * rndSign();
       pk.y += ty * 1.2 * rndSign();
 
     } else {
-      // = B = Paletka w ruchu → standard z tarciem stycznym
       let vrel_n = (pk.vx - p.vx)*nx + (pk.vy - p.vy)*ny;
       let vrel_t = (pk.vx - p.vx)*tx + (pk.vy - p.vy)*ty;
 
@@ -682,11 +762,10 @@ function resolveMalletPuck(p, pk){
       const pen = (min - dist) + 0.6;
       pk.x += nx*pen; pk.y += ny*pen;
 
-      // dźwięk (intensywność ~ |vrel_n|)
-      playHitSound(Math.min(1, Math.abs(vrel_n)*10));
+      playHit('mallet', Math.min(1, Math.abs(vrel_n)*10));
     }
 
-    // = C = Anti‑tunnel: nie pozwól "przeskoczyć" paletki w tej klatce
+    // Anti‑tunnel
     if (typeof pk.prevX === 'number' && typeof pk.prevY === 'number'){
       const prevDx = pk.prevX - p.x, prevDy = pk.prevY - p.y;
       const prevAlong = prevDx*nx + prevDy*ny;
@@ -709,26 +788,37 @@ function resolveMalletPuck(p, pk){
   }
 }
 
-/* ================== Ściany / bramki ================== */
+/* Ściany / bramki (z dźwiękami) */
 function wallsAndGoals(pk, W, H){
   if (pk.x < arena.frW + pk.r || pk.x > W - arena.frW - pk.r){
-    const nx=(pk.x < W/2)?1:-1; pk.vx = pk.vx - (1+WALL_E)*(pk.vx*nx)*nx;
+    const nx=(pk.x < W/2)?1:-1;
+    const vN_before = pk.vx*nx;
+    pk.vx = pk.vx - (1+WALL_E)*(pk.vx*nx)*nx;
     const out = pk.vx*nx; if (out<MIN_WALL_OUT_SPEED) pk.vx += (MIN_WALL_OUT_SPEED-out)*nx;
     pk.x = (pk.x < W/2)? (arena.frW + pk.r) : (W - arena.frW - pk.r);
+    playHit('wall', Math.min(1, Math.abs(vN_before)*10));
   }
   const isGoalX = Math.abs(pk.x - W/2) < arena.gw/2;
   if (!isGoalX){
     if (pk.y < arena.frW + pk.r || pk.y > H - arena.frW - pk.r){
-      const ny=(pk.y < H/2)?1:-1; pk.vy = pk.vy - (1+WALL_E)*(pk.vy*ny)*ny;
+      const ny=(pk.y < H/2)?1:-1;
+      const vN_before = pk.vy*ny;
+      pk.vy = pk.vy - (1+WALL_E)*(pk.vy*ny)*ny;
       const out = pk.vy*ny; if (out<MIN_WALL_OUT_SPEED) pk.vy += (MIN_WALL_OUT_SPEED-out)*ny;
       pk.y = (pk.y < H/2)? (arena.frW + pk.r) : (H - arena.frW - pk.r);
+      playHit('wall', Math.min(1, Math.abs(vN_before)*10));
     }
   } else {
-    if (pk.y < 0 || pk.y > H){ pk.x=W/2; pk.y=H/2; pk.vx=0; pk.vy=0; }
+    if (pk.y < 0 || pk.y > H){
+      playHit('goal', 1.0);
+      pk.x=W/2; pk.y=H/2; pk.vx=0; pk.vy=0;
+    }
   }
 }
 
-/* ================== AI ================== */
+/* =============================================================================
+   AI
+   ========================================================================== */
 function aiInputFor(p,id,dt){
   const params = { easy:{gain:0.8,vmax:0.75,react:0.14,aimNoise:22,strikeDist:46},
                    medium:{gain:1.2,vmax:0.95,react:0.08,aimNoise:12,strikeDist:52},
@@ -771,7 +861,9 @@ function aiInputFor(p,id,dt){
   return { dx: out_dx, dy: out_dy, justStrike, justAButton:false, justZR:false };
 }
 
-/* ================== Integracja wejść ================== */
+/* =============================================================================
+   Integracja wejść
+   ========================================================================== */
 function getInputForPlayer(p, id, dt){
   if (p.input==='touch' && p.touchMode==='joystick'){
     const st = touchState[id];
@@ -829,7 +921,9 @@ function getInputForPlayer(p, id, dt){
   return { dx, dy, justStrike, justAButton:false, justZR:false };
 }
 
-/* ================== Fizyka krok ================== */
+/* =============================================================================
+   Fizyka krok
+   ========================================================================== */
 function updatePlayer(p, dx, dy, justHit, W, H, s){
   const base=9, boost=25;
   p.isHitting=!!justHit;
@@ -842,7 +936,6 @@ function updatePlayer(p, dx, dy, justHit, W, H, s){
   if (p.sideTop) p.y = clamp(p.y, arena.frW+p.r, mid - p.r);
   else           p.y = clamp(p.y, mid + p.r, H - arena.frW - p.r);
 }
-
 function physicsStep(dt){
   const s=dt*60, {W,H}=getSize();
   const players = [p1,p2].concat(p3?[p3]:[]).concat(p4?[p4]:[]);
@@ -851,11 +944,7 @@ function physicsStep(dt){
     updatePlayer(p, input.dx, input.dy, input.justStrike, W, H, s);
   });
 
-  // zapamiętaj poprzednią pozycję krążka (anti‑tunnel)
-  pk.prevX = pk.x;
-  pk.prevY = pk.y;
-
-  // ruch krążka
+  pk.prevX = pk.x; pk.prevY = pk.y;
   pk.x += pk.vx*s; pk.y += pk.vy*s;
   naturalBrake(pk, dt);
 
@@ -867,7 +956,9 @@ function physicsStep(dt){
   if (sp>puckSpeedMax){ const sc=puckSpeedMax/sp; pk.vx*=sc; pk.vy*=sc; }
 }
 
-/* ================== Flagi na paletkach ================== */
+/* =============================================================================
+   Flagi na paletkach
+   ========================================================================== */
 function codeToFlagEmoji(code){
   if (!code || code.length !== 2) return code || '';
   const base = 127397;
@@ -880,7 +971,6 @@ function drawFlagOnMallet(p){
   const emoji = codeToFlagEmoji(p.flagCode || '');
   const label = emoji || (p.flagCode || '');
   if (!label) return;
-
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -893,7 +983,9 @@ function drawFlagOnMallet(p){
   ctx.restore();
 }
 
-/* ================== Rysowanie ================== */
+/* =============================================================================
+   Rysowanie
+   ========================================================================== */
 function draw(){
   const {W,H}=getSize();
   ctx.fillStyle=tableBgColor; ctx.fillRect(0,0,W,H);
@@ -943,7 +1035,9 @@ function draw(){
   disk(pk.x, pk.y, pk.r, '#111');
 }
 
-/* ================== Pętla / HUD ================== */
+/* =============================================================================
+   Pętla / HUD / PAD skróty
+   ========================================================================== */
 const PERF={ show:false, fps:60, last:performance.now(), ema:60 };
 function perfTick(now){
   const dt=(now-PERF.last)/1000; PERF.last=now;
@@ -955,18 +1049,26 @@ let lastTime = performance.now();
 function loop(now){
   perfTick(now);
   const dt=Math.min(0.033,(now-lastTime)/1000); lastTime=now;
+
+  // skróty pada (START/A i Ustawienia/X)
+  checkGamepadStartShortcuts();
+
   if (!isPaused) physicsStep(dt);
   draw();
   requestAnimationFrame(loop);
 }
 
-/* ================== Gol / reset ================== */
+/* =============================================================================
+   Gol / reset
+   ========================================================================== */
 function onGoal(scoringSide, pkRef){
   const {W,H}=getSize();
   pkRef.x=W/2; pkRef.y=H/2; pkRef.vx=0; pkRef.vy=0;
 }
 
-/* ================== Init obiektów ================== */
+/* =============================================================================
+   Init obiektów
+   ========================================================================== */
 function initObjects(){
   const {W,H}=getSize();
   p1 = makePlayer(W*0.5, H-100, 35, '#ff1744', false, 'P1');
@@ -982,7 +1084,9 @@ function resetPositions(){
   pk.x=W*0.5; pk.y=H*0.5; pk.vx=pk.vy=0;
 }
 
-/* ================== UI setup ================== */
+/* =============================================================================
+   UI setup (język, tło, sprzęt, bramka, flagi, czas)
+   ========================================================================== */
 function setupLangUI(){
   const wrap=document.getElementById('langChips');
   wrap.querySelectorAll('.chip').forEach(btn=>{
@@ -1080,7 +1184,9 @@ function setupRoundUI(){
   chk.onchange=()=>{ unlimitedTime=chk.checked; matchTime=unlimitedTime?0:roundTimeSec; customRow.style.display='none'; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); };
 }
 
-/* ================== Gracze / sterowanie ================== */
+/* =============================================================================
+   Gracze / sterowanie (dynamiczne karty)
+   ========================================================================== */
 let selectedPlayers = 2;
 function createOrDestroyPlayers(n){
   const {W,H}=getSize();
@@ -1176,7 +1282,9 @@ function setupPlayersAndControlsUI(){
   renderControls(selectedPlayers);
 }
 
-/* ================== Touch layer widoczność ================== */
+/* =============================================================================
+   Touch layer widoczność (joystick tylko gdy wybrany)
+   ========================================================================== */
 function refreshTouchLayerVisibility(){
   const anyJoystick = [p1,p2,p3,p4].filter(Boolean).some(p=> p.input==='touch' && p.touchMode==='joystick');
   touchLayer.style.display = anyJoystick ? 'block' : 'none';
@@ -1190,7 +1298,9 @@ function refreshTouchLayerVisibility(){
   mountOrClear(p2,'p2'); mountOrClear(p4,'p4'); mountOrClear(p1,'p1'); mountOrClear(p3,'p3');
 }
 
-/* ================== Lista padów ================== */
+/* =============================================================================
+   Lista padów (do selectów w kartach sterowania)
+   ========================================================================== */
 function refreshPadLists(){
   const gps=navigator.getGamepads?navigator.getGamepads():[];
   const padSelects = document.querySelectorAll('select[data-role="padSelect"]');
@@ -1203,7 +1313,9 @@ function refreshPadLists(){
   });
 }
 
-/* ================== Start / countdown / przyciski ================== */
+/* =============================================================================
+   START / Countdown / Przyciski narożne
+   ========================================================================== */
 function showCountdown(cb){
   let c=3; countdownEl.style.display='flex'; countdownEl.innerText=c;
   const tmr=setInterval(()=>{
@@ -1214,43 +1326,59 @@ function showCountdown(cb){
 async function onStart(){
   // odblokuj audio na pierwszy gest
   try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){}
-
-  const fsPref = (localStorage.getItem('fs') || '0')==='1';
-  if (fsPref && !document.fullscreenElement){
-    try{
-      const docEl = document.documentElement;
-      if (docEl.requestFullscreen) await docEl.requestFullscreen();
-      else if (docEl.webkitRequestFullscreen) await docEl.webkitRequestFullscreen();
-    } catch(_){}
-  }
   overlay.style.display='none';
   showCountdown(()=>{ isPaused=false; });
 }
-document.getElementById('btnMenu').onclick = ()=>{ overlay.style.display='flex'; isPaused=true; };
-document.getElementById('btnHud').onclick  = ()=>{ PERF.show = !PERF.show; };
-document.getElementById('btnHelp').onclick = ()=>{ showToast(t('kbTip')+' '+t('gamepadTip')+' '+t('httpsTip'), 3000); };
-document.getElementById('btnFs').onclick = async ()=>{
-  try {
-    const docEl = document.documentElement;
-    const canFS = !!docEl.requestFullscreen || !!docEl.webkitRequestFullscreen;
-    if (!document.fullscreenElement && canFS) {
-      if (docEl.requestFullscreen) await docEl.requestFullscreen();
-      else if (docEl.webkitRequestFullscreen) await docEl.webkitRequestFullscreen();
-    } else if (document.fullscreenElement) {
-      await document.exitFullscreen?.();
-    } else {
-      window.scrollTo(0, 0);
-      applyViewportHeightVar();
-      fit();
-      showToast('Tryb pseudo‑pełnoekranowy (iOS)', 1800);
-    }
-  } catch(e) {
-    showToast('Pełny ekran: błąd', 2000);
-  }
-};
-document.getElementById('btnStart').onclick= onStart;
 
-/* ================== Boot ================== */
+/* Przycisk START w narożniku i w overlay */
+document.getElementById('btnStartCorner').onclick = ()=>{ onStart(); };
+document.getElementById('btnStartOverlay').onclick = ()=>{ onStart(); };
+
+/* Pozostałe przyciski narożne */
+document.getElementById('btnMenu').onclick = ()=>{ overlay.style.display='flex'; isPaused=true; cornerShow(true); };
+document.getElementById('btnHud').onclick  = ()=>{ PERF.show = !PERF.show; };
+document.getElementById('btnHelp').onclick = ()=>{ showToast(t('kbTip')+'  |  '+t('gamepadTip')+'  |  '+t('httpsTip'), 3200); };
+
+/* =============================================================================
+   Widoczność UI: fullscreen → ukryj, gest 2 palców → pokaż/ukryj
+   ========================================================================== */
+function cornerShow(show){
+  if (show) cornerUI.classList.remove('hiddenUI');
+  else cornerUI.classList.add('hiddenUI');
+}
+
+/* Fullscreen: ukryj narożne przyciski dla lepszej widoczności */
+document.addEventListener('fullscreenchange', ()=>{
+  if (document.fullscreenElement){
+    cornerShow(false);
+  } else {
+    cornerShow(true);
+  }
+});
+
+/* Gest 2 palców — toggle narożnego UI */
+let lastTwoFingerToggleAt = 0;
+function onTouchStartToggle(e){
+  if ((e.touches?.length || 0) >= 2){
+    const now = performance.now();
+    if (now - lastTwoFingerToggleAt > 400){ // anty-drganie
+      lastTwoFingerToggleAt = now;
+      const hidden = cornerUI.classList.contains('hiddenUI');
+      cornerShow(hidden); // pokaż jeśli ukryte, ukryj jeśli pokazane
+    }
+  }
+}
+document.addEventListener('touchstart', onTouchStartToggle, {passive:true});
+
+/* Szybki start ze skrótów (klawiatura/pad) */
+function tryStartFromShortcut(src){
+  if (overlay.style.display!=='none') return; // jeśli otwarte ustawienia, nie startuj
+  onStart();
+}
+
+/* =============================================================================
+   Boot
+   ========================================================================== */
 window.addEventListener('load', ()=>{
   try{
     applyViewportHeightVar();
@@ -1268,9 +1396,8 @@ window.addEventListener('load', ()=>{
     setupFlagsUI();
     setupRoundUI();
 
-    // Specjal / wibracje / dźwięk / fizyka
-    const selMb=document.getElementById('selMbLimit');
-    selMb.onchange=()=>{ /* hook na logikę Multiball */ };
+    // Multiball hook
+    document.getElementById('selMbLimit').onchange=()=>{ /* TODO */ };
 
     // Wibracje
     const chkVib=document.getElementById('chkVib');
@@ -1283,14 +1410,24 @@ window.addEventListener('load', ()=>{
       localStorage.setItem('vibStrength', String(vibStrength)); };
     chkVib.onchange=applyV; rngVib.oninput=applyV;
 
-    // Dźwięk
+    // Dźwięk: ON/OFF + głośność
     const chkAudio = document.getElementById('chkAudio');
+    const rngAudio = document.getElementById('rngAudio');
+    const audioVal = document.getElementById('audioVal');
     chkAudio.checked = audioEnabled;
+    rngAudio.value   = String(Math.round(audioVolume*100));
+    audioVal.textContent = Math.round(audioVolume*100) + '%';
+
     chkAudio.onchange = ()=>{
       audioEnabled = chkAudio.checked;
       localStorage.setItem('audioEnabled', audioEnabled ? '1' : '0');
-      // ewentualnie odblokuj audio jeśli włączone
       if (audioEnabled){ try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){} }
+    };
+    rngAudio.oninput = ()=>{
+      audioVolume = Math.max(0, Math.min(1, parseInt(rngAudio.value||'0',10)/100));
+      audioVal.textContent = Math.round(audioVolume*100) + '%';
+      localStorage.setItem('audioVolume', String(audioVolume));
+      try { ensureAudio(); if (masterGain) masterGain.gain.value = audioVolume; } catch(_){}
     };
 
     // Pełny ekran preferencja
