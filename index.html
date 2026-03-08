@@ -6,15 +6,10 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
   <title>Air Hockey — Touch: Joystick / Bezpośredni dotyk</title>
 
-  <!-- PWA (opcjonalne) -->
-  manifest.webmanifest
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Air Hockey" />
-  icon-192.png
+  <!-- Samowystarczalny: brak zewnętrznych plików (manifest, ikony, itd.) -->
 
   <style>
-    :root { --bg:#0b0b0b; --panel:#111; --accent:#00e5ff; --border:#222; --app-h:100svh; }
+    :root { --bg:#0b0b0b; --panel:#111; --accent:#00e5ff; --border:#222; --app-h: 100svh; }
     html, body { height:100%; }
     body {
       margin:0; background:var(--bg);
@@ -23,13 +18,14 @@
       overflow:hidden; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif; color:#fff;
       touch-action:none; overscroll-behavior-y: none;
     }
-    .wrap {
-      position:relative; width:100%; height:100%;
+
+    .wrap { position:relative; width:100%; height:100%;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
     }
+
     canvas { display:block; background:#f8faff; border-radius:8px; box-shadow:0 30px 80px rgba(0,0,0,.55); }
 
     #ui { position:absolute; top:14px; left:14px; z-index:4; display:flex; gap:8px; }
@@ -130,6 +126,7 @@
     <canvas id="game" aria-label="Stół do air hockey"></canvas>
     <div id="perfHud"></div>
 
+    <!-- Touch layer — joysticki (tylko dla graczy z Dotyk=Joystick) -->
     <div id="touchLayer" style="display:none;">
       <div id="tp-p2" class="tpZone tp-p2"></div>
       <div id="tp-p4" class="tpZone tp-p4"></div>
@@ -138,28 +135,34 @@
     </div>
   </div>
 
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+  <!-- ========= USTAWIENIA ========= -->
+  <!-- Ukryte na starcie -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" style="display:none;">
     <div class="panel">
       <h1>USTAWIENIA MECZU</h1>
 
+      <!-- Gracze + Sterowanie (dynamiczne) -->
       <h2>Gracze &amp; Sterowanie</h2>
       <div class="grid grid-2">
+        <!-- Liczba graczy -->
         <div class="row">
           <div class="hint">Liczba graczy</div>
           <div class="chipbar" id="playersChips">
             <button class="chip" data-n="1">1</button>
-            <button class="chip" data-n="2" class="active">2</button>
+            <button class="chip active" data-n="2">2</button>
             <button class="chip" data-n="3">3</button>
             <button class="chip" data-n="4">4</button>
           </div>
           <div class="hint">Przy 3–4: P1+P3 dół, P2+P4 góra.</div>
         </div>
+        <!-- Sterowanie -->
         <div class="row">
           <div class="hint">Sterowanie (dla wybranej liczby graczy)</div>
           <div id="controlsContainer" class="grid" style="gap:12px;"></div>
         </div>
       </div>
 
+      <!-- Wygląd -->
       <h2>Wygląd</h2>
       <div class="grid grid-2">
         <div class="row">
@@ -180,6 +183,7 @@
         </div>
       </div>
 
+      <!-- Sprzęt -->
       <h2>Sprzęt (rozmiar / prędkości)</h2>
       <div class="grid grid-3">
         <div class="row">
@@ -215,6 +219,7 @@
         </div>
       </div>
 
+      <!-- Rozmiar bramki -->
       <h2>Rozmiar bramki</h2>
       <div class="row">
         <div class="chipbar" id="goalSizeChips">
@@ -228,6 +233,7 @@
         <div class="hint">Zmienia szerokość okna bramki i półkoli.</div>
       </div>
 
+      <!-- Flagi -->
       <h2>Flagi</h2>
       <div class="grid grid-2">
         <div class="row">
@@ -240,7 +246,8 @@
         </div>
       </div>
 
-      <h2>Czas rundy / Specjal / Wibracje / Pełny ekran</h2>
+      <!-- Czas rundy / Specjal / Wibracje / FS / Dźwięk -->
+      <h2>Czas rundy / Specjal / Wibracje / Pełny ekran / Dźwięk</h2>
       <div class="grid grid-2">
         <div class="row">
           <div class="chipbar" id="roundChips">
@@ -256,8 +263,9 @@
           </div>
           <label class="hint"><input id="chkUnlimited" type="checkbox" /> Czas nieograniczony</label>
         </div>
+
         <div class="row">
-          <div class="hint">Specjal / Wibracje / FS</div>
+          <div class="hint">Specjal / Wibracje / Dźwięk / FS</div>
           <div class="row">
             <div class="hint">Multiball (limit/gracz)</div>
             <select id="selMbLimit">
@@ -269,6 +277,7 @@
             </select>
             <div class="hint">W trakcie ciosu na padzie: <b>A</b> = 2 tymczasowe krążki.</div>
           </div>
+
           <div class="row">
             <label class="hint"><input id="chkVib" type="checkbox" /> Włącz wibracje</label>
             <div style="display:flex;align-items:center;gap:10px;">
@@ -276,11 +285,17 @@
               <input id="rngVib" type="range" min="0" max="100" step="5" value="70" />
               <div id="vibVal" class="hint mono">70%</div>
             </div>
+
+            <!-- NOWE: Dźwięk ON/OFF -->
+            <label class="hint"><input id="chkAudio" type="checkbox" /> Dźwięk odbicia ON</label>
+
             <label class="hint"><input id="chkFs" type="checkbox" /> Pełny ekran przy starcie</label>
           </div>
         </div>
       </div>
 
+      <!-- Fizyka -->
+      <h2>Fizyka kolizji paletki</h2>
       <div class="grid">
         <div class="chipbar" id="bounceChips">
           <button class="chip" data-mode="soft">Soft</button>
@@ -306,6 +321,7 @@
   <div id="toast" class="errorToast" role="status" aria-live="assertive"></div>
 
 <script>
+/* ================== iOS viewport ================== */
 function isIOS(){
   return /iP(hone|ad|od)/.test(navigator.platform)
       || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
@@ -323,6 +339,7 @@ document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:fals
 document.addEventListener('gesturechange', (e)=>e.preventDefault(), {passive:false});
 document.addEventListener('gestureend', (e)=>e.preventDefault(), {passive:false});
 
+/* ================== Toast / błędy ================== */
 function showToast(msg, ms=2200){
   const el = document.getElementById('toast');
   if (!el) return;
@@ -334,13 +351,13 @@ window.addEventListener('error', (e)=>{
   showToast('Błąd: ' + e.message, 3000);
 });
 
+/* ================== Canvas / rozmiar ================== */
 const canvas = document.getElementById('game');
 const ctx     = canvas.getContext('2d', { alpha:false });
 const overlay = document.getElementById('overlay');
 const perfHud = document.getElementById('perfHud');
 const countdownEl = document.getElementById('countdown');
 const IS_TOUCH = (('ontouchstart' in window) || (navigator.maxTouchPoints||0)>0);
-
 function fit(){
   const dpr = Math.min(window.devicePixelRatio || 1, 2.5) || 1;
   const vw = (window.visualViewport && Math.floor(window.visualViewport.width)) || (window.innerWidth || 800);
@@ -360,10 +377,7 @@ function getSize(){
   if (!isFinite(W) || !isFinite(H) || W < 2 || H < 2){ fit(); W=canvas.width/dpr; H=canvas.height/dpr; }
   return { W, H, dpr };
 }
-function onViewportMaybeChanged(){
-  applyViewportHeightVar();
-  fit();
-}
+function onViewportMaybeChanged(){ applyViewportHeightVar(); fit(); }
 window.addEventListener('resize', onViewportMaybeChanged);
 window.addEventListener('orientationchange', () => setTimeout(()=>{ onViewportMaybeChanged(); resetPositions(); }, 120));
 if ('visualViewport' in window){
@@ -371,10 +385,12 @@ if ('visualViewport' in window){
   window.visualViewport.addEventListener('scroll', onViewportMaybeChanged);
 }
 
+/* ================== I18N skrót ================== */
 let lang = localStorage.getItem('lang') || 'pl';
 const I18N = {
   pl: {
-    goal:'GOL!', settings:'USTAWIENIA MECZU', start:'START / WZNÓW', newMatch:'NOWY MECZ', gameOver:'KONIEC MECZU', ot:'DOGRYWKA',
+    goal:'GOL!', settings:'USTAWIENIA MECZU', start:'START / WZNÓW', newMatch:'NOWY MECZ',
+    gameOver:'KONIEC MECZU', ot:'DOGRYWKA',
     kbTip:'Jeśli klawisze nie działają: kliknij w płótno lub naciśnij Enter.',
     gamepadTip:'Naciśnij dowolny przycisk na padzie, aby go wykryć',
     httpsTip:'Gamepady najlepiej działają w HTTPS lub na localhost.', noPad:'Brak wykrytego pada.'
@@ -382,6 +398,7 @@ const I18N = {
 };
 const t = (k)=> (I18N[lang] && I18N[lang][k]) || k;
 
+/* ================== Fizyka / parametry ================== */
 const WALL_E = 0.96;
 let malletBounceMode = localStorage.getItem('malletBounceMode') || 'wall';
 let TANGENTIAL_DAMPING = parseFloat(localStorage.getItem('tangentialDamping') || '0.01');
@@ -389,7 +406,7 @@ function getMalletE(){ return malletBounceMode==='soft'?0.88:malletBounceMode===
 const MIN_WALL_OUT_SPEED = 0.60;
 
 const K1_AIR=0.8, K2_QUAD=0.0008, MUg=80;
-const CORNER_R = 70;
+const CORNER_R = 70; /* wizual */
 const arena = { frW:8, gw: parseInt(localStorage.getItem('goalWidth')||'220',10) || 220 };
 
 const PUCK_SPEED_PRESETS = { very_slow:18, slow:24, normal:32, fast:38, very_fast:45 };
@@ -397,6 +414,12 @@ let puckSpeedMax = parseInt(localStorage.getItem('puckSpeedMax')||'') || PUCK_SP
 
 let tableBgColor = localStorage.getItem('tableBgColor') || '#f8faff';
 
+/* ================== Czas rundy (fix: brak referencji) ================== */
+let roundTimeSec = 180;  // 3 min domyślnie
+let matchTime    = roundTimeSec;
+let unlimitedTime = false;
+
+/* ================== Obiekty gry ================== */
 function makePlayer(x,y,r,color,sideTop,name){
   return { name, x,y,r, vx:0,vy:0, color, sideTop, isHitting:false,
            input: (IS_TOUCH ? 'touch' : 'keyboard'),
@@ -404,18 +427,77 @@ function makePlayer(x,y,r,color,sideTop,name){
            padIndex:-1, ai:'medium',
            score:0, lastSpecialAt:0, specialUsesUsed:0, ai_dx:0, ai_dy:0,
            touch:{dx:0,dy:0,just:false,active:false},
-           direct:{active:false,x:0,y:0,just:false}
+           direct:{active:false,x:0,y:0,just:false},
+           flagCode: (sideTop ? 'US' : 'PL')
   };
 }
-function makePuck(x,y,r){ return { x,y,r,vx:0,vy:0, cornerStallTicks:0 }; }
+function makePuck(x, y, r){
+  return {
+    x, y, r,
+    vx: 0, vy: 0,
+    prevX: x, prevY: y,      // dla anti‑tunnel
+    cornerStallTicks: 0
+  };
+}
 
 let p1,p2,p3=null,p4=null, pk;
 let isPaused = true;
 
+/* ================== Audio (WebAudio) ================== */
+// ----------------------------------------------------
+// Prosty dźwięk „klik” przy kolizji z paletką
+// - ON/OFF zapamiętywane w localStorage
+// - odblokowywany przy pierwszym geście (onStart)
+// ----------------------------------------------------
+let audioEnabled = (localStorage.getItem('audioEnabled') ?? '1') !== '0';
+let AC = null;
+let lastHitSoundAt = 0;
+const HIT_DEBOUNCE_MS = 60;
+
+function ensureAudio(){
+  if (AC) return;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return;
+  AC = new Ctx();
+}
+
+function playHitSound(intensity=0.2){
+  if (!audioEnabled) return;
+  if (!AC) return;
+  const now = AC.currentTime;
+  // limiter częstotliwości odtwarzania
+  const nowMs = performance.now();
+  if (nowMs - lastHitSoundAt < HIT_DEBOUNCE_MS) return;
+  lastHitSoundAt = nowMs;
+
+  const osc = AC.createOscillator();
+  const gain = AC.createGain();
+
+  // wysokość zależna od intensywności zderzenia
+  const clamped = Math.max(0.05, Math.min(0.9, intensity));
+  const f0 = 220 + clamped * 520;   // 220–740 Hz
+  const f1 = f0 * 0.62;             // szybki spadek (klik)
+  osc.frequency.setValueAtTime(f0, now);
+  osc.frequency.exponentialRampToValueAtTime(f1, now + 0.07);
+
+  // głośność z krótką obwiednią
+  const a0 = 0.0001 + 0.14 * clamped; // ~0.005–0.15
+  gain.gain.setValueAtTime(0.00001, now);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.02, a0), now + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.00001, now + 0.11);
+
+  osc.type = 'triangle'; // miększy klik
+  osc.connect(gain).connect(AC.destination);
+  osc.start(now);
+  osc.stop(now + 0.12);
+}
+
+/* ================== Wejścia KB/Pad/Touch ================== */
 const keys = new Map();
 addEventListener('keydown', e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad)/.test(c)) e.preventDefault(); keys.set(c,true); }, {capture:true});
 addEventListener('keyup',   e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad)/.test(c)) e.preventDefault(); keys.set(c,false); }, {capture:true});
 
+/* gamepad */
 const pads=new Map(), gamepadPrevButtons=new Map(); let gpPollTimer=null;
 function pollGamepads(){ const gps=navigator.getGamepads?.()||[]; pads.clear(); for(const gp of gps) if (gp&&gp.connected) pads.set(gp.index,gp); }
 function startGamepadPolling(){ if (gpPollTimer) return; gpPollTimer=setInterval(()=>{ pollGamepads(); refreshPadLists(); }, 1500); }
@@ -428,6 +510,7 @@ function readGamepad(idx){
   return { dx, dy, justA, justZR, hit };
 }
 
+/* ================== Touch — Joystick ================== */
 const touchLayer = document.getElementById('touchLayer');
 const touchState = {
   p1:{dx:0,dy:0,just:false,active:false}, p2:{dx:0,dy:0,just:false,active:false},
@@ -481,12 +564,12 @@ function mountTouchForPlayer(pid){
   btn.addEventListener('pointerdown', (e)=>{ st.just = true; e.preventDefault(); }, {passive:false});
 }
 
+/* ================== Touch — Bezpośredni dotyk ================== */
 const directPtrToPlayer = new Map();
 const directTouch = {
   p1:{active:false,x:0,y:0,just:false}, p2:{active:false,x:0,y:0,just:false},
   p3:{active:false,x:0,y:0,just:false}, p4:{active:false,x:0,y:0,just:false},
 };
-
 function pickDirectPlayerFor(y){
   const {H} = getSize();
   const topSide = (y < H/2);
@@ -534,7 +617,9 @@ function enableDirectTouchControls(){
   canvas.addEventListener('pointercancel', (e)=> onPointerUpDirect(e), {passive:true});
 }
 
+/* ================== Pomocnicze ================== */
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+
 function naturalBrake(obj, dt){
   let vx=obj.vx*60, vy=obj.vy*60;
   const speed=Math.hypot(vx,vy); if (speed<1e-6){ obj.vx=0; obj.vy=0; return; }
@@ -547,20 +632,84 @@ function naturalBrake(obj, dt){
   const sc3=s3/Math.hypot(vx,vy); vx*=sc3; vy*=sc3;
   obj.vx=vx/60; obj.vy=vy/60;
 }
+
+/* ================== Kolizja Paletka ↔ Krążek (anti‑tunnel + wall-like) ================== */
+const EPS = 1e-6;
+const rndSign = ()=> (Math.random() < 0.5 ? -1 : 1);
+
 function resolveMalletPuck(p, pk){
-  let dx=pk.x-p.x, dy=pk.y-p.y, dist=Math.hypot(dx,dy), min=p.r+pk.r;
+  let dx = pk.x - p.x, dy = pk.y - p.y;
+  let dist = Math.hypot(dx, dy);
+  const min = p.r + pk.r;
+
   if (dist < min){
-    if (!dist){ dx=1e-6; dy=0; dist=1e-6; }
-    const nx=dx/dist, ny=dy/dist, tx=-ny, ty=nx;
-    let vrel_n=(pk.vx-p.vx)*nx + (pk.vy-p.vy)*ny;
-    let vrel_t=(pk.vx-p.vx)*tx + (pk.vy-p.vy)*ty;
-    if (vrel_n > 0) vrel_n = -Math.min(vrel_n, 0.15);
-    const e = getMalletE();
-    const jn = -(1+e)*vrel_n; pk.vx += jn*nx; pk.vy += jn*ny;
-    const jt = -vrel_t*TANGENTIAL_DAMPING; pk.vx += jt*tx; pk.vy += jt*ty;
-    const pen = (min - dist) + 0.6; pk.x += nx*pen; pk.y += ny*pen;
+    if (dist < EPS){ dx = 1; dy = 0; dist = 1; }
+
+    const nx = dx / dist, ny = dy / dist;
+    const tx = -ny,      ty = nx;
+
+    const malletSpeed = Math.hypot(p.vx, p.vy);
+
+    // = A = Paletka stoi → odbicie jak od ściany
+    if (malletSpeed < 0.05){
+      const vN = pk.vx*nx + pk.vy*ny;
+      if (vN < 0){
+        pk.vx = pk.vx - (1 + WALL_E) * vN * nx;
+        pk.vy = pk.vy - (1 + WALL_E) * vN * ny;
+        // dźwięk (intensywność ~ |vN|)
+        playHitSound(Math.min(1, Math.abs(vN)*12));
+      }
+
+      pk.x = p.x + nx * (min + 0.5);
+      pk.y = p.y + ny * (min + 0.5);
+      pk.x += tx * 1.2 * rndSign();
+      pk.y += ty * 1.2 * rndSign();
+
+    } else {
+      // = B = Paletka w ruchu → standard z tarciem stycznym
+      let vrel_n = (pk.vx - p.vx)*nx + (pk.vy - p.vy)*ny;
+      let vrel_t = (pk.vx - p.vx)*tx + (pk.vy - p.vy)*ty;
+
+      if (vrel_n > 0) vrel_n = -Math.min(vrel_n, 0.15);
+
+      const e  = getMalletE();
+      const jn = -(1 + e) * vrel_n;
+      pk.vx += jn*nx; pk.vy += jn*ny;
+
+      const jt = -vrel_t * TANGENTIAL_DAMPING;
+      pk.vx += jt*tx; pk.vy += jt*ty;
+
+      const pen = (min - dist) + 0.6;
+      pk.x += nx*pen; pk.y += ny*pen;
+
+      // dźwięk (intensywność ~ |vrel_n|)
+      playHitSound(Math.min(1, Math.abs(vrel_n)*10));
+    }
+
+    // = C = Anti‑tunnel: nie pozwól "przeskoczyć" paletki w tej klatce
+    if (typeof pk.prevX === 'number' && typeof pk.prevY === 'number'){
+      const prevDx = pk.prevX - p.x, prevDy = pk.prevY - p.y;
+      const prevAlong = prevDx*nx + prevDy*ny;
+      const curAlong  = (pk.x - p.x)*nx + (pk.y - p.y)*ny;
+
+      if (prevAlong > 0 && curAlong < 0){
+        pk.x = p.x + nx * (min + 0.5);
+        pk.y = p.y + ny * (min + 0.5);
+        const jitter = 1.6;
+        pk.x += tx * jitter * rndSign();
+        pk.y += ty * jitter * rndSign();
+
+        const vN2 = pk.vx*nx + pk.vy*ny;
+        if (vN2 < 0){
+          pk.vx -= vN2*nx;
+          pk.vy -= vN2*ny;
+        }
+      }
+    }
   }
 }
+
+/* ================== Ściany / bramki ================== */
 function wallsAndGoals(pk, W, H){
   if (pk.x < arena.frW + pk.r || pk.x > W - arena.frW - pk.r){
     const nx=(pk.x < W/2)?1:-1; pk.vx = pk.vx - (1+WALL_E)*(pk.vx*nx)*nx;
@@ -578,6 +727,8 @@ function wallsAndGoals(pk, W, H){
     if (pk.y < 0 || pk.y > H){ pk.x=W/2; pk.y=H/2; pk.vx=0; pk.vy=0; }
   }
 }
+
+/* ================== AI ================== */
 function aiInputFor(p,id,dt){
   const params = { easy:{gain:0.8,vmax:0.75,react:0.14,aimNoise:22,strikeDist:46},
                    medium:{gain:1.2,vmax:0.95,react:0.08,aimNoise:12,strikeDist:52},
@@ -619,6 +770,8 @@ function aiInputFor(p,id,dt){
 
   return { dx: out_dx, dy: out_dy, justStrike, justAButton:false, justZR:false };
 }
+
+/* ================== Integracja wejść ================== */
 function getInputForPlayer(p, id, dt){
   if (p.input==='touch' && p.touchMode==='joystick'){
     const st = touchState[id];
@@ -675,6 +828,8 @@ function getInputForPlayer(p, id, dt){
   }
   return { dx, dy, justStrike, justAButton:false, justZR:false };
 }
+
+/* ================== Fizyka krok ================== */
 function updatePlayer(p, dx, dy, justHit, W, H, s){
   const base=9, boost=25;
   p.isHitting=!!justHit;
@@ -687,6 +842,7 @@ function updatePlayer(p, dx, dy, justHit, W, H, s){
   if (p.sideTop) p.y = clamp(p.y, arena.frW+p.r, mid - p.r);
   else           p.y = clamp(p.y, mid + p.r, H - arena.frW - p.r);
 }
+
 function physicsStep(dt){
   const s=dt*60, {W,H}=getSize();
   const players = [p1,p2].concat(p3?[p3]:[]).concat(p4?[p4]:[]);
@@ -695,6 +851,11 @@ function physicsStep(dt){
     updatePlayer(p, input.dx, input.dy, input.justStrike, W, H, s);
   });
 
+  // zapamiętaj poprzednią pozycję krążka (anti‑tunnel)
+  pk.prevX = pk.x;
+  pk.prevY = pk.y;
+
+  // ruch krążka
   pk.x += pk.vx*s; pk.y += pk.vy*s;
   naturalBrake(pk, dt);
 
@@ -705,9 +866,36 @@ function physicsStep(dt){
   const sp=Math.hypot(pk.vx, pk.vy);
   if (sp>puckSpeedMax){ const sc=puckSpeedMax/sp; pk.vx*=sc; pk.vy*=sc; }
 }
+
+/* ================== Flagi na paletkach ================== */
+function codeToFlagEmoji(code){
+  if (!code || code.length !== 2) return code || '';
+  const base = 127397;
+  const A = code[0].toUpperCase().charCodeAt(0);
+  const B = code[1].toUpperCase().charCodeAt(0);
+  if (A < 65 || A > 90 || B < 65 || B > 90) return code.toUpperCase();
+  return String.fromCodePoint(base + A, base + B);
+}
+function drawFlagOnMallet(p){
+  const emoji = codeToFlagEmoji(p.flagCode || '');
+  const label = emoji || (p.flagCode || '');
+  if (!label) return;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = Math.max(10, Math.round(p.r * 0.85)) + 'px "Segoe UI Emoji","Apple Color Emoji", system-ui, sans-serif';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+  ctx.strokeText(label, p.x, p.y + 1);
+  ctx.fillStyle = 'rgba(0,0,0,0.88)';
+  ctx.fillText(label, p.x, p.y + 1);
+  ctx.restore();
+}
+
+/* ================== Rysowanie ================== */
 function draw(){
   const {W,H}=getSize();
-  const ctx = canvas.getContext('2d');
   ctx.fillStyle=tableBgColor; ctx.fillRect(0,0,W,H);
 
   ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=4;
@@ -715,20 +903,23 @@ function draw(){
   ctx.beginPath(); ctx.arc(W/2,H/2,60,0,Math.PI*2); ctx.stroke();
 
   const top='#2979ff', bot='#ff1744'; ctx.lineWidth=arena.frW;
+  // góra
   ctx.strokeStyle=top;
   ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, arena.frW/2); ctx.lineTo(arena.frW/2, arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, arena.frW/2); ctx.lineTo(W/2+arena.gw/2, arena.frW/2); ctx.stroke();
-
+  // dół
   ctx.strokeStyle=bot;
   ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, H-arena.frW/2); ctx.lineTo(W/2+arena.gw/2, H-arena.frW/2); ctx.stroke();
 
+  // półkola
   const rArc = arena.gw/2 + 18;
   ctx.save(); ctx.setLineDash([6,6]); ctx.lineWidth=3;
   ctx.strokeStyle = top + 'aa'; ctx.beginPath(); ctx.arc(W/2, arena.frW/2, rArc, Math.PI, 2*Math.PI); ctx.stroke();
   ctx.strokeStyle = bot + 'aa'; ctx.beginPath(); ctx.arc(W/2, H - arena.frW/2, rArc, 0, Math.PI); ctx.stroke();
   ctx.restore();
 
+  // rogi (wizual)
   const r=CORNER_R; ctx.lineWidth=arena.frW; ctx.strokeStyle=top;
   ctx.beginPath(); ctx.arc(arena.frW/2 + r, arena.frW/2 + r, r, Math.PI, 1.5*Math.PI); ctx.stroke();
   ctx.beginPath(); ctx.arc(W - (arena.frW/2 + r), arena.frW/2 + r, r, 1.5*Math.PI, 2*Math.PI); ctx.stroke();
@@ -736,10 +927,23 @@ function draw(){
   ctx.beginPath(); ctx.arc(arena.frW/2 + r, H - (arena.frW/2 + r), r, 0.5*Math.PI, Math.PI); ctx.stroke();
   ctx.beginPath(); ctx.arc(W - (arena.frW/2 + r), H - (arena.frW/2 + r), r, 0, 0.5*Math.PI); ctx.stroke();
 
-  function disk(x,y,R,col){ ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.stroke(); }
-  [p1,p2].concat(p3?[p3]:[]).concat(p4?[p4]:[]).forEach(p=> disk(p.x,p.y,p.r,p.color));
-  disk(pk.x,pk.y,pk.r,'#111');
+  function disk(x,y,R,col){
+    ctx.fillStyle=col;
+    ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.stroke();
+  }
+
+  const playersArr = [p1,p2].concat(p3?[p3]:[]).concat(p4?[p4]:[]);
+  playersArr.forEach(p => {
+    disk(p.x, p.y, p.r, p.color);
+    drawFlagOnMallet(p);
+  });
+
+  // krążek gry
+  disk(pk.x, pk.y, pk.r, '#111');
 }
+
+/* ================== Pętla / HUD ================== */
 const PERF={ show:false, fps:60, last:performance.now(), ema:60 };
 function perfTick(now){
   const dt=(now-PERF.last)/1000; PERF.last=now;
@@ -755,10 +959,14 @@ function loop(now){
   draw();
   requestAnimationFrame(loop);
 }
+
+/* ================== Gol / reset ================== */
 function onGoal(scoringSide, pkRef){
   const {W,H}=getSize();
   pkRef.x=W/2; pkRef.y=H/2; pkRef.vx=0; pkRef.vy=0;
 }
+
+/* ================== Init obiektów ================== */
 function initObjects(){
   const {W,H}=getSize();
   p1 = makePlayer(W*0.5, H-100, 35, '#ff1744', false, 'P1');
@@ -773,6 +981,8 @@ function resetPositions(){
   if (p4){ p4.x=W*0.65; p4.y=100;   p4.vx=p4.vy=0; }
   pk.x=W*0.5; pk.y=H*0.5; pk.vx=pk.vy=0;
 }
+
+/* ================== UI setup ================== */
 function setupLangUI(){
   const wrap=document.getElementById('langChips');
   wrap.querySelectorAll('.chip').forEach(btn=>{
@@ -852,6 +1062,25 @@ function setupFlagsUI(){
   p1.flagCode=p1.flagCode||'PL'; p2.flagCode=p2.flagCode||'US';
   mk('flagsP1', p1); mk('flagsP2', p2);
 }
+function setupRoundUI(){
+  const wrap=document.getElementById('roundChips');
+  const customRow=document.getElementById('customTimeRow');
+  const inp=document.getElementById('inpMinutes');
+  const chk=document.getElementById('chkUnlimited');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.sec==='180');
+    btn.onclick=()=>{
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+      const v=btn.dataset.sec;
+      if (v==='custom'){ customRow.style.display='grid'; unlimitedTime=false; chk.checked=false; }
+      else { roundTimeSec=parseInt(v,10); matchTime=roundTimeSec; customRow.style.display='none'; unlimitedTime=false; chk.checked=false; }
+    };
+  });
+  inp.onchange=()=>{ const m=Math.max(0, Math.min(60, parseInt(inp.value||'0',10))); roundTimeSec=m*60; matchTime=roundTimeSec; };
+  chk.onchange=()=>{ unlimitedTime=chk.checked; matchTime=unlimitedTime?0:roundTimeSec; customRow.style.display='none'; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); };
+}
+
+/* ================== Gracze / sterowanie ================== */
 let selectedPlayers = 2;
 function createOrDestroyPlayers(n){
   const {W,H}=getSize();
@@ -880,12 +1109,15 @@ function renderControls(n){
             <option value="ai"${player.input==='ai'?' selected':''}>AI (bot)</option>
             <option value="touch"${player.input==='touch'?' selected':''}>Dotyk</option>
           </select>
+
           <select id="${padSelId}" data-role="padSelect" style="display:${player.input==='gamepad'?'block':'none'};"></select>
+
           <select id="${aiSelId}" style="display:${player.input==='ai'?'block':'none'};">
             <option value="easy"${player.ai==='easy'?' selected':''}>Łatwy</option>
             <option value="medium"${player.ai==='medium'?' selected':''}>Średni</option>
             <option value="hard"${player.ai==='hard'?' selected':''}>Trudny</option>
           </select>
+
           <div id="touchRowP${idx}" style="display:${player.input==='touch'?'block':'none'};">
             <label class="hint">Tryb dotyku:</label>
             <select id="${touchModeId}">
@@ -894,6 +1126,7 @@ function renderControls(n){
             </select>
             <div class="ctrl-hint">„Bezpośredni dotyk” — malujesz palcem po swojej połowie; pierwszy dotyk = cios. „Joystick” — wirtualny pad + przycisk.</div>
           </div>
+
           <div class="ctrl-hint">${hints[idx]||''}</div>
         </div>
       </div>
@@ -901,6 +1134,7 @@ function renderControls(n){
   }
   const arr=[p1,p2].concat(n>=3?[p3||p1]:[]).concat(n>=4?[p4||p2]:[]);
   arr.forEach((pp,i)=> cont.insertAdjacentHTML('beforeend', cardHTML(i+1, pp)));
+
   arr.forEach((pp,i)=>{
     const idx=i+1;
     const inSel=document.getElementById(`selInputP${idx}`);
@@ -921,6 +1155,7 @@ function renderControls(n){
     if (aiSel)  aiSel.onchange =()=>{ pp.ai=aiSel.value; };
     if (touchModeSel) touchModeSel.onchange=()=>{ pp.touchMode = touchModeSel.value; refreshTouchLayerVisibility(); };
   });
+
   refreshPadLists();
   refreshTouchLayerVisibility();
 }
@@ -940,9 +1175,12 @@ function setupPlayersAndControlsUI(){
   createOrDestroyPlayers(selectedPlayers);
   renderControls(selectedPlayers);
 }
+
+/* ================== Touch layer widoczność ================== */
 function refreshTouchLayerVisibility(){
   const anyJoystick = [p1,p2,p3,p4].filter(Boolean).some(p=> p.input==='touch' && p.touchMode==='joystick');
   touchLayer.style.display = anyJoystick ? 'block' : 'none';
+
   function mountOrClear(p, pid){
     const el = document.getElementById('tp-'+pid);
     if (!el) return;
@@ -951,6 +1189,8 @@ function refreshTouchLayerVisibility(){
   }
   mountOrClear(p2,'p2'); mountOrClear(p4,'p4'); mountOrClear(p1,'p1'); mountOrClear(p3,'p3');
 }
+
+/* ================== Lista padów ================== */
 function refreshPadLists(){
   const gps=navigator.getGamepads?navigator.getGamepads():[];
   const padSelects = document.querySelectorAll('select[data-role="padSelect"]');
@@ -962,6 +1202,8 @@ function refreshPadLists(){
     else if (prev) sel.value=prev;
   });
 }
+
+/* ================== Start / countdown / przyciski ================== */
 function showCountdown(cb){
   let c=3; countdownEl.style.display='flex'; countdownEl.innerText=c;
   const tmr=setInterval(()=>{
@@ -970,6 +1212,9 @@ function showCountdown(cb){
   }, 700);
 }
 async function onStart(){
+  // odblokuj audio na pierwszy gest
+  try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){}
+
   const fsPref = (localStorage.getItem('fs') || '0')==='1';
   if (fsPref && !document.fullscreenElement){
     try{
@@ -1005,144 +1250,7 @@ document.getElementById('btnFs').onclick = async ()=>{
 };
 document.getElementById('btnStart').onclick= onStart;
 
-const PERF={ show:false, fps:60, last:performance.now(), ema:60 };
-function perfTick(now){
-  const dt=(now-PERF.last)/1000; PERF.last=now;
-  const inst=1/Math.max(dt,1/240); PERF.ema=PERF.ema*0.92+inst*0.08; PERF.fps=PERF.ema;
-  perfHud.style.display = PERF.show ? 'block' : 'none';
-  if (PERF.show){ perfHud.innerHTML=`FPS: <b>${PERF.fps.toFixed(0)}</b>`; }
-}
-let lastTime = performance.now();
-function loop(now){
-  perfTick(now);
-  const dt=Math.min(0.033,(now-lastTime)/1000); lastTime=now;
-  if (!isPaused) physicsStep(dt);
-  draw();
-  requestAnimationFrame(loop);
-}
-function onGoal(scoringSide, pkRef){
-  const {W,H}=getSize();
-  pkRef.x=W/2; pkRef.y=H/2; pkRef.vx=0; pkRef.vy=0;
-}
-function initObjects(){
-  const {W,H}=getSize();
-  p1 = makePlayer(W*0.5, H-100, 35, '#ff1744', false, 'P1');
-  p2 = makePlayer(W*0.5, 100,   35, '#2979ff', true,  'P2');
-  pk = makePuck(W*0.5, H*0.5, 22);
-}
-function resetPositions(){
-  const {W,H}=getSize();
-  p1.x=W*0.5; p1.y=H-100; p1.vx=p1.vy=0;
-  p2.x=W*0.5; p2.y=100;   p2.vx=p2.vy=0;
-  if (p3){ p3.x=W*0.35; p3.y=H-100; p3.vx=p3.vy=0; }
-  if (p4){ p4.x=W*0.65; p4.y=100;   p4.vx=p4.vy=0; }
-  pk.x=W*0.5; pk.y=H*0.5; pk.vx=pk.vy=0;
-}
-function setupRoundUI(){
-  const wrap=document.getElementById('roundChips');
-  const customRow=document.getElementById('customTimeRow');
-  const inp=document.getElementById('inpMinutes');
-  const chk=document.getElementById('chkUnlimited');
-  wrap.querySelectorAll('.chip').forEach(btn=>{
-    btn.classList.toggle('active', btn.dataset.sec==='180');
-    btn.onclick=()=>{
-      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
-      const v=btn.dataset.sec;
-      if (v==='custom'){ customRow.style.display='grid'; unlimitedTime=false; chk.checked=false; }
-      else { roundTimeSec=parseInt(v,10); matchTime=roundTimeSec; customRow.style.display='none'; unlimitedTime=false; chk.checked=false; }
-    };
-  });
-  inp.onchange=()=>{ const m=Math.max(0, Math.min(60, parseInt(inp.value||'0',10))); roundTimeSec=m*60; matchTime=roundTimeSec; };
-  chk.onchange=()=>{ unlimitedTime=chk.checked; matchTime=unlimitedTime?0:roundTimeSec; customRow.style.display='none'; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); };
-}
-function setupGoalSizeUI(){
-  const wrap=document.getElementById('goalSizeChips');
-  const current = arena.gw;
-  wrap.querySelectorAll('.chip').forEach(btn=>{
-    const gw = parseInt(btn.dataset.gw,10);
-    if (gw===current) btn.classList.add('active');
-    btn.onclick=()=>{
-      arena.gw = gw; localStorage.setItem('goalWidth', String(gw));
-      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
-    };
-  });
-}
-function setupFlagsUI(){
-  const FLAGS=['PL','US','GB','FR','DE','ES','BR','JP','IT','NL','PT'];
-  const mk=(wrapId, player)=>{
-    const wrap=document.getElementById(wrapId); wrap.innerHTML='';
-    FLAGS.forEach(code=>{
-      const b=document.createElement('button'); b.className='chip'; b.textContent=code;
-      b.onclick=()=>{ player.flagCode=code; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active'); };
-      wrap.appendChild(b);
-    });
-  };
-  p1.flagCode=p1.flagCode||'PL'; p2.flagCode=p2.flagCode||'US';
-  mk('flagsP1', p1); mk('flagsP2', p2);
-}
-function setupPuckUI(){
-  const wrap=document.getElementById('puckSizeChips');
-  wrap.querySelectorAll('.chip').forEach(btn=>{
-    const r=parseInt(btn.dataset.r,10);
-    if (pk.r===r) btn.classList.add('active');
-    btn.onclick=()=>{ pk.r=r; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); };
-  });
-  const spWrap=document.getElementById('puckSpeedChips');
-  const map=PUCK_SPEED_PRESETS; const currentKey=Object.keys(map).find(k=>map[k]===puckSpeedMax)||'normal';
-  spWrap.querySelectorAll('.chip').forEach(btn=>{
-    btn.classList.toggle('active', btn.dataset.speed===currentKey);
-    btn.onclick=()=>{
-      spWrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
-      puckSpeedMax = map[btn.dataset.speed]; localStorage.setItem('puckSpeedMax', String(puckSpeedMax));
-    };
-  });
-}
-function setupMalletUI(){
-  const u=(id, player)=>{
-    const wrap=document.getElementById(id);
-    wrap.querySelectorAll('.chip').forEach(btn=>{
-      if (player.r===parseInt(btn.dataset.r,10)) btn.classList.add('active');
-      btn.onclick=()=>{
-        player.r=parseInt(btn.dataset.r,10);
-        wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
-        resetPositions();
-      };
-    });
-  };
-  u('malletP1Chips', p1); u('malletP2Chips', p2);
-}
-function setupBgUI(){
-  const PRESETS=['#ffffff','#f8faff','#f3f4f6','#eef7ff','#f0fff4','#fff7ed','#fff0f6','#fefae0','#f7f5ff','#f6fff8'];
-  const wrap=document.getElementById('bgPresets'); wrap.innerHTML='';
-  PRESETS.forEach(col=>{
-    const b=document.createElement('button'); b.className='chip'; b.textContent=col;
-    if (tableBgColor.toLowerCase()===col.toLowerCase()) b.classList.add('active');
-    b.onclick=()=>{
-      tableBgColor=col; localStorage.setItem('tableBgColor', col);
-      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-    };
-    wrap.appendChild(b);
-  });
-  const inp=document.getElementById('inpBg'); inp.value = tableBgColor;
-  inp.oninput=(e)=>{ tableBgColor=e.target.value; localStorage.setItem('tableBgColor', tableBgColor); };
-}
-function setupLangUI(){
-  const wrap=document.getElementById('langChips');
-  wrap.querySelectorAll('.chip').forEach(btn=>{
-    if (btn.dataset.lang===lang) btn.classList.add('active');
-    btn.onclick=()=>{ lang=btn.dataset.lang; localStorage.setItem('lang', lang);
-      wrap.querySelectorAll('.chip').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); };
-  });
-}
-
-function touchGamepadAPI(){}
-
-const PERF2={}; // unikamy konfliktów nazw – placeholder
-
-let roundTimeSec=180, matchTime=roundTimeSec, unlimitedTime=false;
-
-document.getElementById('btnStart').onclick= onStart;
-
+/* ================== Boot ================== */
 window.addEventListener('load', ()=>{
   try{
     applyViewportHeightVar();
@@ -1160,9 +1268,11 @@ window.addEventListener('load', ()=>{
     setupFlagsUI();
     setupRoundUI();
 
+    // Specjal / wibracje / dźwięk / fizyka
     const selMb=document.getElementById('selMbLimit');
-    selMb.onchange=()=>{};
+    selMb.onchange=()=>{ /* hook na logikę Multiball */ };
 
+    // Wibracje
     const chkVib=document.getElementById('chkVib');
     const rngVib=document.getElementById('rngVib'); const vibVal=document.getElementById('vibVal');
     let vibEnabled = (localStorage.getItem('vibEnabled') ?? '1') !== '0';
@@ -1173,11 +1283,23 @@ window.addEventListener('load', ()=>{
       localStorage.setItem('vibStrength', String(vibStrength)); };
     chkVib.onchange=applyV; rngVib.oninput=applyV;
 
+    // Dźwięk
+    const chkAudio = document.getElementById('chkAudio');
+    chkAudio.checked = audioEnabled;
+    chkAudio.onchange = ()=>{
+      audioEnabled = chkAudio.checked;
+      localStorage.setItem('audioEnabled', audioEnabled ? '1' : '0');
+      // ewentualnie odblokuj audio jeśli włączone
+      if (audioEnabled){ try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){} }
+    };
+
+    // Pełny ekran preferencja
     const chkFs=document.getElementById('chkFs');
     let fullscreenPref = (localStorage.getItem('fs') ?? '0') === '1';
     chkFs.checked=fullscreenPref;
     chkFs.onchange=()=>{ fullscreenPref=chkFs.checked; localStorage.setItem('fs', fullscreenPref?'1':'0'); };
 
+    // Odbicie tryb + tarcie
     const wrapB=document.getElementById('bounceChips');
     const setAct=()=> wrapB.querySelectorAll('.chip').forEach(b=> b.classList.toggle('active', b.dataset.mode===malletBounceMode));
     wrapB.querySelectorAll('.chip').forEach(btn=>{
@@ -1193,16 +1315,15 @@ window.addEventListener('load', ()=>{
 
     startGamepadPolling();
 
-    function perfTick(now){
-      const dt=(now-lastTime)/1000; lastTime=now;
-      requestAnimationFrame(perfTick);
-    }
     requestAnimationFrame(loop);
   }catch(e){
     console.error('Init error:', e);
     showToast('Init error: ' + (e?.message || e), 3000);
   }
 });
+
+/* Placeholder dla Safari/HTTPS wymagań */
+function touchGamepadAPI(){}
 </script>
 </body>
 </html>
