@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
-  <title>Air Hockey — Narożne przyciski + START + gest 2 palców</title>
-
-  <!-- Samowystarczalny: brak zewnętrznych plików -->
+  <title>Air Hockey — półokręgi 20%, linia dzielona, tryby gry i kolizje paletek</title>
 
   <style>
     :root { --bg:#0b0b0b; --panel:#111; --accent:#00e5ff; --border:#222; --app-h: 100svh; }
@@ -156,7 +154,7 @@
     <canvas id="game" aria-label="Stół do air hockey"></canvas>
     <div id="perfHud"></div>
 
-    <!-- Touch layer — joysticki (tylko dla graczy z Dotyk=Joystick) -->
+    <!-- Touch layer — joysticki -->
     <div id="touchLayer" style="display:none;">
       <div id="tp-p2" class="tpZone tp-p2"></div>
       <div id="tp-p4" class="tpZone tp-p4"></div>
@@ -170,7 +168,7 @@
     <div class="panel">
       <h1>USTAWIENIA MECZU</h1>
 
-      <!-- Gracze + Sterowanie (dynamiczne) -->
+      <!-- Gracze + Sterowanie -->
       <h2>Gracze &amp; Sterowanie</h2>
       <div class="grid grid-2">
         <div class="row">
@@ -216,19 +214,23 @@
         <div class="row">
           <div class="hint">Rozmiar krążka</div>
           <div class="chipbar" id="puckSizeChips">
+            <button class="chip" data-r="16">XS</button>
             <button class="chip" data-r="18">S</button>
-            <button class="chip" data-r="22">M</button>
-            <button class="chip" data-r="26">L</button>
+            <button class="chip" data-r="20">M</button>
+            <button class="chip" data-r="22">L</button>
+            <button class="chip" data-r="24">XL</button>
+            <button class="chip" data-r="28">XXL</button>
           </div>
         </div>
         <div class="row">
           <div class="hint">Prędkość krążka (max)</div>
           <div class="chipbar" id="puckSpeedChips">
+            <button class="chip" data-speed="ultra_slow">Ultra wolny</button>
             <button class="chip" data-speed="very_slow">Bardzo wolny</button>
             <button class="chip" data-speed="slow">Wolny</button>
             <button class="chip" data-speed="normal">Normalny</button>
             <button class="chip" data-speed="fast">Szybki</button>
-            <button class="chip" data-speed="very_fast">Bardzo szybki</button>
+            <button class="chip" data-speed="very_fast_plus">Bardzo szybki+</button>
           </div>
         </div>
         <div class="row">
@@ -246,18 +248,31 @@
         </div>
       </div>
 
+      <!-- Globalna skala rozmiaru -->
+      <h2>Skala rozmiaru (globalna)</h2>
+      <div class="row">
+        <div class="hint">Ustawia jednocześnie paletki i krążek. „Dostosowany do ekranu” reaguje na resize/rotację.</div>
+        <div class="chipbar" id="sizePresetChips">
+          <button class="chip" data-size="auto">Dostosowany do ekranu</button>
+          <button class="chip" data-size="smaller">Mniejszy</button>
+          <button class="chip" data-size="extra_small">Jeszcze mniejszy</button>
+          <button class="chip" data-size="larger">Większy</button>
+          <button class="chip" data-size="largest">Największy</button>
+        </div>
+      </div>
+
       <!-- Rozmiar bramki -->
-      <h2>Rozmiar bramki</h2>
+      <h2>Rozmiar bramki (procent szerokości stołu)</h2>
       <div class="row">
         <div class="chipbar" id="goalSizeChips">
-          <button class="chip" data-gw="140">XS</button>
-          <button class="chip" data-gw="180">S</button>
-          <button class="chip" data-gw="220">M</button>
-          <button class="chip" data-gw="260">L</button>
-          <button class="chip" data-gw="300">XL</button>
-          <button class="chip" data-gw="340">XXL</button>
+          <button class="chip" data-gr="0.14">XS</button>
+          <button class="chip" data-gr="0.18">S</button>
+          <button class="chip" data-gr="0.22">M</button>
+          <button class="chip" data-gr="0.26">L</button>
+          <button class="chip" data-gr="0.30">XL</button>
+          <button class="chip" data-gr="0.34">XXL</button>
         </div>
-        <div class="hint">Zmienia szerokość okna bramki i półkoli.</div>
+        <div class="hint">Szerokość „okna” bramki rośnie/maleje wraz z szerokością stołu.</div>
       </div>
 
       <!-- Flagi -->
@@ -273,10 +288,22 @@
         </div>
       </div>
 
-      <!-- Czas / Specjal / Wibracje / Dźwięk / FS -->
-      <h2>Czas rundy / Specjal / Wibracje / Dźwięk / Pełny ekran</h2>
+      <!-- Czas / Do ilu goli / Wibracje / Dźwięk / FS -->
+      <h2>Czas rundy / Do ilu goli / Wibracje / Dźwięk / Pełny ekran</h2>
+
+      <!-- Tryb gry -->
+      <div class="row" id="modeRow">
+        <div class="hint">Tryb gry</div>
+        <div class="chipbar" id="modeChips">
+          <button class="chip" data-mode="time">Gramy na czas</button>
+          <button class="chip" data-mode="goals">Gramy do goli</button>
+        </div>
+      </div>
+
       <div class="grid grid-2">
-        <div class="row">
+        <!-- LEWA: czas -->
+        <div class="row" id="timeSettingsCol">
+          <div class="hint">Czas rundy</div>
           <div class="chipbar" id="roundChips">
             <button class="chip" data-sec="60">1:00</button>
             <button class="chip" data-sec="120">2:00</button>
@@ -289,22 +316,32 @@
             <input id="inpMinutes" type="number" min="0" max="60" step="1" value="3" />
           </div>
           <label class="hint"><input id="chkUnlimited" type="checkbox" /> Czas nieograniczony</label>
+          <div class="hint">Przy końcu czasu i remisie: <b>dogrywka — złoty gol</b>.</div>
         </div>
 
-        <div class="row">
-          <div class="hint">Specjal / Wibracje / Dźwięk / FS</div>
-          <div class="row">
-            <div class="hint">Multiball (limit/gracz)</div>
-            <select id="selMbLimit">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3" selected>3</option>
-              <option value="5">5</option>
-              <option value="0">∞</option>
-            </select>
-            <div class="hint">W trakcie ciosu na padzie: <b>A</b> = 2 tymczasowe krążki.</div>
+        <!-- PRAWA: do ilu goli -->
+        <div class="row" id="goalsSettingsCol">
+          <div class="hint">Do ilu goli (0 = bez limitu)</div>
+          <div class="chipbar" id="goalsToWinChips">
+            <button class="chip" data-g="0">0</button>
+            <button class="chip" data-g="3">3</button>
+            <button class="chip" data-g="5">5</button>
+            <button class="chip" data-g="7">7</button>
+            <button class="chip" data-g="10">10</button>
+            <button class="chip" data-g="custom">Własny</button>
+          </div>
+          <div id="customGoalsRow" class="row" style="display:none;">
+            <div class="hint">Gole:</div>
+            <input id="inpGoals" type="number" min="1" max="50" step="1" value="5" />
           </div>
 
+          <div class="hint">W trybie „do goli” mecz kończy się natychmiast, gdy ktoś osiągnie limit (gdy 0 = brak końca).</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="row">
+          <div class="hint">Wibracje / Dźwięk / FS</div>
           <div class="row">
             <label class="hint"><input id="chkVib" type="checkbox" /> Włącz wibracje</label>
             <div style="display:flex;align-items:center;gap:10px;">
@@ -313,7 +350,6 @@
               <div id="vibVal" class="hint mono">70%</div>
             </div>
 
-            <!-- Dźwięk: ON/OFF + głośność -->
             <label class="hint"><input id="chkAudio" type="checkbox" /> Dźwięk odbić ON</label>
             <div style="display:flex;align-items:center;gap:10px;">
               <div class="hint">Głośność:</div>
@@ -324,25 +360,39 @@
             <label class="hint"><input id="chkFs" type="checkbox" /> Pełny ekran przy starcie</label>
           </div>
         </div>
-      </div>
 
-      <!-- Fizyka -->
-      <h2>Fizyka kolizji paletki</h2>
-      <div class="grid">
-        <div class="chipbar" id="bounceChips">
-          <button class="chip" data-mode="soft">Soft</button>
-          <button class="chip" data-mode="normal">Normal</button>
-          <button class="chip" data-mode="wall">Wall (jak od ściany)</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <div class="hint">Tarcie styczne (0.000–0.050):</div>
-          <input id="rngFric" type="range" min="0" max="50" step="1" value="10" />
-          <div class="hint mono" id="fricVal">0.010</div>
+        <div class="row">
+          <div class="hint">Fizyka paletki</div>
+          <div class="chipbar" id="bounceChips">
+            <button class="chip" data-mode="soft">Soft</button>
+            <button class="chip" data-mode="normal">Normal</button>
+            <button class="chip" data-mode="wall">Wall (jak od ściany)</button>
+          </div>
+
+          <!-- KOLIZJE PALETEK -->
+          <div class="hint" style="margin-top:8px;">Kolizje między paletkami</div>
+          <div class="chipbar" id="malletCollisionsChips">
+            <button class="chip" data-coll="pass_through">Przenikanie (bez zderzeń)</button>
+            <button class="chip" data-coll="soft_bounce">Lekki kontakt (odbicie)</button>
+            <button class="chip" data-coll="strong_bounce">Mocne odbicie</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="hint">Siła kontaktu:</div>
+            <input id="rngCollStrength" type="range" min="0" max="100" step="5" value="40" />
+            <div id="collStrengthVal" class="hint mono">40%</div>
+          </div>
+          <div class="ctrl-hint">Reguluje intensywność separacji i sprężystość zderzeń (dotyczy trybów „Lekki kontakt” i „Mocne odbicie”).</div>
+
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="hint">Tarcie styczne (0.000–0.050):</div>
+            <input id="rngFric" type="range" min="0" max="50" step="1" value="10" />
+            <div class="hint mono" id="fricVal">0.010</div>
+          </div>
         </div>
       </div>
 
       <div class="row" style="margin-top:14px">
-        <button id="btnStartOverlay" class="btn">START / WZNÓW</button>
+        <button id="btnStartOverlay" class="btn">START / NOWY MECZ</button>
       </div>
       <div class="hint" style="margin-top:6px">
         Tip: F11 → pełny ekran (jeśli przeglądarka blokuje automatyczny).
@@ -397,6 +447,7 @@ const perfHud = document.getElementById('perfHud');
 const countdownEl = document.getElementById('countdown');
 const cornerUI = document.getElementById('cornerUI');
 const IS_TOUCH = (('ontouchstart' in window) || (navigator.maxTouchPoints||0)>0);
+
 function fit(){
   const dpr = Math.min(window.devicePixelRatio || 1, 2.5) || 1;
   const vw = (window.visualViewport && Math.floor(window.visualViewport.width)) || (window.innerWidth || 800);
@@ -416,12 +467,25 @@ function getSize(){
   if (!isFinite(W) || !isFinite(H) || W < 2 || H < 2){ fit(); W=canvas.width/dpr; H=canvas.height/dpr; }
   return { W, H, dpr };
 }
-function onViewportMaybeChanged(){ applyViewportHeightVar(); fit(); }
-window.addEventListener('resize', onViewportMaybeChanged);
-window.addEventListener('orientationchange', () => setTimeout(()=>{ onViewportMaybeChanged(); resetPositions(); }, 120));
-if ('visualViewport' in window){
-  window.visualViewport.addEventListener('resize', onViewportMaybeChanged);
-  window.visualViewport.addEventListener('scroll', onViewportMaybeChanged);
+
+/* =============================================================================
+   Parametry stołu / bramki
+   ========================================================================== */
+const arena = { frW:8, gw: 220 /* wyliczane z ratio */ };
+let goalRatio = parseFloat(localStorage.getItem('goalRatio') || '0.22');
+
+function recalcGoalWidth(){
+  const { W } = getSize();
+  const minGW = Math.max(100, Math.floor(W * 0.10));
+  const maxGW = Math.min(Math.floor(W * 0.50), W - 2*arena.frW - 40);
+  arena.gw = Math.round(Math.max(minGW, Math.min(maxGW, W * goalRatio)));
+}
+
+function onViewportMaybeChanged(){
+  applyViewportHeightVar();
+  fit();
+  recalcGoalWidth();
+  applyAdaptiveSizes(false);
 }
 
 /* =============================================================================
@@ -431,10 +495,13 @@ let lang = localStorage.getItem('lang') || 'pl';
 const I18N = {
   pl: {
     goal:'GOL!', settings:'USTAWIENIA MECZU', start:'START / WZNÓW', newMatch:'NOWY MECZ',
-    gameOver:'KONIEC MECZU', ot:'DOGRYWKA',
+    gameOver:'KONIEC MECZU', ot:'DOGRYWKA', golden:'Złoty gol!',
     kbTip:'Klawiatura: Strzałki lub WASD — wciśnij, by rozpocząć.',
     gamepadTip:'Pad: A (0) = START, X (2) = Ustawienia',
-    httpsTip:'Gamepady najlepiej działają w HTTPS lub na localhost.', noPad:'Brak wykrytego pada.'
+    httpsTip:'Gamepady najlepiej działają w HTTPS lub na localhost.',
+    mode_time:'Gramy na czas',
+    mode_goals:'Gramy do goli',
+    unlimited_label:'Bez limitu'
   }
 };
 const t = (k)=> (I18N[lang] && I18N[lang][k]) || k;
@@ -449,20 +516,70 @@ function getMalletE(){ return malletBounceMode==='soft'?0.88:malletBounceMode===
 const MIN_WALL_OUT_SPEED = 0.60;
 
 const K1_AIR=0.8, K2_QUAD=0.0008, MUg=80;
-const CORNER_R = 70; /* wizual */
-const arena = { frW:8, gw: parseInt(localStorage.getItem('goalWidth')||'220',10) || 220 };
 
-const PUCK_SPEED_PRESETS = { very_slow:18, slow:24, normal:32, fast:38, very_fast:45 };
+const PUCK_SPEED_PRESETS = {
+  ultra_slow:14, very_slow:20, slow:26, normal:32, fast:38, very_fast_plus:48
+};
 let puckSpeedMax = parseInt(localStorage.getItem('puckSpeedMax')||'') || PUCK_SPEED_PRESETS.normal;
-
 let tableBgColor = localStorage.getItem('tableBgColor') || '#f8faff';
 
 /* =============================================================================
-   Czas rundy (zmienne globalne)
+   Tryb gry / Czas / Gole / Dogrywka
    ========================================================================== */
+let matchMode = localStorage.getItem('matchMode') || 'time';  // 'time' | 'goals'
 let roundTimeSec = 180;
 let matchTime    = roundTimeSec;
 let unlimitedTime = false;
+
+let goalsToWin = parseInt(localStorage.getItem('goalsToWin') || '0', 10);
+let overtimeActive = false;
+
+function fmtTime(sec){
+  sec = Math.max(0, Math.floor(sec || 0));
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return `${String(m).padStart(1,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+/* =============================================================================
+   Wynik (TOP vs BOTTOM)
+   ========================================================================== */
+const score = { top: 0, bottom: 0 };
+
+/* =============================================================================
+   Globalny preset rozmiaru
+   ========================================================================== */
+let sizePreset = localStorage.getItem('sizePreset') || 'auto';
+const SIZE_FACTORS = { auto:1.00, smaller:0.88, extra_small:0.76, larger:1.12, largest:1.26 };
+let manualMalletOverride = { p1:false, p2:false, p3:false, p4:false };
+let manualPuckOverride = false;
+
+function computeBaseSizes(){
+  const { W, H } = getSize();
+  const L = Math.max(320, Math.min(W, H));
+  const factor = SIZE_FACTORS[sizePreset] || 1.0;
+  let puckR   = Math.round(L * 0.028);
+  let malletR = Math.round(L * 0.045);
+  puckR   = Math.round(puckR   * factor);
+  malletR = Math.round(malletR * factor);
+  puckR   = Math.max(14, Math.min(puckR, 34));
+  malletR = Math.max(24, Math.min(malletR, 52));
+  return { puckR, malletRTop: malletR, malletRBottom: malletR };
+}
+function applyAdaptiveSizes(presetChanged=false){
+  if (!p1 || !p2 || !pk) return;
+  const base = computeBaseSizes();
+  const force = presetChanged;
+  const shouldApplyP1 = force || (sizePreset==='auto' && !manualMalletOverride.p1);
+  const shouldApplyP2 = force || (sizePreset==='auto' && !manualMalletOverride.p2);
+  const shouldApplyP3 = (p3 ? (force || (sizePreset==='auto' && !manualMalletOverride.p3)) : false);
+  const shouldApplyP4 = (p4 ? (force || (sizePreset==='auto' && !manualMalletOverride.p4)) : false);
+  const shouldApplyPk = force || (sizePreset==='auto' && !manualPuckOverride);
+  if (shouldApplyP1) p1.r = base.malletRBottom;
+  if (shouldApplyP2) p2.r = base.malletRTop;
+  if (p3 && shouldApplyP3) p3.r = base.malletRBottom;
+  if (p4 && shouldApplyP4) p4.r = base.malletRTop;
+  if (shouldApplyPk) pk.r = base.puckR;
+}
 
 /* =============================================================================
    Obiekty gry
@@ -475,23 +592,16 @@ function makePlayer(x,y,r,color,sideTop,name){
            score:0, lastSpecialAt:0, specialUsesUsed:0, ai_dx:0, ai_dy:0,
            touch:{dx:0,dy:0,just:false,active:false},
            direct:{active:false,x:0,y:0,just:false},
-           flagCode: (sideTop ? 'US' : 'PL')
-  };
+           flagCode: (sideTop ? 'US' : 'PL') };
 }
 function makePuck(x, y, r){
-  return {
-    x, y, r,
-    vx: 0, vy: 0,
-    prevX: x, prevY: y,
-    cornerStallTicks: 0
-  };
+  return { x, y, r, vx: 0, vy: 0, prevX: x, prevY: y, cornerStallTicks: 0 };
 }
-
 let p1,p2,p3=null,p4=null, pk;
 let isPaused = true;
 
 /* =============================================================================
-   Audio (WebAudio) — odbicia, banda, GOL
+   Audio
    ========================================================================== */
 let audioEnabled = (localStorage.getItem('audioEnabled') ?? '1') !== '0';
 let audioVolume  = Math.max(0, Math.min(1, parseFloat(localStorage.getItem('audioVolume') || '0.70')));
@@ -512,11 +622,9 @@ function scheduleBeep(t0, freq0, freq1, dur, peak, type='triangle'){
   osc.type = type;
   osc.frequency.setValueAtTime(freq0, t0);
   if (freq1 && freq1>0) osc.frequency.exponentialRampToValueAtTime(freq1, t0 + dur*0.7);
-
   g.gain.setValueAtTime(0.00001, t0);
   g.gain.exponentialRampToValueAtTime(Math.max(0.01, peak), t0 + 0.005);
   g.gain.exponentialRampToValueAtTime(0.00001, t0 + dur);
-
   osc.connect(g).connect(masterGain);
   osc.start(t0);
   osc.stop(t0 + dur + 0.02);
@@ -550,7 +658,6 @@ function playHit(type, intensity=0.2){
 const keys = new Map();
 addEventListener('keydown', e=>{ const c=e.code||''; if(/^(Arrow|Key|Space|Control|Enter|Numpad|KeyW|KeyA|KeyS|KeyD)/.test(c)) e.preventDefault();
   keys.set(c,true);
-  // SZYBKI START: Strzałki / WASD — jeśli pauza i brak overlay → start
   if (isPaused && overlay.style.display==='none' && (
       c.startsWith('Arrow') || c==='KeyW' || c==='KeyA' || c==='KeyS' || c==='KeyD'
     )) { tryStartFromShortcut('keyboard'); }
@@ -567,23 +674,19 @@ function readGamepad(idx){
   const dx=norm(axLX), dy=norm(axLY); const btns=gp.buttons||[];
   let prev=gamepadPrevButtons.get(idx)||Array(btns.length).fill(false);
   const now=btns.map(b=>!!b?.pressed); gamepadPrevButtons.set(idx, now);
-  const justA =(now[0]&&!prev[0]);   // A / Cross
-  const justX =(now[2]&&!prev[2]);   // X / Square (index 2) → Ustawienia
+  const justA =(now[0]&&!prev[0]);
+  const justX =(now[2]&&!prev[2]);
   const justZR=(now[7]&&!prev[7]);
   const hit=now[0]||now[5]||now[7];
   return { dx, dy, justA, justZR, hit, justX };
 }
-
-/* Szybki START / Ustawienia z PAD-a: odpytywanie wszystkich */
 function checkGamepadStartShortcuts(){
   const gps = navigator.getGamepads ? navigator.getGamepads() : [];
   for (const gp of gps){
     if (!gp) continue;
     const idx = gp.index;
     const info = readGamepad(idx);
-    // A (0) → START jeśli pauza i overlay zamknięty
     if (info.justA && isPaused && overlay.style.display==='none'){ tryStartFromShortcut('gamepad'); return; }
-    // X (2) → toggle Ustawienia
     if (info.justX){
       if (overlay.style.display==='none'){ overlay.style.display='flex'; isPaused=true; cornerShow(true); }
       else { overlay.style.display='none'; }
@@ -593,7 +696,7 @@ function checkGamepadStartShortcuts(){
 }
 
 /* =============================================================================
-   Touch — Joystick i Bezpośredni dotyk (jak wcześniej)
+   Touch — Joystick i Bezpośredni dotyk
    ========================================================================== */
 const touchLayer = document.getElementById('touchLayer');
 const touchState = {
@@ -709,18 +812,18 @@ function naturalBrake(obj, dt){
   let vx=obj.vx*60, vy=obj.vy*60;
   const speed=Math.hypot(vx,vy); if (speed<1e-6){ obj.vx=0; obj.vy=0; return; }
   const lin=Math.exp(-K1_AIR*dt); vx*=lin; vy*=lin;
-  let s2=Math.hypot(vx,vy); const dec2=K2_QUAD*s2*s2*dt; s2=Math.max(0, s2-dec2);
+  let s2=Math.hypot(vx,vy); const dec2=0.0008*s2*s2*dt; s2=Math.max(0, s2-dec2);
   if (!s2){ obj.vx=0; obj.vy=0; return; }
   const sc2=s2/Math.hypot(vx,vy); vx*=sc2; vy*=sc2;
-  let s3=Math.hypot(vx,vy); s3=Math.max(0, s3 - MUg*dt);
+  let s3=Math.hypot(vx,vy); s3=Math.max(0, s3 - 80*dt);
   if (!s3){ obj.vx=0; obj.vy=0; return; }
   const sc3=s3/Math.hypot(vx,vy); vx*=sc3; vy*=sc3;
   obj.vx=vx/60; obj.vy=vy/60;
 }
 
-/* Kolizja Paletka ↔ Krążek (anti‑tunnel + wall-like) */
+/* Kolizja Paletka ↔ Krążek */
 const EPS = 1e-6;
-const rndSign = ()=> (Math.random() < 0.5 ? -1 : 1);
+const rndSign = ()=>(Math.random() < 0.5 ? -1 : 1);
 function resolveMalletPuck(p, pk){
   let dx = pk.x - p.x, dy = pk.y - p.y;
   let dist = Math.hypot(dx, dy);
@@ -739,13 +842,11 @@ function resolveMalletPuck(p, pk){
       if (vN < 0){
         pk.vx = pk.vx - (1 + WALL_E) * vN * nx;
         pk.vy = pk.vy - (1 + WALL_E) * vN * ny;
-        playHit('mallet', Math.min(1, Math.abs(vN)*12));
       }
       pk.x = p.x + nx * (min + 0.5);
       pk.y = p.y + ny * (min + 0.5);
       pk.x += tx * 1.2 * rndSign();
       pk.y += ty * 1.2 * rndSign();
-
     } else {
       let vrel_n = (pk.vx - p.vx)*nx + (pk.vy - p.vy)*ny;
       let vrel_t = (pk.vx - p.vx)*tx + (pk.vy - p.vy)*ty;
@@ -761,34 +862,72 @@ function resolveMalletPuck(p, pk){
 
       const pen = (min - dist) + 0.6;
       pk.x += nx*pen; pk.y += ny*pen;
-
-      playHit('mallet', Math.min(1, Math.abs(vrel_n)*10));
-    }
-
-    // Anti‑tunnel
-    if (typeof pk.prevX === 'number' && typeof pk.prevY === 'number'){
-      const prevDx = pk.prevX - p.x, prevDy = pk.prevY - p.y;
-      const prevAlong = prevDx*nx + prevDy*ny;
-      const curAlong  = (pk.x - p.x)*nx + (pk.y - p.y)*ny;
-
-      if (prevAlong > 0 && curAlong < 0){
-        pk.x = p.x + nx * (min + 0.5);
-        pk.y = p.y + ny * (min + 0.5);
-        const jitter = 1.6;
-        pk.x += tx * jitter * rndSign();
-        pk.y += ty * jitter * rndSign();
-
-        const vN2 = pk.vx*nx + pk.vy*ny;
-        if (vN2 < 0){
-          pk.vx -= vN2*nx;
-          pk.vy -= vN2*ny;
-        }
-      }
     }
   }
 }
 
-/* Ściany / bramki (z dźwiękami) */
+/* =============================================================================
+   Kolizje paletka ↔ paletka (tryby + suwak siły)
+   ========================================================================== */
+let malletCollisionsMode = localStorage.getItem('malletCollisionsMode') || 'pass_through'; // 'pass_through' | 'soft_bounce' | 'strong_bounce'
+let malletContactStrength = Math.max(0, Math.min(100, parseInt(localStorage.getItem('malletContactStrength') || '40', 10)));
+
+function getContactParams(){
+  // Skala 0..1 → rozszerzona 0.5..1.5 dla widocznego efektu
+  const s01 = clamp(malletContactStrength, 0, 100)/100;
+  const scale = 0.5 + s01;              // 0.5 .. 1.5
+  const baseE = (malletCollisionsMode==='strong_bounce') ? 0.55 : 0.25; // bazowa sprężystość
+  const e = clamp(baseE * scale, 0.05, 0.95);       // końcowy współczynnik odbicia
+  const sepK = 0.6 * scale;                          // intensywność separacji pozycji
+  const fricT = 0.06 * scale;                        // lekka „tangencja” podczas zderzeń (opcjonalnie)
+  return { e, sepK, fricT };
+}
+
+function resolveMalletPair(a, b, W, H){
+  if (malletCollisionsMode === 'pass_through') return; // brak zderzeń
+
+  const dx = b.x - a.x, dy = b.y - a.y;
+  let dist = Math.hypot(dx, dy) || 1e-6;
+  const min = a.r + b.r;
+  if (dist >= min) return;
+
+  let nx = dx / dist, ny = dy / dist;
+  const { e, sepK, fricT } = getContactParams();
+
+  // ===== Separacja pozycji (delikatnie, zależnie od siły) =====
+  const rawOverlap = (min - dist);
+  const sep = (rawOverlap + 0.5) * sepK;  // +0.5 dla stabilności
+  const half = sep / 2;
+
+  a.x -= nx * half; a.y -= ny * half;
+  b.x += nx * half; b.y += ny * half;
+
+  // Granice połowy stołu
+  const mid = H/2;
+  a.x = clamp(a.x, arena.frW + a.r, W - arena.frW - a.r);
+  b.x = clamp(b.x, arena.frW + b.r, W - arena.frW - b.r);
+  a.y = clamp(a.y, a.sideTop ? (arena.frW + a.r) : (mid + a.r),
+                      a.sideTop ? (mid - a.r)      : (H - arena.frW - a.r));
+  b.y = clamp(b.y, b.sideTop ? (arena.frW + b.r) : (mid + b.r),
+                      b.sideTop ? (mid - b.r)      : (H - arena.frW - b.r));
+
+  // ===== Impuls „sprężysty” na normalnej (równe masy) =====
+  const vrel_n = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+  if (vrel_n < 0){
+    const j = -(1 + e) * vrel_n / 2; // /2: rozdział na 2 ciała
+    a.vx -= j * nx; a.vy -= j * ny;
+    b.vx += j * nx; b.vy += j * ny;
+
+    // Delikatna składowa styczna (daje „poślizg” przy kontakcie)
+    const tx = -ny, ty = nx;
+    const vrel_t = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
+    const jt = -vrel_t * fricT / 2;
+    a.vx -= jt * tx; a.vy -= jt * ty;
+    b.vx += jt * tx; b.vy += jt * ty;
+  }
+}
+
+/* Ściany / bramki — z obsługą gola */
 function wallsAndGoals(pk, W, H){
   if (pk.x < arena.frW + pk.r || pk.x > W - arena.frW - pk.r){
     const nx=(pk.x < W/2)?1:-1;
@@ -796,7 +935,6 @@ function wallsAndGoals(pk, W, H){
     pk.vx = pk.vx - (1+WALL_E)*(pk.vx*nx)*nx;
     const out = pk.vx*nx; if (out<MIN_WALL_OUT_SPEED) pk.vx += (MIN_WALL_OUT_SPEED-out)*nx;
     pk.x = (pk.x < W/2)? (arena.frW + pk.r) : (W - arena.frW - pk.r);
-    playHit('wall', Math.min(1, Math.abs(vN_before)*10));
   }
   const isGoalX = Math.abs(pk.x - W/2) < arena.gw/2;
   if (!isGoalX){
@@ -806,12 +944,12 @@ function wallsAndGoals(pk, W, H){
       pk.vy = pk.vy - (1+WALL_E)*(pk.vy*ny)*ny;
       const out = pk.vy*ny; if (out<MIN_WALL_OUT_SPEED) pk.vy += (MIN_WALL_OUT_SPEED-out)*ny;
       pk.y = (pk.y < H/2)? (arena.frW + pk.r) : (H - arena.frW - pk.r);
-      playHit('wall', Math.min(1, Math.abs(vN_before)*10));
     }
   } else {
-    if (pk.y < 0 || pk.y > H){
-      playHit('goal', 1.0);
-      pk.x=W/2; pk.y=H/2; pk.vx=0; pk.vy=0;
+    if (pk.y < -pk.r || pk.y > H + pk.r) {
+      const scoringSide = (pk.y < H/2) ? 'bottom' : 'top';
+      onGoal(scoringSide, pk);
+      return;
     }
   }
 }
@@ -944,6 +1082,15 @@ function physicsStep(dt){
     updatePlayer(p, input.dx, input.dy, input.justStrike, W, H, s);
   });
 
+  // Kolizje paletka↔paletka (gdy włączone)
+  if (players.length >= 2 && malletCollisionsMode !== 'pass_through'){
+    for (let i=0;i<players.length;i++){
+      for (let j=i+1;j<players.length;j++){
+        resolveMalletPair(players[i], players[j], W, H);
+      }
+    }
+  }
+
   pk.prevX = pk.x; pk.prevY = pk.y;
   pk.x += pk.vx*s; pk.y += pk.vy*s;
   naturalBrake(pk, dt);
@@ -984,59 +1131,105 @@ function drawFlagOnMallet(p){
 }
 
 /* =============================================================================
-   Rysowanie
+   Rysowanie — linie, półkola, wynik
    ========================================================================== */
 function draw(){
   const {W,H}=getSize();
   ctx.fillStyle=tableBgColor; ctx.fillRect(0,0,W,H);
 
-  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=4;
-  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(W/2,H/2,60,0,Math.PI*2); ctx.stroke();
+  // Kolory band i półprzezroczyste 20%
+  const topCol='#2979ff', botCol='#ff1744';
+  const topCol20='rgba(41,121,255,0.20)', botCol20='rgba(255,23,68,0.20)';
 
-  const top='#2979ff', bot='#ff1744'; ctx.lineWidth=arena.frW;
-  // góra
-  ctx.strokeStyle=top;
+  // === Linia środkowa dzielona kolorami (20%)
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = topCol20; ctx.beginPath(); ctx.moveTo(0, H/2);   ctx.lineTo(W/2, H/2); ctx.stroke();
+  ctx.strokeStyle = botCol20; ctx.beginPath(); ctx.moveTo(W/2, H/2); ctx.lineTo(W,   H/2); ctx.stroke();
+
+  // Delikatny kontur koła środkowego
+  const midCircleStroke='rgba(0,0,0,0.08)';
+  ctx.strokeStyle = midCircleStroke; ctx.beginPath(); ctx.arc(W/2,H/2,60,0,Math.PI*2); ctx.stroke();
+
+  // === ŚRODKOWE półkola (20%) — góra niebieski, dół czerwony
+  ctx.save(); ctx.lineWidth=4;
+  ctx.strokeStyle = topCol20; ctx.beginPath(); ctx.arc(W/2, H/2, 60, Math.PI, 2*Math.PI); ctx.stroke(); // w dół
+  ctx.strokeStyle = botCol20; ctx.beginPath(); ctx.arc(W/2, H/2, 60, 0, Math.PI);         ctx.stroke(); // w górę
+  ctx.restore();
+
+  // === Bandy i okna bramek (grube)
+  ctx.lineWidth=arena.frW;
+  // GÓRA
+  ctx.strokeStyle=topCol;
   ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, arena.frW/2); ctx.lineTo(arena.frW/2, arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, arena.frW/2); ctx.lineTo(W/2+arena.gw/2, arena.frW/2); ctx.stroke();
-  // dół
-  ctx.strokeStyle=bot;
+  // DÓŁ
+  ctx.strokeStyle=botCol;
   ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, H-arena.frW/2); ctx.lineTo(W/2+arena.gw/2, H-arena.frW/2); ctx.stroke();
 
-  // półkola
-  const rArc = arena.gw/2 + 18;
-  ctx.save(); ctx.setLineDash([6,6]); ctx.lineWidth=3;
-  ctx.strokeStyle = top + 'aa'; ctx.beginPath(); ctx.arc(W/2, arena.frW/2, rArc, Math.PI, 2*Math.PI); ctx.stroke();
-  ctx.strokeStyle = bot + 'aa'; ctx.beginPath(); ctx.arc(W/2, H - arena.frW/2, rArc, 0, Math.PI); ctx.stroke();
+  // === Półokrąg OD SŁUPKA DO SŁUPKA (20%), ŁUKIEM DO ŚRODKA POLA ===
+  // top: łuk w dół (π..2π), bottom: łuk w górę (0..π)
+  const yTopInner = arena.frW;
+  const yBotInner = H - arena.frW;
+  const rSemi = arena.gw/2;
+  ctx.save(); ctx.lineWidth=4;
+  ctx.strokeStyle=topCol20; ctx.beginPath(); ctx.arc(W/2, yTopInner, rSemi, Math.PI, 2*Math.PI); ctx.stroke(); // w dół (do środka)
+  ctx.strokeStyle=botCol20; ctx.beginPath(); ctx.arc(W/2, yBotInner, rSemi, 0, Math.PI);         ctx.stroke(); // w górę (do środka)
   ctx.restore();
 
-  // rogi (wizual)
-  const r=CORNER_R; ctx.lineWidth=arena.frW; ctx.strokeStyle=top;
+  // === Dodatkowe półkola „jak na środku” przy bramkach (r=60), ŁUKIEM DO ŚRODKA ===
+  {
+    const yTopGoal = arena.frW;     // jeśli wolisz „w pasie bandy”: użyj arena.frW/2
+    const yBotGoal = H - arena.frW;
+    const rSame = 60;
+    ctx.save(); ctx.lineWidth=4;
+    ctx.strokeStyle=topCol20; ctx.beginPath(); ctx.arc(W/2, yTopGoal, rSame, Math.PI, 2*Math.PI); ctx.stroke(); // w dół
+    ctx.strokeStyle=botCol20; ctx.beginPath(); ctx.arc(W/2, yBotGoal, rSame, 0, Math.PI);         ctx.stroke(); // w górę
+    ctx.restore();
+  }
+
+  // Narożniki band (wizual)
+  const r=70; ctx.lineWidth=arena.frW; ctx.strokeStyle=topCol;
   ctx.beginPath(); ctx.arc(arena.frW/2 + r, arena.frW/2 + r, r, Math.PI, 1.5*Math.PI); ctx.stroke();
   ctx.beginPath(); ctx.arc(W - (arena.frW/2 + r), arena.frW/2 + r, r, 1.5*Math.PI, 2*Math.PI); ctx.stroke();
-  ctx.strokeStyle=bot;
+  ctx.strokeStyle=botCol;
   ctx.beginPath(); ctx.arc(arena.frW/2 + r, H - (arena.frW/2 + r), r, 0.5*Math.PI, Math.PI); ctx.stroke();
   ctx.beginPath(); ctx.arc(W - (arena.frW/2 + r), H - (arena.frW/2 + r), r, 0, 0.5*Math.PI); ctx.stroke();
 
-  function disk(x,y,R,col){
-    ctx.fillStyle=col;
-    ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
-    ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.stroke();
+  // === Czas / etykieta trybu (środek)
+  ctx.save();
+  ctx.font = '700 22px system-ui, Segoe UI, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  let timeLabel;
+  if (matchMode === 'goals') {
+    timeLabel = `Do ${goalsToWin > 0 ? goalsToWin : '∞'} goli`;
+  } else {
+    if (overtimeActive) timeLabel = `${t('ot')} — ${t('golden')}`;
+    else if (unlimitedTime) timeLabel = '∞';
+    else timeLabel = fmtTime(matchTime);
   }
+  ctx.fillText(timeLabel, W/2, H/2);
+  ctx.restore();
 
-  const playersArr = [p1,p2].concat(p3?[p3]:[]).concat(p4?[p4]:[]);
-  playersArr.forEach(p => {
-    disk(p.x, p.y, p.r, p.color);
-    drawFlagOnMallet(p);
-  });
+  // === Wynik (20%) — nad/pod kołem
+  ctx.save();
+  ctx.font = '900 32px system-ui, Segoe UI, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const gap = 18;
+  ctx.fillStyle = topCol20; ctx.fillText(String(score.top),    W/2, (H/2) - 60 - gap);
+  ctx.fillStyle = botCol20; ctx.fillText(String(score.bottom), W/2, (H/2) + 60 + gap);
+  ctx.restore();
 
-  // krążek gry
+  // Paletki i krążek
+  function disk(x,y,R,col){ ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.stroke(); }
+  const players = [p1,p2].concat(p3?[p3]:[]).concat(p4?[p4]:[]);
+  players.forEach(p => { disk(p.x, p.y, p.r, p.color); drawFlagOnMallet(p); });
   disk(pk.x, pk.y, pk.r, '#111');
 }
 
 /* =============================================================================
-   Pętla / HUD / PAD skróty
+   Pętla / TIMER / KONIEC
    ========================================================================== */
 const PERF={ show:false, fps:60, last:performance.now(), ema:60 };
 function perfTick(now){
@@ -1050,8 +1243,21 @@ function loop(now){
   perfTick(now);
   const dt=Math.min(0.033,(now-lastTime)/1000); lastTime=now;
 
-  // skróty pada (START/A i Ustawienia/X)
   checkGamepadStartShortcuts();
+
+  if (matchMode === 'time' && !isPaused && !unlimitedTime && !overtimeActive) {
+    matchTime -= dt;
+    if (matchTime <= 0) {
+      matchTime = 0;
+      if (score.top === score.bottom){
+        overtimeActive = true;
+        unlimitedTime = true;
+        showToast((t('ot') || 'DOGRYWKA') + ' — ' + (t('golden') || 'Złoty gol!'), 2600);
+      } else {
+        endMatch(score.top > score.bottom ? 'top' : 'bottom', 'time');
+      }
+    }
+  }
 
   if (!isPaused) physicsStep(dt);
   draw();
@@ -1059,11 +1265,34 @@ function loop(now){
 }
 
 /* =============================================================================
-   Gol / reset
+   Gol / sprawdzenie wygranej / dogrywka
    ========================================================================== */
 function onGoal(scoringSide, pkRef){
+  try { /* dźwięk gola byłby tu */ } catch(_){}
+  if (scoringSide === 'top')    score.top++;
+  if (scoringSide === 'bottom') score.bottom++;
+
+  if (overtimeActive){ endMatch(scoringSide, 'golden'); return; }
+
+  if (matchMode === 'goals' && goalsToWin > 0){
+    if (score.top >= goalsToWin)    { endMatch('top', 'goals'); return; }
+    if (score.bottom >= goalsToWin) { endMatch('bottom', 'goals'); return; }
+  }
+
   const {W,H}=getSize();
-  pkRef.x=W/2; pkRef.y=H/2; pkRef.vx=0; pkRef.vy=0;
+  pkRef.x=W/2; pkRef.y=H/2; pkRef.vx=pkRef.vy=0;
+  [p1,p2,p3,p4].filter(Boolean).forEach(p => { p.vx=0; p.vy=0; });
+
+  isPaused = true;
+  showCountdown(() => { isPaused = false; });
+}
+function endMatch(winnerSide, reason){
+  isPaused = true;
+  let msg = (t('gameOver') || 'KONIEC MECZU') + ' — ';
+  msg += (winnerSide==='top' ? 'GÓRA (Niebiescy) wygrywa' : 'DÓŁ (Czerwoni) wygrywa');
+  msg += reason==='golden' ? ' (Złoty gol)' : reason==='goals' ? ' (limit goli)' : ' (koniec czasu)';
+  showToast(msg, 3600);
+  overlay.style.display='flex';
 }
 
 /* =============================================================================
@@ -1071,9 +1300,11 @@ function onGoal(scoringSide, pkRef){
    ========================================================================== */
 function initObjects(){
   const {W,H}=getSize();
-  p1 = makePlayer(W*0.5, H-100, 35, '#ff1744', false, 'P1');
-  p2 = makePlayer(W*0.5, 100,   35, '#2979ff', true,  'P2');
-  pk = makePuck(W*0.5, H*0.5, 22);
+  recalcGoalWidth();
+  const base = computeBaseSizes();
+  p1 = makePlayer(W*0.5, H-100, base.malletRBottom, '#ff1744', false, 'P1');
+  p2 = makePlayer(W*0.5, 100,   base.malletRTop,    '#2979ff', true,  'P2');
+  pk = makePuck(W*0.5, H*0.5, base.puckR);
 }
 function resetPositions(){
   const {W,H}=getSize();
@@ -1085,7 +1316,7 @@ function resetPositions(){
 }
 
 /* =============================================================================
-   UI setup (język, tło, sprzęt, bramka, flagi, czas)
+   UI setup
    ========================================================================== */
 function setupLangUI(){
   const wrap=document.getElementById('langChips');
@@ -1101,35 +1332,34 @@ function setupBgUI(){
   PRESETS.forEach(col=>{
     const b=document.createElement('button'); b.className='chip'; b.textContent=col;
     if (tableBgColor.toLowerCase()===col.toLowerCase()) b.classList.add('active');
-    b.onclick=()=>{
-      tableBgColor=col; localStorage.setItem('tableBgColor', col);
-      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-    };
+    b.onclick=()=>{ tableBgColor=col; localStorage.setItem('tableBgColor', col);
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active'); };
     wrap.appendChild(b);
   });
   const inp=document.getElementById('inpBg'); inp.value = tableBgColor;
   inp.oninput=(e)=>{ tableBgColor=e.target.value; localStorage.setItem('tableBgColor', tableBgColor); };
 }
 function setupMalletUI(){
-  const u=(id, player)=>{
+  const u=(id, player, pid)=>{
     const wrap=document.getElementById(id);
     wrap.querySelectorAll('.chip').forEach(btn=>{
       if (player.r===parseInt(btn.dataset.r,10)) btn.classList.add('active');
       btn.onclick=()=>{
         player.r=parseInt(btn.dataset.r,10);
+        manualMalletOverride[pid]=true;
         wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
         resetPositions();
       };
     });
   };
-  u('malletP1Chips', p1); u('malletP2Chips', p2);
+  u('malletP1Chips', p1, 'p1'); u('malletP2Chips', p2, 'p2');
 }
 function setupPuckUI(){
   const wrap=document.getElementById('puckSizeChips');
   wrap.querySelectorAll('.chip').forEach(btn=>{
     const r=parseInt(btn.dataset.r,10);
     if (pk.r===r) btn.classList.add('active');
-    btn.onclick=()=>{ pk.r=r; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); };
+    btn.onclick=()=>{ pk.r=r; manualPuckOverride=true; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active'); };
   });
   const spWrap=document.getElementById('puckSpeedChips');
   const map=PUCK_SPEED_PRESETS; const currentKey=Object.keys(map).find(k=>map[k]===puckSpeedMax)||'normal';
@@ -1143,13 +1373,14 @@ function setupPuckUI(){
 }
 function setupGoalSizeUI(){
   const wrap=document.getElementById('goalSizeChips');
-  const current = arena.gw;
   wrap.querySelectorAll('.chip').forEach(btn=>{
-    const gw = parseInt(btn.dataset.gw,10);
-    if (gw===current) btn.classList.add('active');
+    const gr = parseFloat(btn.dataset.gr);
+    btn.classList.toggle('active', Math.abs(gr - goalRatio) < 1e-6);
     btn.onclick=()=>{
-      arena.gw = gw; localStorage.setItem('goalWidth', String(gw));
+      goalRatio = gr;
+      localStorage.setItem('goalRatio', String(goalRatio));
       wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+      recalcGoalWidth();
     };
   });
 }
@@ -1159,6 +1390,7 @@ function setupFlagsUI(){
     const wrap=document.getElementById(wrapId); wrap.innerHTML='';
     FLAGS.forEach(code=>{
       const b=document.createElement('button'); b.className='chip'; b.textContent=code;
+      if (player.flagCode===code) b.classList.add('active');
       b.onclick=()=>{ player.flagCode=code; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active'); };
       wrap.appendChild(b);
     });
@@ -1183,6 +1415,73 @@ function setupRoundUI(){
   inp.onchange=()=>{ const m=Math.max(0, Math.min(60, parseInt(inp.value||'0',10))); roundTimeSec=m*60; matchTime=roundTimeSec; };
   chk.onchange=()=>{ unlimitedTime=chk.checked; matchTime=unlimitedTime?0:roundTimeSec; customRow.style.display='none'; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); };
 }
+function setupGoalsToWinUI(){
+  const wrap=document.getElementById('goalsToWinChips');
+  const customRow=document.getElementById('customGoalsRow');
+  const inp=document.getElementById('inpGoals');
+  const currentValue = goalsToWin;
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    const g = btn.dataset.g==='custom' ? 'custom' : parseInt(btn.dataset.g,10);
+    btn.classList.toggle('active', (g==='custom' ? false : g===currentValue));
+    btn.onclick=()=>{
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+      if (g==='custom'){ customRow.style.display='grid'; }
+      else { goalsToWin=g; localStorage.setItem('goalsToWin', String(goalsToWin)); customRow.style.display='none'; }
+    };
+  });
+  inp.onchange=()=>{
+    const n = Math.max(1, Math.min(50, parseInt(inp.value||'5', 10)));
+    goalsToWin = n; localStorage.setItem('goalsToWin', String(goalsToWin));
+  };
+}
+
+/* Globalny preset rozmiaru — UI */
+function setupSizePresetUI(){
+  const wrap = document.getElementById('sizePresetChips');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.size===sizePreset);
+    btn.onclick=()=>{
+      sizePreset = btn.dataset.size;
+      localStorage.setItem('sizePreset', sizePreset);
+      manualMalletOverride = { p1:false, p2:false, p3:false, p4:false };
+      manualPuckOverride = false;
+      applyAdaptiveSizes(true);
+      resetPositions();
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      btn.classList.add('active');
+    };
+  });
+}
+
+/* Kolizje paletek — UI */
+function setupMalletCollisionsUI(){
+  const wrap = document.getElementById('malletCollisionsChips');
+  if (wrap){
+    const setAct=()=> wrap.querySelectorAll('.chip').forEach(b=>{
+      b.classList.toggle('active', b.dataset.coll===malletCollisionsMode);
+    });
+    wrap.querySelectorAll('.chip').forEach(btn=>{
+      btn.onclick=()=>{
+        malletCollisionsMode = btn.dataset.coll || 'pass_through';
+        localStorage.setItem('malletCollisionsMode', malletCollisionsMode);
+        setAct();
+      };
+    });
+    setAct();
+  }
+  // Suwak siły kontaktu
+  const rng = document.getElementById('rngCollStrength');
+  const lbl = document.getElementById('collStrengthVal');
+  if (rng && lbl){
+    rng.value = String(malletContactStrength);
+    lbl.textContent = malletContactStrength + '%';
+    rng.oninput = () => {
+      malletContactStrength = Math.max(0, Math.min(100, parseInt(rng.value||'0',10)));
+      lbl.textContent = malletContactStrength + '%';
+      localStorage.setItem('malletContactStrength', String(malletContactStrength));
+    };
+  }
+}
 
 /* =============================================================================
    Gracze / sterowanie (dynamiczne karty)
@@ -1190,10 +1489,11 @@ function setupRoundUI(){
 let selectedPlayers = 2;
 function createOrDestroyPlayers(n){
   const {W,H}=getSize();
-  if (!p1) p1 = makePlayer(W*0.5, H-100, 35, '#ff1744', false, 'P1');
-  if (!p2) p2 = makePlayer(W*0.5, 100,   35, '#2979ff', true,  'P2');
-  if (n>=3 && !p3) p3=makePlayer(W*0.35, H-100, 35, p1.color, false, 'P3'); else if (n<3) p3=null;
-  if (n>=4 && !p4) p4=makePlayer(W*0.65, 100,   35, p2.color, true,  'P4'); else if (n<4) p4=null;
+  if (!p1) p1 = makePlayer(W*0.5, H-100, computeBaseSizes().malletRBottom, '#ff1744', false, 'P1');
+  if (!p2) p2 = makePlayer(W*0.5, 100,   computeBaseSizes().malletRTop,    '#2979ff', true,  'P2');
+  if (n>=3 && !p3) p3=makePlayer(W*0.35, H-100, computeBaseSizes().malletRBottom, p1.color, false, 'P3'); else if (n<3) p3=null;
+  if (n>=4 && !p4) p4=makePlayer(W*0.65, 100,   computeBaseSizes().malletRTop,    p2.color, true,  'P4'); else if (n<4) p4=null;
+  applyAdaptiveSizes(false);
 }
 function renderControls(n){
   const cont = document.getElementById('controlsContainer'); cont.innerHTML='';
@@ -1230,7 +1530,7 @@ function renderControls(n){
               <option value="direct"${player.touchMode==='direct'?' selected':''}>Bezpośredni dotyk</option>
               <option value="joystick"${player.touchMode==='joystick'?' selected':''}>Joystick</option>
             </select>
-            <div class="ctrl-hint">„Bezpośredni dotyk” — malujesz palcem po swojej połowie; pierwszy dotyk = cios. „Joystick” — wirtualny pad + przycisk.</div>
+            <div class="ctrl-hint">„Bezpośredni dotyk” — palcem po swojej połowie; pierwszy dotyk = cios. „Joystick” — wirtualny pad + przycisk.</div>
           </div>
 
           <div class="ctrl-hint">${hints[idx]||''}</div>
@@ -1283,7 +1583,7 @@ function setupPlayersAndControlsUI(){
 }
 
 /* =============================================================================
-   Touch layer widoczność (joystick tylko gdy wybrany)
+   Touch layer widoczność
    ========================================================================== */
 function refreshTouchLayerVisibility(){
   const anyJoystick = [p1,p2,p3,p4].filter(Boolean).some(p=> p.input==='touch' && p.touchMode==='joystick');
@@ -1299,7 +1599,7 @@ function refreshTouchLayerVisibility(){
 }
 
 /* =============================================================================
-   Lista padów (do selectów w kartach sterowania)
+   Lista padów
    ========================================================================== */
 function refreshPadLists(){
   const gps=navigator.getGamepads?navigator.getGamepads():[];
@@ -1314,7 +1614,7 @@ function refreshPadLists(){
 }
 
 /* =============================================================================
-   START / Countdown / Przyciski narożne
+   START / Countdown / Przyciski narożne / FS
    ========================================================================== */
 function showCountdown(cb){
   let c=3; countdownEl.style.display='flex'; countdownEl.innerText=c;
@@ -1324,56 +1624,98 @@ function showCountdown(cb){
   }, 700);
 }
 async function onStart(){
-  // odblokuj audio na pierwszy gest
   try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){}
   overlay.style.display='none';
+
+  try {
+    const shouldFs = (localStorage.getItem('fs') ?? '0') === '1';
+    if (shouldFs && !document.fullscreenElement) {
+      await document.documentElement.requestFullscreen?.();
+      cornerShow(false);
+    }
+  } catch(e){}
+
+  // Nowy mecz
+  score.top=0; score.bottom=0;
+  overtimeActive=false;
+  matchTime = (matchMode==='time') ? (unlimitedTime ? 0 : roundTimeSec) : 0;
+
+  resetPositions();
   showCountdown(()=>{ isPaused=false; });
 }
-
-/* Przycisk START w narożniku i w overlay */
 document.getElementById('btnStartCorner').onclick = ()=>{ onStart(); };
 document.getElementById('btnStartOverlay').onclick = ()=>{ onStart(); };
-
-/* Pozostałe przyciski narożne */
 document.getElementById('btnMenu').onclick = ()=>{ overlay.style.display='flex'; isPaused=true; cornerShow(true); };
 document.getElementById('btnHud').onclick  = ()=>{ PERF.show = !PERF.show; };
 document.getElementById('btnHelp').onclick = ()=>{ showToast(t('kbTip')+'  |  '+t('gamepadTip')+'  |  '+t('httpsTip'), 3200); };
 
 /* =============================================================================
-   Widoczność UI: fullscreen → ukryj, gest 2 palców → pokaż/ukryj
+   Widoczność UI / fullscreen / gest 2 palców
    ========================================================================== */
 function cornerShow(show){
   if (show) cornerUI.classList.remove('hiddenUI');
   else cornerUI.classList.add('hiddenUI');
 }
-
-/* Fullscreen: ukryj narożne przyciski dla lepszej widoczności */
 document.addEventListener('fullscreenchange', ()=>{
-  if (document.fullscreenElement){
-    cornerShow(false);
-  } else {
-    cornerShow(true);
-  }
+  if (document.fullscreenElement){ cornerShow(false); } else { cornerShow(true); }
 });
-
-/* Gest 2 palców — toggle narożnego UI */
-let lastTwoFingerToggleAt = 0;
+let lastTwoFingerToggleAt = 0; let twoFingerTimer = null;
+function anyJoystickOn(){
+  return [p1,p2,p3,p4].filter(Boolean).some(p => p.input==='touch' && p.touchMode==='joystick');
+}
 function onTouchStartToggle(e){
-  if ((e.touches?.length || 0) >= 2){
-    const now = performance.now();
-    if (now - lastTwoFingerToggleAt > 400){ // anty-drganie
-      lastTwoFingerToggleAt = now;
-      const hidden = cornerUI.classList.contains('hiddenUI');
-      cornerShow(hidden); // pokaż jeśli ukryte, ukryj jeśli pokazane
-    }
+  const touches = e.touches?.length || 0;
+  if (touches >= 2) {
+    if (anyJoystickOn()) return;
+    clearTimeout(twoFingerTimer);
+    twoFingerTimer = setTimeout(() => {
+      const now = performance.now();
+      if (now - lastTwoFingerToggleAt > 400){
+        lastTwoFingerToggleAt = now;
+        const hidden = cornerUI.classList.contains('hiddenUI');
+        cornerShow(hidden);
+      }
+    }, 220);
   }
 }
 document.addEventListener('touchstart', onTouchStartToggle, {passive:true});
 
-/* Szybki start ze skrótów (klawiatura/pad) */
-function tryStartFromShortcut(src){
-  if (overlay.style.display!=='none') return; // jeśli otwarte ustawienia, nie startuj
-  onStart();
+/* Szybki start skrótem */
+function tryStartFromShortcut(){ if (overlay.style.display!=='none') return; onStart(); }
+
+/* =============================================================================
+   TRYB GRY — UI
+   ========================================================================== */
+function updateModeUI(){
+  const timeCol = document.getElementById('timeSettingsCol');
+  const goalsCol= document.getElementById('goalsSettingsCol');
+
+  if (matchMode === 'time'){
+    timeCol.style.opacity = '1.0';
+    timeCol.style.pointerEvents = 'auto';
+    goalsCol.style.opacity = '0.35';
+    goalsCol.style.pointerEvents = 'none';
+  } else {
+    timeCol.style.opacity = '0.35';
+    timeCol.style.pointerEvents = 'none';
+    goalsCol.style.opacity = '1.0';
+    goalsCol.style.pointerEvents = 'auto';
+  }
+
+  localStorage.setItem('matchMode', matchMode);
+}
+function setupModeUI(){
+  const wrap=document.getElementById('modeChips');
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.mode===matchMode);
+    btn.onclick=()=>{
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      btn.classList.add('active');
+      matchMode = btn.dataset.mode;
+      updateModeUI();
+    };
+  });
+  updateModeUI();
 }
 
 /* =============================================================================
@@ -1383,6 +1725,7 @@ window.addEventListener('load', ()=>{
   try{
     applyViewportHeightVar();
     fit();
+    recalcGoalWidth();
 
     initObjects();
     resetPositions();
@@ -1395,9 +1738,11 @@ window.addEventListener('load', ()=>{
     setupGoalSizeUI();
     setupFlagsUI();
     setupRoundUI();
-
-    // Multiball hook
-    document.getElementById('selMbLimit').onchange=()=>{ /* TODO */ };
+    setupGoalsToWinUI();
+    setupSizePresetUI();
+    setupModeUI();
+    setupMalletCollisionsUI();
+    applyAdaptiveSizes(false);
 
     // Wibracje
     const chkVib=document.getElementById('chkVib');
@@ -1410,27 +1755,21 @@ window.addEventListener('load', ()=>{
       localStorage.setItem('vibStrength', String(vibStrength)); };
     chkVib.onchange=applyV; rngVib.oninput=applyV;
 
-    // Dźwięk: ON/OFF + głośność
+    // Dźwięk
     const chkAudio = document.getElementById('chkAudio');
     const rngAudio = document.getElementById('rngAudio');
     const audioVal = document.getElementById('audioVal');
     chkAudio.checked = audioEnabled;
     rngAudio.value   = String(Math.round(audioVolume*100));
     audioVal.textContent = Math.round(audioVolume*100) + '%';
-
-    chkAudio.onchange = ()=>{
-      audioEnabled = chkAudio.checked;
-      localStorage.setItem('audioEnabled', audioEnabled ? '1' : '0');
-      if (audioEnabled){ try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){} }
-    };
-    rngAudio.oninput = ()=>{
-      audioVolume = Math.max(0, Math.min(1, parseInt(rngAudio.value||'0',10)/100));
+    chkAudio.onchange = ()=>{ audioEnabled = chkAudio.checked; localStorage.setItem('audioEnabled', audioEnabled ? '1' : '0');
+      if (audioEnabled){ try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){} } };
+    rngAudio.oninput = ()=>{ audioVolume = Math.max(0, Math.min(1, parseInt(rngAudio.value||'0',10)/100));
       audioVal.textContent = Math.round(audioVolume*100) + '%';
       localStorage.setItem('audioVolume', String(audioVolume));
-      try { ensureAudio(); if (masterGain) masterGain.gain.value = audioVolume; } catch(_){}
-    };
+      try { ensureAudio(); if (masterGain) masterGain.gain.value = audioVolume; } catch(_){ } };
 
-    // Pełny ekran preferencja
+    // FS
     const chkFs=document.getElementById('chkFs');
     let fullscreenPref = (localStorage.getItem('fs') ?? '0') === '1';
     chkFs.checked=fullscreenPref;
@@ -1443,15 +1782,22 @@ window.addEventListener('load', ()=>{
       btn.onclick=()=>{ malletBounceMode=btn.dataset.mode; localStorage.setItem('malletBounceMode', malletBounceMode); setAct(); };
     });
     setAct();
-    const rng=document.getElementById('rngFric'); const lbl=document.getElementById('fricVal');
-    rng.value = String(Math.round(TANGENTIAL_DAMPING*1000)); lbl.textContent=TANGENTIAL_DAMPING.toFixed(3);
-    rng.oninput=()=>{ const v=clamp(parseInt(rng.value,10)||0, 0, 50); TANGENTIAL_DAMPING=v/1000; localStorage.setItem('tangentialDamping', String(TANGENTIAL_DAMPING)); lbl.textContent=TANGENTIAL_DAMPING.toFixed(3); };
+    const rngF=document.getElementById('rngFric'); const lblF=document.getElementById('fricVal');
+    rngF.value = String(Math.round(TANGENTIAL_DAMPING*1000)); lblF.textContent=TANGENTIAL_DAMPING.toFixed(3);
+    rngF.oninput=()=>{ const v=clamp(parseInt(rngF.value,10)||0, 0, 50); TANGENTIAL_DAMPING=v/1000; localStorage.setItem('tangentialDamping', String(TANGENTIAL_DAMPING)); lblF.textContent=TANGENTIAL_DAMPING.toFixed(3); };
 
     enableDirectTouchControls();
     refreshTouchLayerVisibility();
 
-    startGamepadPolling();
+    // Resize hooks
+    window.addEventListener('resize', onViewportMaybeChanged);
+    window.addEventListener('orientationchange', () => setTimeout(()=>{ onViewportMaybeChanged(); resetPositions(); }, 120));
+    if ('visualViewport' in window){
+      window.visualViewport.addEventListener('resize', onViewportMaybeChanged);
+      window.visualViewport.addEventListener('scroll', onViewportMaybeChanged);
+    }
 
+    startGamepadPolling();
     requestAnimationFrame(loop);
   }catch(e){
     console.error('Init error:', e);
@@ -1459,8 +1805,9 @@ window.addEventListener('load', ()=>{
   }
 });
 
-/* Placeholder dla Safari/HTTPS wymagań */
+/* Safari placeholder */
 function touchGamepadAPI(){}
+function clearManualOverrides(){ manualMalletOverride = { p1:false, p2:false, p3:false, p4:false }; manualPuckOverride = false; }
 </script>
 </body>
 </html>
