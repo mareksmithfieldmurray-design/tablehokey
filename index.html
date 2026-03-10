@@ -1146,15 +1146,28 @@ function draw(){
   ctx.strokeStyle = topCol20; ctx.beginPath(); ctx.moveTo(0, H/2);   ctx.lineTo(W/2, H/2); ctx.stroke();
   ctx.strokeStyle = botCol20; ctx.beginPath(); ctx.moveTo(W/2, H/2); ctx.lineTo(W,   H/2); ctx.stroke();
 
-  // Delikatny kontur koła środkowego
-  const midCircleStroke='rgba(0,0,0,0.08)';
-  ctx.strokeStyle = midCircleStroke; ctx.beginPath(); ctx.arc(W/2,H/2,60,0,Math.PI*2); ctx.stroke();
 
-  // === ŚRODKOWE półkola (20%) — góra niebieski, dół czerwony
-  ctx.save(); ctx.lineWidth=4;
-  ctx.strokeStyle = topCol20; ctx.beginPath(); ctx.arc(W/2, H/2, 60, Math.PI, 2*Math.PI); ctx.stroke(); // w dół
-  ctx.strokeStyle = botCol20; ctx.beginPath(); ctx.arc(W/2, H/2, 60, 0, Math.PI);         ctx.stroke(); // w górę
-  ctx.restore();
+// === ŚRODKOWE półkola (20%) — promień = jak bramka (gw/2) ===
+// Dzięki temu półkola w centrum skaluje się razem z rozciąganiem bramek.
+ctx.save();
+ctx.lineWidth = 4;
+
+// promień środkowych półkoli „przywiązany” do bramki
+const rCenter = Math.max(4, arena.gw / 2);
+
+// TOP (niebieski): łuk jak wcześniej (w dół)
+ctx.strokeStyle = topCol20;
+ctx.beginPath();
+ctx.arc(W/2, H/2, rCenter, Math.PI, 2 * Math.PI);
+ctx.stroke();
+
+// BOTTOM (czerwony): łuk jak wcześniej (w górę)
+ctx.strokeStyle = botCol20;
+ctx.beginPath();
+ctx.arc(W/2, H/2, rCenter, 0, Math.PI);
+ctx.stroke();
+
+ctx.restore();
 
   // === Bandy i okna bramek (grube)
   ctx.lineWidth=arena.frW;
@@ -1177,16 +1190,38 @@ function draw(){
   ctx.strokeStyle=botCol20; ctx.beginPath(); ctx.arc(W/2, yBotInner, rSemi, 0, Math.PI);         ctx.stroke(); // w górę (do środka)
   ctx.restore();
 
-  // === Dodatkowe półkola „jak na środku” przy bramkach (r=60), ŁUKIEM DO ŚRODKA ===
-  {
-    const yTopGoal = arena.frW;     // jeśli wolisz „w pasie bandy”: użyj arena.frW/2
-    const yBotGoal = H - arena.frW;
-    const rSame = 60;
-    ctx.save(); ctx.lineWidth=4;
-    ctx.strokeStyle=topCol20; ctx.beginPath(); ctx.arc(W/2, yTopGoal, rSame, Math.PI, 2*Math.PI); ctx.stroke(); // w dół
-    ctx.strokeStyle=botCol20; ctx.beginPath(); ctx.arc(W/2, yBotGoal, rSame, 0, Math.PI);         ctx.stroke(); // w górę
-    ctx.restore();
-  }
+ // === Dodatkowe półkola przy bramkach — PRZYSPAWANE DO SŁUPKÓW (skalują się z bramką) ===
+// Promień = arena.gw / 2  → końcówki łuku zawsze w słupkach (W/2 ± gw/2).
+{
+  // Położenie w pionie:
+  // • arena.frW     → oś łuku na wewnętrznej krawędzi bandy (jak wcześniej)
+  // • arena.frW/2   → oś łuku na środku bandy (opcjonalnie; zmień jeśli wolisz)
+  const yTopGoal = arena.frW;
+  const yBotGoal = H - arena.frW;
+
+  // Opcjonalny „margines od słupków” (zostaw 0, jeśli ma idealnie dochodzić do słupków)
+  const margin = 0;
+
+  // Promień „przyspawany” do bramki:
+  const rGoalArc = Math.max(4, arena.gw / 2 - margin);
+
+  ctx.save();
+  ctx.lineWidth = 4;
+
+  // GÓRA (TOP / niebieski): łuk "na zewnątrz" (w górę)
+  ctx.strokeStyle = topCol20;
+  ctx.beginPath();
+  ctx.arc(W/2, yTopGoal, rGoalArc, 0, Math.PI);
+  ctx.stroke();
+
+  // DÓŁ (BOTTOM / czerwony): łuk "na zewnątrz" (w dół)
+  ctx.strokeStyle = botCol20;
+  ctx.beginPath();
+  ctx.arc(W/2, yBotGoal, rGoalArc, Math.PI, 2 * Math.PI);
+  ctx.stroke();
+
+  ctx.restore();
+}
 
   // Narożniki band (wizual)
   const r=70; ctx.lineWidth=arena.frW; ctx.strokeStyle=topCol;
