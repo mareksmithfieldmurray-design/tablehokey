@@ -5,6 +5,7 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
   <title>Air Hockey — półokręgi 20%, linia dzielona, tryby gry i kolizje paletek</title>
+
   <style>
     :root { --bg:#0b0b0b; --panel:#111; --accent:#00e5ff; --border:#222; --app-h: 100svh; }
     html, body { height:100%; }
@@ -45,8 +46,10 @@
     .btn-quick:active { transform:translateY(1px); }
     .btn-start { background:#00e676; color:#04160a; border-color:#146b3b; }
 
+    /* Schowanie całego UI (np. w fullscreen) */
     .hiddenUI { display:none !important; }
 
+    /* Overlay ustawień */
     .overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
       background:rgba(0,0,0,.9); z-index:10; }
     .panel {
@@ -166,7 +169,7 @@
       <h1>USTAWIENIA MECZU</h1>
 
       <!-- Gracze + Sterowanie -->
-      <h2>Gracze &amp; Sterowanie</h2>
+      <h2>Gracze & Sterowanie</h2>
       <div class="grid grid-2">
         <div class="row">
           <div class="hint">Liczba graczy</div>
@@ -304,7 +307,7 @@
           <div class="chipbar" id="roundChips">
             <button class="chip" data-sec="60">1:00</button>
             <button class="chip" data-sec="120">2:00</button>
-            <button class="chip active" data-sec="180">3:00</button>
+            <button class="chip" data-sec="180">3:00</button>
             <button class="chip" data-sec="300">5:00</button>
             <button class="chip" data-sec="custom">Własny</button>
           </div>
@@ -380,11 +383,42 @@
           </div>
           <div class="ctrl-hint">Reguluje intensywność separacji i sprężystość zderzeń (dotyczy trybów „Lekki kontakt” i „Mocne odbicie”).</div>
 
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <div class="hint">Tarcie styczne (0.000–0.050):</div>
-            <input id="rngFric" type="range" min="0" max="50" step="1" value="10" />
-            <div class="hint mono" id="fricVal">0.010</div>
-          </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div class="hint">Tarcie styczne (0.000–0.050):</div>
+              <input id="rngFric" type="range" min="0" max="50" step="1" value="10" />
+              <div class="hint mono" id="fricVal">0.010</div>
+            </div>
+        </div>
+      </div>
+
+      <!-- ======== WYNIK (pozycja / skalowanie) ======== -->
+      <h2>Wynik (pozycja / skalowanie)</h2>
+      <div class="row">
+        <label class="hint">
+          <input id="chkScoreFollowRadius" type="checkbox" />
+          Odstęp względem promienia środka
+        </label>
+        <label class="hint">
+          <input id="chkScoreAutoIO" type="checkbox" />
+          Auto: w środku / na zewnątrz (wg rozmiaru pola)
+        </label>
+
+        <div class="ctrl-row">
+          <div class="hint">Odstęp INSIDE (px)</div>
+          <input id="rngScoreGapInside" type="range" min="4" max="40" step="1" />
+          <div class="hint mono" id="valGapInside">—</div>
+        </div>
+
+        <div class="ctrl-row">
+          <div class="hint">Odstęp OUTSIDE (px)</div>
+          <input id="rngScoreGapOutside" type="range" min="4" max="40" step="1" />
+          <div class="hint mono" id="valGapOutside">—</div>
+        </div>
+
+        <div class="ctrl-row">
+          <div class="hint">Rozmiar czcionki wyniku (px)</div>
+          <input id="rngScoreFontPx" type="range" min="20" max="60" step="1" />
+          <div class="hint mono" id="valScoreFontPx">—</div>
         </div>
       </div>
 
@@ -399,144 +433,7 @@
 
   <div id="toast" class="errorToast" role="status" aria-live="assertive"></div>
 
-  <!-- ================================================================
-       AUDIO MODULE (ESM wbudowany w stronę)
-       ================================================================ -->
-  <script type="module" id="audio-module">
-    /* ============================================================================
-       audio.js — lekki moduł dźwięku (ESM)
-       ============================================================================ */
-    let AC = null;
-    let masterGain = null;
-    let _enabled = (localStorage.getItem('audioEnabled') ?? '1') !== '0';
-    let _volume = Math.max(0, Math.min(1, parseFloat(localStorage.getItem('audioVolume') || '0.70')));
-    let _startedAutoResume = false;
-
-    const RATE_LIMIT_MS = { mallet:25, wall:50, goal:120, countdown:350, ui:80 };
-    const _lastAt = Object.create(null);
-
-    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-    function clamp01(v){ return clamp(v,0,1); }
-
-    async function ensureContext(){
-      if (!_enabled) return;
-      if (!AC){
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return;
-        AC = new Ctx();
-      }
-      if (!masterGain){
-        masterGain = AC.createGain();
-        masterGain.gain.value = _volume;
-        masterGain.connect(AC.destination);
-      }
-      try { if (AC.state === 'suspended') await AC.resume(); } catch(_) {}
-    }
-
-    function attachAutoResumeOnUserGesture(){
-      if (_startedAutoResume) return;
-      _startedAutoResume = true;
-      const tryResume = async () => {
-        try {
-          await ensureContext();
-          window.removeEventListener('pointerdown', tryResume);
-          window.removeEventListener('keydown', tryResume, true);
-          window.removeEventListener('click', tryResume, true);
-        } catch(_) {}
-      };
-      window.addEventListener('pointerdown', tryResume, { passive:true });
-      window.addEventListener('keydown', tryResume, true);
-      window.addEventListener('click', tryResume, true);
-    }
-
-    function setEnabled(v){
-      _enabled = !!v;
-      localStorage.setItem('audioEnabled', _enabled ? '1' : '0');
-      if (!_enabled && masterGain){ masterGain.gain.value = 0.0; }
-      else if (_enabled){
-        ensureContext();
-        if (masterGain) masterGain.gain.value = _volume;
-      }
-    }
-
-    function setVolume(v){
-      _volume = clamp01(v);
-      localStorage.setItem('audioVolume', String(_volume));
-      if (masterGain) masterGain.gain.value = _volume;
-    }
-
-    function scheduleBeep(t0, { f0, f1 = 0, dur = 0.12, peak = 0.12, type = 'triangle' }){
-      if (!AC || !masterGain) return;
-      const osc = AC.createOscillator();
-      const g = AC.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(f0, t0);
-      if (f1 && f1 > 0){
-        osc.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t0 + dur * 0.7);
-      }
-      const minGain = 0.00001;
-      g.gain.setValueAtTime(minGain, t0);
-      g.gain.exponentialRampToValueAtTime(Math.max(0.01, peak), t0 + 0.005);
-      g.gain.exponentialRampToValueAtTime(minGain, t0 + dur);
-
-      osc.connect(g).connect(masterGain);
-      osc.start(t0);
-      osc.stop(t0 + dur + 0.02);
-    }
-
-    function rateLimited(type){
-      const now = performance.now();
-      const gap = RATE_LIMIT_MS[type] ?? 60;
-      const last = _lastAt[type] || 0;
-      if (now - last < gap) return true;
-      _lastAt[type] = now;
-      return false;
-    }
-
-    function playHit(type, intensity = 0.2){
-      if (!_enabled) return;
-      if (!AC || !masterGain) return;
-      if (rateLimited(type)) return;
-
-      const t0 = AC.currentTime + 0.0008;
-      const t = clamp(intensity, 0.05, 1.0);
-
-      if (type === 'mallet'){
-        const f0 = 220 + t * 520;
-        const f1 = f0 * 0.62;
-        scheduleBeep(t0, { f0, f1, dur: 0.12, peak: 0.10 + 0.12 * t, type: 'triangle' });
-      } else if (type === 'wall'){
-        const f0 = 180 + t * 420;
-        const f1 = f0 * 0.75;
-        scheduleBeep(t0, { f0, f1, dur: 0.10, peak: 0.08 + 0.10 * t, type: 'square' });
-      } else if (type === 'goal'){
-        scheduleBeep(t0,       { f0: 640, f1: 480, dur: 0.12, peak: 0.16, type: 'sawtooth' });
-        scheduleBeep(t0 + 0.1, { f0: 540, f1: 380, dur: 0.14, peak: 0.14, type: 'triangle' });
-      } else if (type === 'countdown'){
-        const f0 = 520 + t * 120, f1 = 360;
-        scheduleBeep(t0, { f0, f1, dur: 0.11, peak: 0.11 + 0.08 * t, type: 'square' });
-      } else {
-        const f0 = 520, f1 = 460;
-        scheduleBeep(t0, { f0, f1, dur: 0.08, peak: 0.10 + 0.06 * t, type: 'triangle' });
-      }
-    }
-
-    // Eksport do reszty skryptu
-    const AudioAPI = { ensureContext, setEnabled, setVolume, playHit, attachAutoResumeOnUserGesture };
-    // udostępniamy globalnie (żeby drugi <script> mógł używać bez importu)
-    window.__AudioAPI = AudioAPI;
-
-    // Auto-init
-    (async () => {
-      attachAutoResumeOnUserGesture();
-      await ensureContext();
-    })();
-  </script>
-
-  <!-- ================================================================
-       GRA — z dołożonymi wywołaniami dźwięku
-       ================================================================ -->
-  <script>
+<script>
 /* =============================================================================
    iOS viewport / bezpieczna wysokość
    ========================================================================== */
@@ -555,7 +452,7 @@ function applyViewportHeightVar(){
 }
 document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
 document.addEventListener('gesturechange', (e)=>e.preventDefault(), {passive:false});
-document.addEventListener('gestureend', (e)=>e.preventDefault(), {passive:false});
+document.addEventListener('gestureend',   (e)=>e.preventDefault(), {passive:false});
 
 /* =============================================================================
    Toast / błędy
@@ -716,6 +613,15 @@ function applyAdaptiveSizes(presetChanged=false){
 }
 
 /* =============================================================================
+   Ustawienia WYNIK (pozycja / skalowanie) — pamięć
+   ========================================================================== */
+let scoreOffsetDynamic       = (localStorage.getItem('scoreOffsetDynamic')       ?? '1') !== '0';  // 1 = bazuj na rCenter (gw/2)
+let scoreAutoInsideOutside   = (localStorage.getItem('scoreAutoInsideOutside')   ?? '1') !== '0';  // 1 = auto inside/outside wg miejsca
+let scoreGapInside           = parseInt(localStorage.getItem('scoreGapInside')   ?? '14', 10);
+let scoreGapOutside          = parseInt(localStorage.getItem('scoreGapOutside')  ?? '18', 10);
+let scoreFontPx              = parseInt(localStorage.getItem('scoreFontPx')      ?? '32', 10);
+
+/* =============================================================================
    Obiekty gry
    ========================================================================== */
 function makePlayer(x,y,r,color,sideTop,name){
@@ -735,15 +641,55 @@ let p1,p2,p3=null,p4=null, pk;
 let isPaused = true;
 
 /* =============================================================================
-   Audio API (z modułu)
+   Audio
    ========================================================================== */
-const { playHit, setEnabled: setAudioEnabled, setVolume: setAudioVolume, ensureContext: ensureAudio } = window.__AudioAPI || {};
+let audioEnabled = (localStorage.getItem('audioEnabled') ?? '1') !== '0';
+let audioVolume  = Math.max(0, Math.min(1, parseFloat(localStorage.getItem('audioVolume') || '0.70')));
+let AC = null, masterGain = null;
+function ensureAudio(){
+  if (AC) { if (!masterGain) { masterGain = AC.createGain(); masterGain.gain.value = audioVolume; masterGain.connect(AC.destination); } return; }
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return;
+  AC = new Ctx();
+  masterGain = AC.createGain();
+  masterGain.gain.value = audioVolume;
+  masterGain.connect(AC.destination);
+}
+function scheduleBeep(t0, freq0, freq1, dur, peak, type='triangle'){
+  if (!AC || !masterGain) return;
+  const osc = AC.createOscillator();
+  const g   = AC.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq0, t0);
+  if (freq1 && freq1>0) osc.frequency.exponentialRampToValueAtTime(freq1, t0 + dur*0.7);
+  g.gain.setValueAtTime(0.00001, t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.01, peak), t0 + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.00001, t0 + dur);
+  osc.connect(g).connect(masterGain);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.02);
+}
+const lastSoundAt = { mallet:0, wall:0, goal:0 };
+function playHit(type, intensity=0.2){
+  if (!audioEnabled || !AC || !masterGain) return;
+  const nowMs = performance.now();
+  const limit = (type==='goal') ? 120 : (type==='wall'? 50 : 25);
+  if (nowMs - (lastSoundAt[type]||0) < limit) return;
+  lastSoundAt[type] = nowMs;
 
-/* =============================================================================
-   Haptics (hook – opcjonalnie)
-   ========================================================================== */
-function haptic(/*type, strength01*/){
-  // Placeholder: jeśli chcesz, wepnij tu navigator.vibrate(...) zależnie od preferencji
+  const t  = Math.max(0.05, Math.min(1.0, intensity));
+  const tn = AC.currentTime;
+
+  if (type==='mallet'){
+    const f0 = 220 + t*520, f1 = f0 * 0.62;
+    scheduleBeep(tn, f0, f1, 0.12, 0.10 + 0.12*t, 'triangle');
+  } else if (type==='wall'){
+    const f0 = 180 + t*420, f1 = f0 * 0.75;
+    scheduleBeep(tn, f0, f1, 0.10, 0.08 + 0.10*t, 'square');
+  } else if (type==='goal'){
+    scheduleBeep(tn,      640, 480, 0.12, 0.16, 'sawtooth');
+    scheduleBeep(tn+0.10, 540, 380, 0.14, 0.14, 'triangle');
+  }
 }
 
 /* =============================================================================
@@ -894,8 +840,8 @@ function enableDirectTouchControls(){
     if (![p1,p2,p3,p4].filter(Boolean).some(p=>p.input==='touch' && p.touchMode==='direct')) return;
     onPointerMoveDirect(e);
   }, {passive:true});
-  canvas.addEventListener('pointerup', (e)=> onPointerUpDirect(e), {passive:true});
-  canvas.addEventListener('pointercancel', (e)=> onPointerUpDirect(e), {passive:true});
+  canvas.addEventListener('pointerup',   (e)=> onPointerUpDirect(e),   {passive:true});
+  canvas.addEventListener('pointercancel',(e)=> onPointerUpDirect(e),  {passive:true});
 }
 
 /* =============================================================================
@@ -941,15 +887,6 @@ function resolveMalletPuck(p, pk){
       pk.y = p.y + ny * (min + 0.5);
       pk.x += tx * 1.2 * rndSign();
       pk.y += ty * 1.2 * rndSign();
-
-      /* ===== DŹWIĘK + (opcjonalnie) HAPTICS: delikatny kontakt ===== */
-      try {
-        const relV = Math.hypot(pk.vx - p.vx, pk.vy - p.vy);
-        const intens = Math.max(0.06, Math.min(1, relV * 2.0));
-        playHit && playHit('mallet', intens);
-        // haptic('hit', intens);
-      } catch(_) {}
-
     } else {
       let vrel_n = (pk.vx - p.vx)*nx + (pk.vy - p.vy)*ny;
       let vrel_t = (pk.vx - p.vx)*tx + (pk.vy - p.vy)*ty;
@@ -965,14 +902,6 @@ function resolveMalletPuck(p, pk){
 
       const pen = (min - dist) + 0.6;
       pk.x += nx*pen; pk.y += ny*pen;
-
-      /* ===== DŹWIĘK + (opcjonalnie) HAPTICS: mocniejsze uderzenie ===== */
-      try {
-        const relV = Math.hypot(pk.vx - p.vx, pk.vy - p.vy);
-        const intens = Math.max(0.08, Math.min(1, relV * 2.5 + (p.isHitting ? 0.3 : 0)));
-        playHit && playHit('mallet', intens);
-        // haptic('hit', intens);
-      } catch(_) {}
     }
   }
 }
@@ -984,17 +913,18 @@ let malletCollisionsMode = localStorage.getItem('malletCollisionsMode') || 'pass
 let malletContactStrength = Math.max(0, Math.min(100, parseInt(localStorage.getItem('malletContactStrength') || '40', 10)));
 
 function getContactParams(){
+  // Skala 0..1 → rozszerzona 0.5..1.5 dla widocznego efektu
   const s01 = clamp(malletContactStrength, 0, 100)/100;
   const scale = 0.5 + s01;              // 0.5 .. 1.5
-  const baseE = (malletCollisionsMode==='strong_bounce') ? 0.55 : 0.25;
-  const e = clamp(baseE * scale, 0.05, 0.95);
-  const sepK = 0.6 * scale;
-  const fricT = 0.06 * scale;
+  const baseE = (malletCollisionsMode==='strong_bounce') ? 0.55 : 0.25; // bazowa sprężystość
+  const e = clamp(baseE * scale, 0.05, 0.95);       // końcowy współczynnik odbicia
+  const sepK = 0.6 * scale;                         // intensywność separacji pozycji
+  const fricT = 0.06 * scale;                       // lekka „tangencja” podczas zderzeń (opcjonalnie)
   return { e, sepK, fricT };
 }
 
 function resolveMalletPair(a, b, W, H){
-  if (malletCollisionsMode === 'pass_through') return;
+  if (malletCollisionsMode === 'pass_through') return; // brak zderzeń
 
   const dx = b.x - a.x, dy = b.y - a.y;
   let dist = Math.hypot(dx, dy) || 1e-6;
@@ -1004,27 +934,31 @@ function resolveMalletPair(a, b, W, H){
   let nx = dx / dist, ny = dy / dist;
   const { e, sepK, fricT } = getContactParams();
 
+  // ===== Separacja pozycji (delikatnie, zależnie od siły) =====
   const rawOverlap = (min - dist);
-  const sep = (rawOverlap + 0.5) * sepK;
+  const sep = (rawOverlap + 0.5) * sepK;  // +0.5 dla stabilności
   const half = sep / 2;
 
   a.x -= nx * half; a.y -= ny * half;
   b.x += nx * half; b.y += ny * half;
 
+  // Granice połowy stołu
   const mid = H/2;
   a.x = clamp(a.x, arena.frW + a.r, W - arena.frW - a.r);
   b.x = clamp(b.x, arena.frW + b.r, W - arena.frW - b.r);
   a.y = clamp(a.y, a.sideTop ? (arena.frW + a.r) : (mid + a.r),
                       a.sideTop ? (mid - a.r)      : (H - arena.frW - a.r));
   b.y = clamp(b.y, b.sideTop ? (arena.frW + b.r) : (mid + b.r),
-                      b.sideTop ? (mid - b.r)      : (H - arena.frW - b.r));
+                      b.sideTop ? (mid - a.r)      : (H - arena.frW - a.r));
 
+  // ===== Impuls „sprężysty” na normalnej (równe masy) =====
   const vrel_n = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
   if (vrel_n < 0){
-    const j = -(1 + e) * vrel_n / 2;
+    const j = -(1 + e) * vrel_n / 2; // /2: rozdział na 2 ciała
     a.vx -= j * nx; a.vy -= j * ny;
     b.vx += j * nx; b.vy += j * ny;
 
+    // Delikatna składowa styczna (daje „poślizg” przy kontakcie)
     const tx = -ny, ty = nx;
     const vrel_t = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
     const jt = -vrel_t * fricT / 2;
@@ -1033,40 +967,23 @@ function resolveMalletPair(a, b, W, H){
   }
 }
 
-/* Ściany / bramki — z obsługą gola + dźwięków */
+/* Ściany / bramki — z obsługą gola */
 function wallsAndGoals(pk, W, H){
   if (pk.x < arena.frW + pk.r || pk.x > W - arena.frW - pk.r){
     const nx=(pk.x < W/2)?1:-1;
     const vN_before = pk.vx*nx;
-
     pk.vx = pk.vx - (1+WALL_E)*(pk.vx*nx)*nx;
     const out = pk.vx*nx; if (out<MIN_WALL_OUT_SPEED) pk.vx += (MIN_WALL_OUT_SPEED-out)*nx;
     pk.x = (pk.x < W/2)? (arena.frW + pk.r) : (W - arena.frW - pk.r);
-
-    /* ===== DŹWIĘK + HAPTICS: boczna banda ===== */
-    try {
-      const intens = Math.min(1, Math.abs(vN_before) * 8);
-      playHit && playHit('wall', intens);
-      // haptic('wall', intens);
-    } catch(_) {}
   }
-
   const isGoalX = Math.abs(pk.x - W/2) < arena.gw/2;
   if (!isGoalX){
     if (pk.y < arena.frW + pk.r || pk.y > H - arena.frW - pk.r){
       const ny=(pk.y < H/2)?1:-1;
       const vN_before = pk.vy*ny;
-
       pk.vy = pk.vy - (1+WALL_E)*(pk.vy*ny)*ny;
       const out = pk.vy*ny; if (out<MIN_WALL_OUT_SPEED) pk.vy += (MIN_WALL_OUT_SPEED-out)*ny;
       pk.y = (pk.y < H/2)? (arena.frW + pk.r) : (H - arena.frW - pk.r);
-
-      /* ===== DŹWIĘK + HAPTICS: górna/dolna banda ===== */
-      try {
-        const intens = Math.min(1, Math.abs(vN_before) * 8);
-        playHit && playHit('wall', intens);
-        // haptic('wall', intens);
-      } catch(_) {}
     }
   } else {
     if (pk.y < -pk.r || pk.y > H + pk.r) {
@@ -1269,12 +1186,23 @@ function draw(){
   ctx.strokeStyle = topCol20; ctx.beginPath(); ctx.moveTo(0, H/2);   ctx.lineTo(W/2, H/2); ctx.stroke();
   ctx.strokeStyle = botCol20; ctx.beginPath(); ctx.moveTo(W/2, H/2); ctx.lineTo(W,   H/2); ctx.stroke();
 
-  // === Środkowe półkola (20%) — promień skaluje się z bramką
+  // === ŚRODKOWE półkola (20%) — promień = jak bramka (gw/2)
   ctx.save();
   ctx.lineWidth = 4;
   const rCenter = Math.max(4, arena.gw / 2);
-  ctx.strokeStyle = topCol20; ctx.beginPath(); ctx.arc(W/2, H/2, rCenter, Math.PI, 2*Math.PI); ctx.stroke();
-  ctx.strokeStyle = botCol20; ctx.beginPath(); ctx.arc(W/2, H/2, rCenter, 0, Math.PI); ctx.stroke();
+
+  // TOP (niebieski): łuk w dół
+  ctx.strokeStyle = topCol20;
+  ctx.beginPath();
+  ctx.arc(W/2, H/2, rCenter, Math.PI, 2 * Math.PI);
+  ctx.stroke();
+
+  // BOTTOM (czerwony): łuk w górę
+  ctx.strokeStyle = botCol20;
+  ctx.beginPath();
+  ctx.arc(W/2, H/2, rCenter, 0, Math.PI);
+  ctx.stroke();
+
   ctx.restore();
 
   // === Bandy i okna bramek (grube)
@@ -1288,26 +1216,37 @@ function draw(){
   ctx.beginPath(); ctx.moveTo(W/2-arena.gw/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H-arena.frW/2); ctx.lineTo(arena.frW/2, H/2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(W-arena.frW/2, H/2); ctx.lineTo(W-arena.frW/2, H-arena.frW/2); ctx.lineTo(W/2+arena.gw/2, H-arena.frW/2); ctx.stroke();
 
-  // === Półokrąg od słupka do słupka (20%), łukiem do środka pola
+  // === Półokrąg OD SŁUPKA DO SŁUPKA (20%), łukiem do środka pola (bez zmian kierunku)
   const yTopInner = arena.frW;
   const yBotInner = H - arena.frW;
   const rSemi = arena.gw/2;
   ctx.save(); ctx.lineWidth=4;
-  ctx.strokeStyle=topCol20; ctx.beginPath(); ctx.arc(W/2, yTopInner, rSemi, Math.PI, 2*Math.PI); ctx.stroke();
-  ctx.strokeStyle=botCol20; ctx.beginPath(); ctx.arc(W/2, yBotInner, rSemi, 0, Math.PI);         ctx.stroke();
+  ctx.strokeStyle=topCol20; ctx.beginPath(); ctx.arc(W/2, yTopInner, rSemi, Math.PI, 2*Math.PI); ctx.stroke(); // w dół (do środka)
+  ctx.strokeStyle=botCol20; ctx.beginPath(); ctx.arc(W/2, yBotInner, rSemi, 0, Math.PI);         ctx.stroke(); // w górę (do środka)
   ctx.restore();
 
-  // === Dodatkowe półkola przy bramkach (skalują się z bramką)
+  // === Dodatkowe półkola przy bramkach — PRZYSPAWANE DO SŁUPKÓW (skalują się z bramką), NA ZEWNĄTRZ
   {
-    const yTopGoal = arena.frW;
+    const yTopGoal = arena.frW;        // oś na wewnętrznej krawędzi bandy
     const yBotGoal = H - arena.frW;
     const margin = 0;
     const rGoalArc = Math.max(4, arena.gw / 2 - margin);
 
     ctx.save();
     ctx.lineWidth = 4;
-    ctx.strokeStyle = topCol20; ctx.beginPath(); ctx.arc(W/2, yTopGoal, rGoalArc, 0, Math.PI); ctx.stroke();
-    ctx.strokeStyle = botCol20; ctx.beginPath(); ctx.arc(W/2, yBotGoal, rGoalArc, Math.PI, 2*Math.PI); ctx.stroke();
+
+    // Góra: w górę (na zewnątrz)
+    ctx.strokeStyle = topCol20;
+    ctx.beginPath();
+    ctx.arc(W/2, yTopGoal, rGoalArc, 0, Math.PI);
+    ctx.stroke();
+
+    // Dół: w dół (na zewnątrz)
+    ctx.strokeStyle = botCol20;
+    ctx.beginPath();
+    ctx.arc(W/2, yBotGoal, rGoalArc, Math.PI, 2 * Math.PI);
+    ctx.stroke();
+
     ctx.restore();
   }
 
@@ -1321,7 +1260,8 @@ function draw(){
 
   // === Czas / etykieta trybu (środek)
   ctx.save();
-  ctx.font = '700 22px system-ui, Segoe UI, sans-serif';
+  const timeFontPx = 22;
+  ctx.font = `700 ${timeFontPx}px system-ui, Segoe UI, sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(0,0,0,0.12)';
   let timeLabel;
@@ -1335,13 +1275,57 @@ function draw(){
   ctx.fillText(timeLabel, W/2, H/2);
   ctx.restore();
 
-  // === Wynik (20%) — nad/pod kołem
+  // === Wynik (20%) — auto inside/outside + suwaki + antykolizja z etykietą czasu
   ctx.save();
-  ctx.font = '900 32px system-ui, Segoe UI, sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const gap = 18;
-  ctx.fillStyle = topCol20; ctx.fillText(String(score.top),    W/2, (H/2) - 60 - gap);
-  ctx.fillStyle = botCol20; ctx.fillText(String(score.bottom), W/2, (H/2) + 60 + gap);
+
+  // 1) Font wyniku (z suwaka)
+  ctx.font = `900 ${scoreFontPx}px system-ui, Segoe UI, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // 2) Parametry i promień środka dla pozycjonowania
+  const band = arena.frW;
+  const gapInside  = scoreGapInside;
+  const gapOutside = scoreGapOutside;
+  const rCenterForScore = scoreOffsetDynamic ? Math.max(4, arena.gw / 2) : 60;
+
+  // 3) „Na zewnątrz”: wstępne Y oraz luz do band
+  const yTopOutside    = (H / 2) - (rCenterForScore + gapOutside);
+  const yBottomOutside = (H / 2) + (rCenterForScore + gapOutside);
+  const topClearOutside    = yTopOutside    - band;
+  const bottomClearOutside = (H - band)     - yBottomOutside;
+
+  // 4) Decyzja: inside vs outside
+  let placeInside = false;
+  if (scoreAutoInsideOutside) {
+    const topRoomOK    = topClearOutside    >= scoreFontPx * 0.55;
+    const bottomRoomOK = bottomClearOutside >= scoreFontPx * 0.55;
+    placeInside = !(topRoomOK && bottomRoomOK);
+  }
+
+  // 5) Pozycje przed antykolizją
+  let yTopScore    = placeInside ? (H / 2) - Math.max(4, rCenterForScore - gapInside) : yTopOutside;
+  let yBottomScore = placeInside ? (H / 2) + Math.max(4, rCenterForScore - gapInside) : yBottomOutside;
+
+  // 6) Antykolizja z etykietą czasu
+  const timeY  = H / 2;
+  const minSep = (scoreFontPx / 2) + (timeFontPx / 2) + 6; // 6 px bufora
+  if ((timeY - yTopScore) < minSep)    yTopScore    = timeY - minSep;
+  if ((yBottomScore - timeY) < minSep) yBottomScore = timeY + minSep;
+
+  // 7) Ograniczenia do band
+  const topMinY    = band + scoreFontPx * 0.55;
+  const bottomMaxY = H - band - scoreFontPx * 0.55;
+  yTopScore    = Math.max(yTopScore,    topMinY);
+  yBottomScore = Math.min(yBottomScore, bottomMaxY);
+
+  // 8) Rysowanie
+  ctx.fillStyle = topCol20;
+  ctx.fillText(String(score.top),    W / 2, yTopScore);
+
+  ctx.fillStyle = botCol20;
+  ctx.fillText(String(score.bottom), W / 2, yBottomScore);
+
   ctx.restore();
 
   // Paletki i krążek
@@ -1391,9 +1375,7 @@ function loop(now){
    Gol / sprawdzenie wygranej / dogrywka
    ========================================================================== */
 function onGoal(scoringSide, pkRef){
-  /* ===== DŹWIĘK + HAPTICS: gol ===== */
-  try { playHit && playHit('goal', 0.9); /* haptic('goal', 1.0); */ } catch(_){}
-
+  try { /* dźwięk gola byłby tu */ } catch(_){}
   if (scoringSide === 'top')    score.top++;
   if (scoringSide === 'bottom') score.bottom++;
 
@@ -1539,25 +1521,6 @@ function setupRoundUI(){
   });
   inp.onchange=()=>{ const m=Math.max(0, Math.min(60, parseInt(inp.value||'0',10))); roundTimeSec=m*60; matchTime=roundTimeSec; };
   chk.onchange=()=>{ unlimitedTime=chk.checked; matchTime=unlimitedTime?0:roundTimeSec; customRow.style.display='none'; wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); };
-}
-function setupGoalsToWinUI(){
-  const wrap=document.getElementById('goalsToWinChips');
-  const customRow=document.getElementById('customGoalsRow');
-  const inp=document.getElementById('inpGoals');
-  const currentValue = goalsToWin;
-  wrap.querySelectorAll('.chip').forEach(btn=>{
-    const g = btn.dataset.g==='custom' ? 'custom' : parseInt(btn.dataset.g,10);
-    btn.classList.toggle('active', (g==='custom' ? false : g===currentValue));
-    btn.onclick=()=>{
-      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
-      if (g==='custom'){ customRow.style.display='grid'; }
-      else { goalsToWin=g; localStorage.setItem('goalsToWin', String(goalsToWin)); customRow.style.display='none'; }
-    };
-  });
-  inp.onchange=()=>{
-    const n = Math.max(1, Math.min(50, parseInt(inp.value||'5', 10)));
-    goalsToWin = n; localStorage.setItem('goalsToWin', String(goalsToWin));
-  };
 }
 
 /* Globalny preset rozmiaru — UI */
@@ -1743,36 +1706,20 @@ function refreshPadLists(){
    ========================================================================== */
 function showCountdown(cb){
   let c=3; countdownEl.style.display='flex'; countdownEl.innerText=c;
-
-  // (opcjonalny) dźwięk countdownu co „tik”
-  try { playHit && playHit('countdown', 0.65); } catch(_) {}
-
   const tmr=setInterval(()=>{
-    c--;
-    if (c>0) {
-      countdownEl.innerText=c;
-      try { playHit && playHit('countdown', 0.65); } catch(_) {}
-    } else {
-      clearInterval(tmr); countdownEl.style.display='none'; cb&&cb();
-    }
+    c--; if (c>0) countdownEl.innerText=c;
+    else { clearInterval(tmr); countdownEl.style.display='none'; cb&&cb(); }
   }, 700);
 }
 async function onStart(){
-  try { ensureAudio && ensureAudio(); } catch(_){}
+  try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){}
   overlay.style.display='none';
 
   try {
     const shouldFs = (localStorage.getItem('fs') ?? '0') === '1';
     if (shouldFs && !document.fullscreenElement) {
-      const el = document.documentElement;
-      const reqFS = el.requestFullscreen
-                 || el.webkitRequestFullscreen
-                 || el.mozRequestFullScreen
-                 || el.msRequestFullscreen;
-      if (reqFS) {
-        await reqFS.call(el);
-        cornerShow(false);
-      }
+      await document.documentElement.requestFullscreen?.();
+      cornerShow(false);
     }
   } catch(e){}
 
@@ -1786,9 +1733,9 @@ async function onStart(){
 }
 document.getElementById('btnStartCorner').onclick = ()=>{ onStart(); };
 document.getElementById('btnStartOverlay').onclick = ()=>{ onStart(); };
-document.getElementById('btnMenu').onclick = ()=>{ overlay.style.display='flex'; isPaused=true; cornerShow(true); try{ playHit && playHit('ui', 0.5);}catch(_){ } };
-document.getElementById('btnHud').onclick  = ()=>{ PERF.show = !PERF.show; try{ playHit && playHit('ui', 0.45);}catch(_){ } };
-document.getElementById('btnHelp').onclick = ()=>{ showToast(t('kbTip')+'  |  '+t('gamepadTip')+'  |  '+t('httpsTip'), 3200); try{ playHit && playHit('ui', 0.45);}catch(_){ } };
+document.getElementById('btnMenu').onclick = ()=>{ overlay.style.display='flex'; isPaused=true; cornerShow(true); };
+document.getElementById('btnHud').onclick  = ()=>{ PERF.show = !PERF.show; };
+document.getElementById('btnHelp').onclick = ()=>{ showToast(t('kbTip')+'  |  '+t('gamepadTip')+'  |  '+t('httpsTip'), 3200); };
 
 /* =============================================================================
    Widoczność UI / fullscreen / gest 2 palców
@@ -1799,15 +1746,6 @@ function cornerShow(show){
 }
 document.addEventListener('fullscreenchange', ()=>{
   if (document.fullscreenElement){ cornerShow(false); } else { cornerShow(true); }
-});
-document.addEventListener('webkitfullscreenchange', ()=>{
-  if (document.webkitFullscreenElement){ cornerShow(false); } else { cornerShow(true); }
-});
-document.addEventListener('msfullscreenchange', ()=>{
-  if (document.msFullscreenElement){ cornerShow(false); } else { cornerShow(true); }
-});
-document.addEventListener('mozfullscreenchange', ()=>{
-  if (document.mozFullScreenElement){ cornerShow(false); } else { cornerShow(true); }
 });
 let lastTwoFingerToggleAt = 0; let twoFingerTimer = null;
 function anyJoystickOn(){
@@ -1894,7 +1832,7 @@ window.addEventListener('load', ()=>{
     setupMalletCollisionsUI();
     applyAdaptiveSizes(false);
 
-    // Wibracje — UI (placeholder, logika w haptic() do wpięcia wg preferencji)
+    // Wibracje
     const chkVib=document.getElementById('chkVib');
     const rngVib=document.getElementById('rngVib'); const vibVal=document.getElementById('vibVal');
     let vibEnabled = (localStorage.getItem('vibEnabled') ?? '1') !== '0';
@@ -1905,25 +1843,19 @@ window.addEventListener('load', ()=>{
       localStorage.setItem('vibStrength', String(vibStrength)); };
     chkVib.onchange=applyV; rngVib.oninput=applyV;
 
-    // Dźwięk — UI → AudioAPI
+    // Dźwięk
     const chkAudio = document.getElementById('chkAudio');
     const rngAudio = document.getElementById('rngAudio');
     const audioVal = document.getElementById('audioVal');
-    chkAudio.checked = (localStorage.getItem('audioEnabled') ?? '1') !== '0';
-    rngAudio.value   = String(Math.round(parseFloat(localStorage.getItem('audioVolume') || '0.70') * 100));
-    audioVal.textContent = rngAudio.value + '%';
-
-    chkAudio.onchange = ()=>{
-      const on = chkAudio.checked;
-      localStorage.setItem('audioEnabled', on ? '1' : '0');
-      try { setAudioEnabled && setAudioEnabled(on); if (on) ensureAudio && ensureAudio(); } catch(_){}
-    };
-    rngAudio.oninput = ()=>{
-      const vol = Math.max(0, Math.min(1, parseInt(rngAudio.value||'0',10)/100));
-      audioVal.textContent = Math.round(vol*100) + '%';
-      localStorage.setItem('audioVolume', String(vol));
-      try { setAudioVolume && setAudioVolume(vol); } catch(_){}
-    };
+    chkAudio.checked = audioEnabled;
+    rngAudio.value   = String(Math.round(audioVolume*100));
+    audioVal.textContent = Math.round(audioVolume*100) + '%';
+    chkAudio.onchange = ()=>{ audioEnabled = chkAudio.checked; localStorage.setItem('audioEnabled', audioEnabled ? '1' : '0');
+      if (audioEnabled){ try { ensureAudio(); AC && AC.resume && AC.resume(); } catch(_){} } };
+    rngAudio.oninput = ()=>{ audioVolume = Math.max(0, Math.min(1, parseInt(rngAudio.value||'0',10)/100));
+      audioVal.textContent = Math.round(audioVolume*100) + '%';
+      localStorage.setItem('audioVolume', String(audioVolume));
+      try { ensureAudio(); if (masterGain) masterGain.gain.value = audioVolume; } catch(_){ } };
 
     // FS
     const chkFs=document.getElementById('chkFs');
@@ -1941,6 +1873,69 @@ window.addEventListener('load', ()=>{
     const rngF=document.getElementById('rngFric'); const lblF=document.getElementById('fricVal');
     rngF.value = String(Math.round(TANGENTIAL_DAMPING*1000)); lblF.textContent=TANGENTIAL_DAMPING.toFixed(3);
     rngF.oninput=()=>{ const v=clamp(parseInt(rngF.value,10)||0, 0, 50); TANGENTIAL_DAMPING=v/1000; localStorage.setItem('tangentialDamping', String(TANGENTIAL_DAMPING)); lblF.textContent=TANGENTIAL_DAMPING.toFixed(3); };
+
+    // === Wynik — UI (checkboxy + suwaki) ===
+    const chkScoreFollow = document.getElementById('chkScoreFollowRadius');
+    const chkScoreAutoIO = document.getElementById('chkScoreAutoIO');
+
+    const rngGapIn  = document.getElementById('rngScoreGapInside');
+    const rngGapOut = document.getElementById('rngScoreGapOutside');
+    const rngFont   = document.getElementById('rngScoreFontPx');
+
+    const valGapIn  = document.getElementById('valGapInside');
+    const valGapOut = document.getElementById('valGapOutside');
+    const valFont   = document.getElementById('valScoreFontPx');
+
+    // — checkbox: odstęp względem promienia środka
+    if (chkScoreFollow) {
+      chkScoreFollow.checked = scoreOffsetDynamic;
+      chkScoreFollow.onchange = () => {
+        scoreOffsetDynamic = chkScoreFollow.checked;
+        localStorage.setItem('scoreOffsetDynamic', scoreOffsetDynamic ? '1' : '0');
+      };
+    }
+
+    // — checkbox: auto inside/outside
+    if (chkScoreAutoIO) {
+      chkScoreAutoIO.checked = scoreAutoInsideOutside;
+      chkScoreAutoIO.onchange = () => {
+        scoreAutoInsideOutside = chkScoreAutoIO.checked;
+        localStorage.setItem('scoreAutoInsideOutside', scoreAutoInsideOutside ? '1' : '0');
+      };
+    }
+
+    // — suwak: gap INSIDE
+    if (rngGapIn && valGapIn) {
+      rngGapIn.value = String(scoreGapInside);
+      valGapIn.textContent = scoreGapInside + ' px';
+      rngGapIn.oninput = () => {
+        scoreGapInside = clamp(parseInt(rngGapIn.value, 10) || 14, 0, 80);
+        valGapIn.textContent = scoreGapInside + ' px';
+        localStorage.setItem('scoreGapInside', String(scoreGapInside));
+      };
+    }
+
+    // — suwak: gap OUTSIDE
+    if (rngGapOut && valGapOut) {
+      rngGapOut.value = String(scoreGapOutside);
+      valGapOut.textContent = scoreGapOutside + ' px';
+      rngGapOut.oninput = () => {
+        scoreGapOutside = clamp(parseInt(rngGapOut.value, 10) || 18, 0, 80);
+        valGapOut.textContent = scoreGapOutside + ' px';
+        localStorage.setItem('scoreGapOutside', String(scoreGapOutside));
+      };
+    }
+
+    // — suwak: font px
+    if (rngFont && valFont) {
+      rngFont.value = String(scoreFontPx);
+      valFont.textContent = scoreFontPx + ' px';
+      rngFont.oninput = () => {
+        scoreFontPx = clamp(parseInt(rngFont.value, 10) || 32, 12, 96);
+        valFont.textContent = scoreFontPx + ' px';
+        localStorage.setItem('scoreFontPx', String(scoreFontPx));
+      };
+    }
 
     enableDirectTouchControls();
     refreshTouchLayerVisibility();
@@ -1964,6 +1959,6 @@ window.addEventListener('load', ()=>{
 /* Safari placeholder */
 function touchGamepadAPI(){}
 function clearManualOverrides(){ manualMalletOverride = { p1:false, p2:false, p3:false, p4:false }; manualPuckOverride = false; }
-  </script>
+</script>
 </body>
 </html>
